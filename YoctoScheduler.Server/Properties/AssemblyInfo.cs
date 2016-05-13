@@ -5,11 +5,11 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("YoctoScheduler")]
+[assembly: AssemblyTitle("YoctoScheduler.Server")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("YoctoScheduler")]
+[assembly: AssemblyProduct("YoctoScheduler.Server")]
 [assembly: AssemblyCopyright("Copyright ©  2016")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
@@ -20,7 +20,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("142bbb72-1e05-44c8-8ea9-9a4a257a6a0d")]
+[assembly: Guid("3bfce0c6-784b-4ba5-87c9-794636318e09")]
 
 // Version information for an assembly consists of the following four values:
 //
