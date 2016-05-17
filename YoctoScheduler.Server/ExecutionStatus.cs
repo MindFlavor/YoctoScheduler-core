@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Transactions;
 using YoctoScheduler.Core;
 
 namespace YoctoScheduler.Server
@@ -21,11 +22,21 @@ namespace YoctoScheduler.Server
 
         public static ExecutionStatus CreateExecutionStatus(int TaskId, int ServerId)
         {
-            using (MasterModel mm = new MasterModel())
+            using (CommittableTransaction ct = new CommittableTransaction(new TransactionOptions() { IsolationLevel = IsolationLevel.Serializable }))
             {
-                var innerES = new YoctoScheduler.Core.ExecutionStatus() { TaskID = TaskId, ServerID = ServerId, LastUpdate = DateTime.Now };
-                mm.ExecutionStatus.Add(innerES);
-                mm.SaveChanges();
+                using (MasterModel mm = new MasterModel())
+                {
+                    var alreadyWorking = mm.ExecutionStatus.Where(x => x.TaskID == TaskId && (x.Status == Status.Idle || x.Status == Status.Running)).FirstOrDefault();
+                    if(alreadyWorking != null)
+                    {
+                        Console.WriteLine("Cannot start a new execution status: already there: {0:S}", alreadyWorking);
+                        return null;                        
+                    }
+
+                    var innerES = new YoctoScheduler.Core.ExecutionStatus() { TaskID = TaskId, ServerID = ServerId, LastUpdate = DateTime.Now };
+                    mm.ExecutionStatus.Add(innerES);
+                    mm.SaveChanges();
+                }
             }
 
             return new ExecutionStatus(TaskId, ServerId);

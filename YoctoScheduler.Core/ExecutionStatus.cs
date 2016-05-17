@@ -23,5 +23,12 @@ namespace YoctoScheduler.Core
         public int ServerID { get; set; }
 
         public DateTime LastUpdate { get; set; }
+
+        public override string ToString()
+        {
+            return string.Format("{0:S}[ID={1:N0}, TaskID={2:N0}, Status={3:S}, ServerID={4:N0}, LastUpdate={5:S}]",
+                this.GetType().FullName,
+                ID, TaskID, Status, ServerID, LastUpdate);
+        }
     }
 }
