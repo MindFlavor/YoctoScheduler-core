@@ -11,7 +11,7 @@ namespace YoctoScheduler.Core
     public class Server
     {
         [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public Guid Guid { get; set; }
+        public int ServerID { get; set; }
     
         public Status Status { get; set; }
 

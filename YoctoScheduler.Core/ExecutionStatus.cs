@@ -20,7 +20,7 @@ namespace YoctoScheduler.Core
         public Status Status { get; set; }
 
         public Server Server { get; set; }
-        public Guid ServerGuid { get; set; }
+        public int ServerID { get; set; }
 
         public DateTime LastUpdate { get; set; }
     }

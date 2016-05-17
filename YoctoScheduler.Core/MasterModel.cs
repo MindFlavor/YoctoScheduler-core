@@ -30,7 +30,7 @@ namespace YoctoScheduler.Core
             modelBuilder.Entity<ExecutionStatus>()
                         .HasRequired(m => m.Server)
                         .WithMany(t => t.ExecutionStatuses)
-                        .HasForeignKey(m => m.ServerGuid)
+                        .HasForeignKey(m => m.ServerID)
                         .WillCascadeOnDelete(true);
 
             modelBuilder.Entity<ExecutionStatus>()

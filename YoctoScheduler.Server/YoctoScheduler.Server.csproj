@@ -51,6 +51,7 @@
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Server.cs" />
+    <Compile Include="ExecutionStatus.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\YoctoScheduler.Core\YoctoScheduler.Core.csproj">

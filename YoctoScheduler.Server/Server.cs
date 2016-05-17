@@ -9,52 +9,57 @@ namespace YoctoScheduler.Server
 {
     public class Server
     {
-        public Guid Guid { get; set; }
+        public int Id { get; set; }
 
-        protected Server(Guid Guid)
+        protected Server(int Id)
         {
-            this.Guid = Guid;
+            this.Id = Id;
         }
-        
+
 
         public static Server CreateServer(string Description)
         {
             // register itself
-            Guid guid;
+            int serverId;
             using (MasterModel mm = new MasterModel())
             {
                 var innerServer = new YoctoScheduler.Core.Server() { Description = Description, LastPing = DateTime.Now };
                 mm.Servers.Add(innerServer);
                 mm.SaveChanges();
 
-                guid = innerServer.Guid;
+                serverId = innerServer.ServerID;
             }
-            Server srv = new Server(guid);
+            Server srv = new Server(serverId);
+            Console.WriteLine("Created server {0:N0}", serverId);
 
-            // start ping thread
+            #region start ping thread
             Thread t = new Thread(new ThreadStart(srv.PingThread));
             t.IsBackground = true;
             t.Start();
+            #endregion
 
-            // start clear old servers thread
+            #region start clear old servers thread
             t = new Thread(new ThreadStart(srv.ClearOldServersThread));
             t.IsBackground = true;
             t.Start();
+            #endregion
 
-            // dead task thread
+            #region dead task thread
             t = new Thread(new ThreadStart(srv.DeadTasksThread));
             t.IsBackground = true;
             t.Start();
+            #endregion
 
-            //// task thread
+            #region task thread
             t = new Thread(new ThreadStart(srv.TasksThread));
             t.IsBackground = true;
             t.Start();
+            #endregion
 
             #region Set server as running
             using (MasterModel mm = new MasterModel())
             {
-                mm.Servers.Where(x => x.Guid == guid).First().Status = Status.Running;
+                mm.Servers.Where(x => x.ServerID == serverId).First().Status = Status.Running;
                 mm.SaveChanges();
             }
             #endregion
@@ -68,7 +73,7 @@ namespace YoctoScheduler.Server
             {
                 using (MasterModel mm = new MasterModel())
                 {
-                    mm.Servers.Where(x => x.Guid == Guid).First().LastPing = DateTime.Now;
+                    mm.Servers.Where(x => x.ServerID == Id).First().LastPing = DateTime.Now;
                     mm.SaveChanges();
                 }
 

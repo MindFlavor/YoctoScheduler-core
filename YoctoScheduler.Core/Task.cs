@@ -11,7 +11,7 @@ namespace YoctoScheduler.Core
     public class Task
     {
         [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public int ID { get; set; }
+        public int TaskID { get; set; }
 
         public ICollection<ExecutionStatus> ExecutionStatuses { get; set; }
     }
