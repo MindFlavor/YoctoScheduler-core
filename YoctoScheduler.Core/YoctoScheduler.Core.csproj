@@ -55,6 +55,7 @@
     <Compile Include="MasterModel.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Server.cs" />
+    <Compile Include="Status.cs" />
     <Compile Include="Task.cs" />
   </ItemGroup>
   <ItemGroup>

@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 
 namespace YoctoScheduler.Core
 {
+
     public class ExecutionStatus
     {
         [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
@@ -16,6 +17,7 @@ namespace YoctoScheduler.Core
         public Task Task { get; set; }
         public int TaskID { get; set; }
 
+        public Status Status { get; set; }
 
         public Server Server { get; set; }
         public Guid ServerGuid { get; set; }

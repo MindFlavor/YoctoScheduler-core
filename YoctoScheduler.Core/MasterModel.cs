@@ -39,7 +39,6 @@ namespace YoctoScheduler.Core
                         .HasForeignKey(m => m.TaskID)
                         .WillCascadeOnDelete(false);
         }
-
     }
 
 }
