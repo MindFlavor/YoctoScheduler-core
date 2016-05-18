@@ -25,7 +25,7 @@ namespace YoctoScheduler.Core
         public virtual DbSet<Task> Tasks { get; set; }
         public virtual DbSet<ExecutionStatus> ExecutionStatus { get; set; }
         public virtual DbSet<Server> Servers { get; set; }
-        public virtual DbSet<Schedule> Scheduls { get; set; }
+        public virtual DbSet<Schedule> Schedules { get; set; }
 
         protected override void OnModelCreating(DbModelBuilder modelBuilder)
         {
@@ -41,7 +41,7 @@ namespace YoctoScheduler.Core
                         .HasForeignKey(m => m.TaskID)
                         .WillCascadeOnDelete(false);
 
-            #region IX_LastUpdate
+            #region Index IX_LastUpdate
             modelBuilder.Entity<ExecutionStatus>()
                         .Property(e => e.LastUpdate)
                         .HasColumnAnnotation("Index", new IndexAnnotation(new IndexAttribute("IX_LastUpdate", 0)));

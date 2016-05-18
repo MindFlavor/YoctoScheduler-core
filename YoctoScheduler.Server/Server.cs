@@ -12,7 +12,6 @@ namespace YoctoScheduler.Server
         private static readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(Server));
 
         public int Id { get; set; }
-
         public DateTime LastScheduleCheck { get; protected set; }
 
         protected Server(int Id)
@@ -82,7 +81,9 @@ namespace YoctoScheduler.Server
 
         public override string ToString()
         {
-            return string.Format("{0:S}[Id={1:N0},LastScheduleCheck={2:S}]", this.GetType().FullName, Id, LastScheduleCheck.ToString("yyyyMMdd hh:mm::ss"));
+            return string.Format("{0:S}[Id={1:N0}, LastScheduleCheck={2:S}]",
+                this.GetType().FullName, Id,
+                LastScheduleCheck.ToString("yyyyMMdd hh:mm::ss"));
         }
 
         protected void PingThread()
@@ -159,25 +160,27 @@ namespace YoctoScheduler.Server
                     var lastExecutions = mm.ExecutionStatus.Where(e => e.LastUpdate > this.LastScheduleCheck).GroupBy(e => e.TaskID).Select(grp => new
                     {
                         grp.Key,
-                        ExecutionStatus = grp.OrderByDescending(s => s.LastUpdate).FirstOrDefault().LastUpdate
-                    });
+                        ExecutionStatus = grp.OrderByDescending(s => s.LastUpdate).FirstOrDefault()
+                    }).ToList();
 
-                    foreach (var e in lastExecutions)
+                    // find next schedules
+                    mm.Schedules.Where(s => (s.Enabled == true)).AsParallel().ForAll(s => 
                     {
-                        // TODO: execute if needed
-                        log.InfoFormat("{0:S}", e.ToString());
-                    }
-
-                    // find enabled scheduls
-                    mm.Scheduls.Where(s => (s.Enabled == true)).AsParallel().ForAll(s => 
-                    {
-
+                        var lastExecution = lastExecutions.Where(e => e.ExecutionStatus.TaskID == s.TaskID).FirstOrDefault();
+                        var next = NCrontab.CrontabSchedule.Parse(s.Cron).GetNextOccurrence(LastScheduleCheck);
+                        if (next < DateTime.Now)
+                        {
+                            #region Schedule execution
+                            log.InfoFormat("Executing {0:S}!", s.Task.ToString());
+                            #endregion
+                        }
                     });
 
                     mm.SaveChanges();
                 }
 
                 LastScheduleCheck = DateTime.Now;
+
                 log.DebugFormat("{0:S} - Check for tasks to start - Completed", this.ToString());
                 // every 30 seconds
                 Thread.Sleep(10 * 1000);
