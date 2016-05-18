@@ -26,10 +26,18 @@ namespace YoctoScheduler.Server
             {
                 using (MasterModel mm = new MasterModel())
                 {
+                    var task = mm.Tasks.Where(x => x.TaskID == TaskId).FirstOrDefault();
+                    if (task == null)
+                        throw new YoctoScheduler.Core.Exceptions.TaskNotFoundException(TaskId);                    
+
+                    var server = mm.Servers.Where(x => x.ServerID == ServerId).FirstOrDefault();
+                    if (server == null)
+                        throw new YoctoScheduler.Core.Exceptions.ServerNotFoundException(ServerId);
+
                     var alreadyWorking = mm.ExecutionStatus.Where(x => x.TaskID == TaskId && (x.Status == Status.Idle || x.Status == Status.Running)).FirstOrDefault();
                     if(alreadyWorking != null)
                     {
-                        Console.WriteLine("Cannot start a new execution status: already there: {0:S}", alreadyWorking);
+                        Console.WriteLine("Cannot start a new execution status: already there: {0:S}", alreadyWorking.ToString());
                         return null;                        
                     }
 

@@ -5,9 +5,10 @@ GO
 CREATE DATABASE [YoctoScheduler.Core.MasterModel];
 GO
 
-SELECT * FROM [YoctoScheduler.Core.MasterModel].dbo.[Servers];
+SELECT * FROM [YoctoScheduler.Core.MasterModel].[dbo].[Servers];
 SELECT * FROM [YoctoScheduler.Core.MasterModel].[dbo].[Tasks];
 SELECT * FROM [YoctoScheduler.Core.MasterModel].[dbo].[ExecutionStatus];
+SELECT * FROM [YoctoScheduler.Core.MasterModel].[dbo].[Schedules];
 
 INSERT INTO [YoctoScheduler.Core.MasterModel].dbo.[Servers]([Description], [Status], LastPing)
 VALUES('Prova', 2, '2010-01-01')
@@ -18,3 +19,5 @@ GO
 INSERT INTO [YoctoScheduler.Core.MasterModel].dbo.[Servers]([Description], [Status], LastPing)
 VALUES('Prova3', 2, '2014-04-01')
 GO
+
+UPDATE [YoctoScheduler.Core.MasterModel].[dbo].[ExecutionStatus] SET Status = 0
