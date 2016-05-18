@@ -10,11 +10,18 @@ namespace Test
 {
     class Program
     {
-        static YoctoScheduler.Server.Server Server;
+        private const string LOG4NET_CONFIG = "Test.log4net.xml";
+        private static readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(Program));
+
+        static YoctoScheduler.Server.Server srvInstance;
         static void Main(string[] args)
         {
+            #region setup logging        
+            log4net.Config.XmlConfigurator.Configure(System.Reflection.Assembly.GetExecutingAssembly().GetManifestResourceStream(LOG4NET_CONFIG));
+            log.InfoFormat("Test program v{0:S} started.", System.Reflection.Assembly.GetExecutingAssembly().GetName().Version);
+            #endregion
 
-            Server = YoctoScheduler.Server.Server.CreateServer("Server di prova " + DateTime.Now.ToString());
+            srvInstance = YoctoScheduler.Server.Server.CreateServer("Server di prova " + DateTime.Now.ToString());
 
             //MasterModel mm = new MasterModel();
             //YoctoScheduler.Core.Task task = new YoctoScheduler.Core.Task();
@@ -28,11 +35,11 @@ namespace Test
             //mm.SaveChanges();
 
             //Console.WriteLine(es.Server.Description);
+            Console.WriteLine("Program running, please input a command!");
 
             bool fDone = false;
             while (!fDone)
             {
-                Console.Write("> ");
                 var cmd = Console.ReadLine();
                 var tokens = cmd.Split(' ');
                 try
@@ -63,13 +70,14 @@ namespace Test
                         case "":
                             break;
                         default:
-                            Console.WriteLine("Syntax error, unknown command \"{0:S}\". Type help for help, quit to quit.", tokens[0]);
+                            log.WarnFormat("Syntax error, unknown command \"{0:S}\". Type help for help, quit to quit.", tokens[0]);
                             break;
 
                     }
-                } catch(Exception e)
+                }
+                catch (Exception e)
                 {
-                    Console.WriteLine("Exception: " + e.ToString());
+                    log.ErrorFormat("Exception: " + e.ToString());
                 }
             }
         }
@@ -81,15 +89,15 @@ namespace Test
                 var task = new YoctoScheduler.Core.Task();
                 mm.Tasks.Add(task);
                 mm.SaveChanges();
-                Console.WriteLine("Created task id {0:S}", task.TaskID.ToString());
+                log.InfoFormat("Created task id {0:S}", task.TaskID.ToString());
             }
         }
 
         static void CreateExecution(int TaskId)
         {
-            var status = YoctoScheduler.Server.ExecutionStatus.CreateExecutionStatus(TaskId, Server.Id);
+            var status = YoctoScheduler.Server.ExecutionStatus.CreateExecutionStatus(TaskId, srvInstance.Id);
 
-            Console.WriteLine("Created execution status", status);
+            log.InfoFormat("Created execution status", status.ToString());
         }
     }
 }

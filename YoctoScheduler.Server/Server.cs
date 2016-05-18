@@ -9,6 +9,8 @@ namespace YoctoScheduler.Server
 {
     public class Server
     {
+        private static readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(Server));
+
         public int Id { get; set; }
 
         protected Server(int Id)
@@ -28,43 +30,55 @@ namespace YoctoScheduler.Server
                 mm.SaveChanges();
 
                 serverId = innerServer.ServerID;
+
             }
             Server srv = new Server(serverId);
-            Console.WriteLine("Created server {0:N0}", serverId);
+            log.DebugFormat("{0:S} - Created server ", srv.ToString());
 
             #region start ping thread
             Thread t = new Thread(new ThreadStart(srv.PingThread));
             t.IsBackground = true;
+            log.DebugFormat("{0:S} - Starting ping thread", srv.ToString());
             t.Start();
             #endregion
 
             #region start clear old servers thread
             t = new Thread(new ThreadStart(srv.ClearOldServersThread));
             t.IsBackground = true;
+            log.DebugFormat("{0:S} - Starting clear old servers thread", srv.ToString());
             t.Start();
             #endregion
 
             #region dead task thread
             t = new Thread(new ThreadStart(srv.DeadTasksThread));
             t.IsBackground = true;
+            log.DebugFormat("{0:S} - Starting dead task thread thread", srv.ToString());
             t.Start();
             #endregion
 
             #region task thread
             t = new Thread(new ThreadStart(srv.TasksThread));
             t.IsBackground = true;
+            log.DebugFormat("{0:S} - Starting task thread thread", srv.ToString());
             t.Start();
             #endregion
 
             #region Set server as running
+            log.DebugFormat("{0:S} - Setting server as running", srv.ToString());
             using (MasterModel mm = new MasterModel())
             {
                 mm.Servers.Where(x => x.ServerID == serverId).First().Status = Status.Running;
                 mm.SaveChanges();
             }
             #endregion
+            log.InfoFormat("{0:S} - Server running", srv.ToString());
 
             return srv;
+        }
+
+        public override string ToString()
+        {
+            return string.Format("{0:S}[Id={1:N0}]", this.GetType().FullName, Id);
         }
 
         protected void PingThread()
@@ -74,6 +88,7 @@ namespace YoctoScheduler.Server
                 using (MasterModel mm = new MasterModel())
                 {
                     mm.Servers.Where(x => x.ServerID == Id).First().LastPing = DateTime.Now;
+                    log.DebugFormat("{0:S} - Ping", this.ToString());
                     mm.SaveChanges();
                 }
 
@@ -91,7 +106,11 @@ namespace YoctoScheduler.Server
 
                 using (MasterModel mm = new MasterModel())
                 {
-                    mm.Servers.Where(x => x.LastPing < dtDead).AsParallel().ForAll(x => x.Status = Status.Dead);
+                    mm.Servers.Where(x => (x.LastPing < dtDead) && (x.Status != Status.Dead)).AsParallel().ForAll(x =>
+                    {
+                        log.InfoFormat("{0:S} - Setting server {1:N0} as dead (last ping {2:S} ago)", this.ToString(), x.ServerID, (DateTime.Now - x.LastPing).ToString());
+                        x.Status = Status.Dead;
+                    });
                     mm.SaveChanges();
                 }
 
@@ -109,7 +128,12 @@ namespace YoctoScheduler.Server
                 using (MasterModel mm = new MasterModel())
                 {
                     // set dead tasks as dead
-                    mm.ExecutionStatus.Where(x => x.LastUpdate < dtDead).AsParallel().ForAll(x => x.Status = Status.Dead);
+                    mm.ExecutionStatus.Where(x => (x.LastUpdate < dtDead) && (x.Status != Status.Dead)).AsParallel().ForAll(x =>
+                    {
+                        log.InfoFormat("{0:S} - Setting task (TaskID={1:N0}, ServerID={2:N0}) as dead (last update {3:S} ago)",
+                            this.ToString(), x.TaskID, x.ServerID, (DateTime.Now - x.LastUpdate).ToString());
+                        x.Status = Status.Dead;
+                    });
                     mm.SaveChanges();
                 }
 
@@ -122,6 +146,7 @@ namespace YoctoScheduler.Server
         {
             while (true)
             {
+                log.DebugFormat("{0:S} - Check for tasks to start - Starting", this.ToString());
                 using (MasterModel mm = new MasterModel())
                 {
                     // find task to run
@@ -129,6 +154,7 @@ namespace YoctoScheduler.Server
                     mm.SaveChanges();
                 }
 
+                log.DebugFormat("{0:S} - Check for tasks to start - Completed", this.ToString());
                 // every 30 seconds
                 Thread.Sleep(30 * 1000);
             }
