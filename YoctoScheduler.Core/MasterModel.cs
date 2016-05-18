@@ -1,7 +1,9 @@
 namespace YoctoScheduler.Core
 {
     using System;
+    using System.ComponentModel.DataAnnotations.Schema;
     using System.Data.Entity;
+    using System.Data.Entity.Infrastructure.Annotations;
     using System.Linq;
 
     public class MasterModel : DbContext
@@ -39,6 +41,23 @@ namespace YoctoScheduler.Core
                         .HasForeignKey(m => m.TaskID)
                         .WillCascadeOnDelete(false);
 
+            #region IX_LastUpdate
+            modelBuilder.Entity<ExecutionStatus>()
+                        .Property(e => e.LastUpdate)
+                        .HasColumnAnnotation("Index", new IndexAnnotation(new IndexAttribute("IX_LastUpdate", 0)));
+
+            modelBuilder.Entity<ExecutionStatus>()
+                        .Property(e => e.TaskID)
+                        .HasColumnAnnotation("Index", new IndexAnnotation(new IndexAttribute("IX_LastUpdate", 1)));
+
+            modelBuilder.Entity<ExecutionStatus>()
+                        .Property(e => e.ServerID)
+                        .HasColumnAnnotation("Index", new IndexAnnotation(new IndexAttribute("IX_LastUpdate", 2)));
+                
+            modelBuilder.Entity<ExecutionStatus>()
+                        .Property(e => e.Status)
+                        .HasColumnAnnotation("Index", new IndexAnnotation(new IndexAttribute("IX_LastUpdate", 3)));
+            #endregion
         }
     }
 
