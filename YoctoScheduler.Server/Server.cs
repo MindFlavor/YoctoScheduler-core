@@ -38,26 +38,26 @@ namespace YoctoScheduler.Server
             log.DebugFormat("{0:S} - Created server ", srv.ToString());
 
             Thread t;
-            //#region start ping thread
-            //t = new Thread(new ThreadStart(srv.PingThread));
-            //t.IsBackground = true;
-            //log.DebugFormat("{0:S} - Starting ping thread", srv.ToString());
-            //t.Start();
-            //#endregion
+            #region start ping thread
+            t = new Thread(new ThreadStart(srv.PingThread));
+            t.IsBackground = true;
+            log.DebugFormat("{0:S} - Starting ping thread", srv.ToString());
+            t.Start();
+            #endregion
 
-            //#region start clear old servers thread
-            //t = new Thread(new ThreadStart(srv.ClearOldServersThread));
-            //t.IsBackground = true;
-            //log.DebugFormat("{0:S} - Starting clear old servers thread", srv.ToString());
-            //t.Start();
-            //#endregion
+            #region start clear old servers thread
+            t = new Thread(new ThreadStart(srv.ClearOldServersThread));
+            t.IsBackground = true;
+            log.DebugFormat("{0:S} - Starting clear old servers thread", srv.ToString());
+            t.Start();
+            #endregion
 
-            //#region dead task thread
-            //t = new Thread(new ThreadStart(srv.DeadTasksThread));
-            //t.IsBackground = true;
-            //log.DebugFormat("{0:S} - Starting dead task thread thread", srv.ToString());
-            //t.Start();
-            //#endregion
+            #region dead task thread
+            t = new Thread(new ThreadStart(srv.DeadTasksThread));
+            t.IsBackground = true;
+            log.DebugFormat("{0:S} - Starting dead task thread thread", srv.ToString());
+            t.Start();
+            #endregion
 
             #region task thread
             t = new Thread(new ThreadStart(srv.TasksThread));
@@ -157,6 +157,7 @@ namespace YoctoScheduler.Server
                     // get last executions
                     // for this to be bearable we should create this index:
                     // CREATE NONCLUSTERED INDEX idx_LastUpdate ON [dbo].[ExecutionStatus](LastUpdate DESC) INCLUDE(TaskID, ServerID, Status);
+                    // we collect it eagerly so we can work in memory afterwards
                     var lastExecutions = mm.ExecutionStatus.Where(e => e.LastUpdate > this.LastScheduleCheck).GroupBy(e => e.TaskID).Select(grp => new
                     {
                         grp.Key,
