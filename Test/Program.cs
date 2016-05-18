@@ -51,6 +51,15 @@ namespace Test
                             }
                             CreateExecution(int.Parse(tokens[1]));
                             break;
+                        case "new_schedule":
+                            if (tokens.Length < 3)
+                            {
+                                Console.WriteLine("Syntax error, must specify a valid task id and a valid crontab");
+                                continue;
+                            }
+                            CreateSchedule(int.Parse(tokens[1]), string.Join(" ", tokens.Skip(2)));
+
+                            break;
                         case "quit":
                             fDone = true;
                             break;
@@ -58,6 +67,7 @@ namespace Test
                             Console.WriteLine("Available commands:");
                             Console.WriteLine("\tnew_task");
                             Console.WriteLine("\tnew_execution <task_id>");
+                            Console.WriteLine("\tnew_schedule <task_id> <cron expression>");
                             Console.WriteLine("\tquit");
                             Console.WriteLine("\thelp");
                             break;
@@ -92,6 +102,24 @@ namespace Test
             var status = YoctoScheduler.Server.ExecutionStatus.CreateExecutionStatus(TaskId, srvInstance.Id);
 
             log.InfoFormat("Created execution status", status.ToString());
+        }
+
+        static void CreateSchedule(int taskId, string cron)
+        {
+            Schedule sched;
+            using (MasterModel mm = new MasterModel())
+            {
+                var task = mm.Tasks.Where(t => t.TaskID == taskId).FirstOrDefault();
+                if (task == null)
+                    throw new YoctoScheduler.Core.Exceptions.TaskNotFoundException(taskId);
+
+                sched = new Schedule() { Cron = cron, Enabled = true };
+                task.Schedules = new List<Schedule>();
+                task.Schedules.Add(sched);
+
+                mm.SaveChanges();
+            }
+            log.InfoFormat("Created schedule {0:S}", sched.ToString());
         }
     }
 }
