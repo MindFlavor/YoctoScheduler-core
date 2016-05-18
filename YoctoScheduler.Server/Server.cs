@@ -13,9 +13,12 @@ namespace YoctoScheduler.Server
 
         public int Id { get; set; }
 
+        public DateTime LastScheduleCheck { get; protected set; }
+
         protected Server(int Id)
         {
             this.Id = Id;
+            this.LastScheduleCheck = DateTime.MinValue;
         }
 
 
@@ -35,26 +38,27 @@ namespace YoctoScheduler.Server
             Server srv = new Server(serverId);
             log.DebugFormat("{0:S} - Created server ", srv.ToString());
 
-            #region start ping thread
-            Thread t = new Thread(new ThreadStart(srv.PingThread));
-            t.IsBackground = true;
-            log.DebugFormat("{0:S} - Starting ping thread", srv.ToString());
-            t.Start();
-            #endregion
+            Thread t;
+            //#region start ping thread
+            //t = new Thread(new ThreadStart(srv.PingThread));
+            //t.IsBackground = true;
+            //log.DebugFormat("{0:S} - Starting ping thread", srv.ToString());
+            //t.Start();
+            //#endregion
 
-            #region start clear old servers thread
-            t = new Thread(new ThreadStart(srv.ClearOldServersThread));
-            t.IsBackground = true;
-            log.DebugFormat("{0:S} - Starting clear old servers thread", srv.ToString());
-            t.Start();
-            #endregion
+            //#region start clear old servers thread
+            //t = new Thread(new ThreadStart(srv.ClearOldServersThread));
+            //t.IsBackground = true;
+            //log.DebugFormat("{0:S} - Starting clear old servers thread", srv.ToString());
+            //t.Start();
+            //#endregion
 
-            #region dead task thread
-            t = new Thread(new ThreadStart(srv.DeadTasksThread));
-            t.IsBackground = true;
-            log.DebugFormat("{0:S} - Starting dead task thread thread", srv.ToString());
-            t.Start();
-            #endregion
+            //#region dead task thread
+            //t = new Thread(new ThreadStart(srv.DeadTasksThread));
+            //t.IsBackground = true;
+            //log.DebugFormat("{0:S} - Starting dead task thread thread", srv.ToString());
+            //t.Start();
+            //#endregion
 
             #region task thread
             t = new Thread(new ThreadStart(srv.TasksThread));
@@ -78,7 +82,7 @@ namespace YoctoScheduler.Server
 
         public override string ToString()
         {
-            return string.Format("{0:S}[Id={1:N0}]", this.GetType().FullName, Id);
+            return string.Format("{0:S}[Id={1:N0},LastScheduleCheck={2:S}]", this.GetType().FullName, Id, LastScheduleCheck.ToString("yyyyMMdd hh:mm::ss"));
         }
 
         protected void PingThread()
@@ -149,14 +153,34 @@ namespace YoctoScheduler.Server
                 log.DebugFormat("{0:S} - Check for tasks to start - Starting", this.ToString());
                 using (MasterModel mm = new MasterModel())
                 {
-                    // find task to run
-                    //mm.Tasks.Where(task => task.ExecutionStatuses
+                    // get last executions
+                    // for this to be bearable we should create this index:
+                    // CREATE NONCLUSTERED INDEX idx_LastUpdate ON [dbo].[ExecutionStatus](LastUpdate DESC) INCLUDE(TaskID, ServerID, Status);
+                    var lastExecutions = mm.ExecutionStatus.Where(e => e.LastUpdate > this.LastScheduleCheck).GroupBy(e => e.TaskID).Select(grp => new
+                    {
+                        grp.Key,
+                        ExecutionStatus = grp.OrderByDescending(s => s.LastUpdate).FirstOrDefault().LastUpdate
+                    });
+
+                    foreach (var e in lastExecutions)
+                    {
+                        // TODO: execute if needed
+                        log.InfoFormat("{0:S}", e.ToString());
+                    }
+
+                    // find enabled scheduls
+                    mm.Scheduls.Where(s => (s.Enabled == true)).AsParallel().ForAll(s => 
+                    {
+
+                    });
+
                     mm.SaveChanges();
                 }
 
+                LastScheduleCheck = DateTime.Now;
                 log.DebugFormat("{0:S} - Check for tasks to start - Completed", this.ToString());
                 // every 30 seconds
-                Thread.Sleep(30 * 1000);
+                Thread.Sleep(10 * 1000);
             }
         }
     }

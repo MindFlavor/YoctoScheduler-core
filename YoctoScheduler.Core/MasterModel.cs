@@ -22,8 +22,8 @@ namespace YoctoScheduler.Core
 
         public virtual DbSet<Task> Tasks { get; set; }
         public virtual DbSet<ExecutionStatus> ExecutionStatus { get; set; }
-
         public virtual DbSet<Server> Servers { get; set; }
+        public virtual DbSet<Schedule> Scheduls { get; set; }
 
         protected override void OnModelCreating(DbModelBuilder modelBuilder)
         {
@@ -38,6 +38,7 @@ namespace YoctoScheduler.Core
                         .WithMany(t => t.ExecutionStatuses)
                         .HasForeignKey(m => m.TaskID)
                         .WillCascadeOnDelete(false);
+
         }
     }
 
