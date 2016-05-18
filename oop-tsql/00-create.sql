@@ -69,3 +69,6 @@ ALTER TABLE [live].[ExecutionStatus] CHECK CONSTRAINT [FK_ExecutionStatus_Tasks_
 GO
 
 
+----------------
+USE [master];
+GO

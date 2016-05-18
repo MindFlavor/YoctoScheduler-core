@@ -105,7 +105,6 @@ namespace YoctoScheduler.Core
             }
         }
 
-
         protected internal void PopolateParameters(SqlCommand cmd)
         {
             SqlParameter param = new SqlParameter("@taskID", System.Data.SqlDbType.Int);
@@ -127,8 +126,5 @@ namespace YoctoScheduler.Core
                 cmd.Parameters.Add(param);
             }
         }
-
-
-
     }
 }
