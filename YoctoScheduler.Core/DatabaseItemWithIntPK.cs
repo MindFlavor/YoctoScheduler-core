@@ -6,12 +6,8 @@ using System.Threading.Tasks;
 
 namespace YoctoScheduler.Core
 {
-    public enum Status
+    public abstract class DatabaseItemWithIntPK : DatabaseItem
     {
-        Unknown = 0,
-        Idle = 100,
-        Starting = 200,
-        Running = 300,
-        Dead = -100
+        public const int INVALID_ID = -1;
     }
 }
