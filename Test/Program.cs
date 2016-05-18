@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using YoctoScheduler.Core;
 using System.Threading;
+using NCrontab;
 
 namespace Test
 {
@@ -16,6 +17,11 @@ namespace Test
         static YoctoScheduler.Server.Server srvInstance;
         static void Main(string[] args)
         {
+            //var ctab = NCrontab.CrontabSchedule.Parse("* 1-3 * * *");
+            //Console.WriteLine(ctab.GetNextOccurrence(DateTime.Parse("2010-01-01 04:34")));
+            //return;
+
+
             #region setup logging        
             log4net.Config.XmlConfigurator.Configure(System.Reflection.Assembly.GetExecutingAssembly().GetManifestResourceStream(LOG4NET_CONFIG));
             log.InfoFormat("Test program v{0:S} started.", System.Reflection.Assembly.GetExecutingAssembly().GetName().Version);
@@ -23,18 +29,6 @@ namespace Test
 
             srvInstance = YoctoScheduler.Server.Server.CreateServer("Server di prova " + DateTime.Now.ToString());
 
-            //MasterModel mm = new MasterModel();
-            //YoctoScheduler.Core.Task task = new YoctoScheduler.Core.Task();
-            //mm.Tasks.Add(task);
-            //mm.SaveChanges();
-
-            //Server server = mm.Servers.Where(x => x.Guid == srv.Guid).First();
-
-            //ExecutionStatus es = new ExecutionStatus() { Server = server, Task = task, LastUpdate = DateTime.Now };
-            //mm.ExecutionStatus.Add(es);
-            //mm.SaveChanges();
-
-            //Console.WriteLine(es.Server.Description);
             Console.WriteLine("Program running, please input a command!");
 
             bool fDone = false;

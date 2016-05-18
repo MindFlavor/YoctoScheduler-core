@@ -8,13 +8,16 @@ using System.Threading.Tasks;
 
 namespace YoctoScheduler.Core
 {
-    public class Task
+    public class Schedule
     {
         [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        public int ScheduleID { get; set; }
+
+        public string Cron { get; set; }
+
+        public bool Enabled { get; set; }
+        
         public int TaskID { get; set; }
-
-        public ICollection<ExecutionStatus> ExecutionStatuses { get; set; }
-
-        public ICollection<Schedule> Schedules { get; set; }
+        public virtual Task Task { get; set; }
     }
 }

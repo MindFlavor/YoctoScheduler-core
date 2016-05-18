@@ -14,12 +14,12 @@ namespace YoctoScheduler.Core
         [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int ID { get; set; }
 
-        public Task Task { get; set; }
+        public virtual Task Task { get; set; }
         public int TaskID { get; set; }
 
         public Status Status { get; set; }
-
-        public Server Server { get; set; }
+        
+        public virtual Server Server { get; set; }
         public int ServerID { get; set; }
 
         public DateTime LastUpdate { get; set; }
