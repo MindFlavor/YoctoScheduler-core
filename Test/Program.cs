@@ -54,7 +54,7 @@ namespace Test
                                 Console.WriteLine("Syntax error, must specify a valid task id and a valid crontab");
                                 continue;
                             }
-                            //CreateSchedule(int.Parse(tokens[1]), string.Join(" ", tokens.Skip(2)));
+                            CreateSchedule(int.Parse(tokens[1]), string.Join(" ", tokens.Skip(2)));
 
                             break;
                         case "quit":
@@ -96,22 +96,11 @@ namespace Test
         //    log.InfoFormat("Created execution status", status.ToString());
         //}
 
-        //static void CreateSchedule(int taskId, string cron)
-        //{
-        //    Schedule sched;
-        //    using (MasterModel mm = new MasterModel())
-        //    {
-        //        var task = mm.Tasks.Where(t => t.TaskID == taskId).FirstOrDefault();
-        //        if (task == null)
-        //            throw new YoctoScheduler.Core.Exceptions.TaskNotFoundException(taskId);
-
-        //        sched = new Schedule() { Cron = cron, Enabled = true };
-        //        task.Schedules = new List<Schedule>();
-        //        task.Schedules.Add(sched);
-
-        //        mm.SaveChanges();
-        //    }
-        //    log.InfoFormat("Created schedule {0:S}", sched.ToString());
-        //}
+        static void CreateSchedule(int taskId, string cron)
+        {
+            Schedule sched = Schedule.New(System.Configuration.ConfigurationManager.ConnectionStrings["YoctoScheduler"].ConnectionString,
+                taskId, cron, false);
+            log.InfoFormat("Created schedule {0:S}", sched.ToString());
+        }
     }
 }

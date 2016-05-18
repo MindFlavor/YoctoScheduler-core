@@ -11,24 +11,21 @@ namespace YoctoScheduler.Core
 {
     public class Task : DatabaseItemWithIntPK
     {
-        public int TaskID { get; set; }
-
         private static readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(Task));
+
+        public Task(string connectionString) : base(connectionString) { }
 
         public override string ToString()
         {
-            return string.Format("{0:S}[TaskID={1:N0}]",
+            return string.Format("{0:S}[{1:S}]",
                 this.GetType().FullName,
-                TaskID);
+                base.ToString());
         }
 
         public static Task New(string connectionString)
         {
             #region Database entry
-            var task = new Task()
-            {
-                ConnectionString = connectionString
-            };
+            var task = new Task(connectionString);
 
             using (var conn = OpenConnection(connectionString))
             {
@@ -41,7 +38,7 @@ namespace YoctoScheduler.Core
                 task.PopolateParameters(cmd);
 
                 cmd.Prepare();
-                task.TaskID = (int)cmd.ExecuteScalar();
+                task.ID = (int)cmd.ExecuteScalar();
             }
             #endregion
 
@@ -57,5 +54,32 @@ namespace YoctoScheduler.Core
         {
         }
 
+        public static Task RetrieveByID(string connectionString, int ID)
+        {
+            Task task;
+            using (var conn = OpenConnection(connectionString))
+            {
+                SqlCommand cmd = new SqlCommand(
+                    @"SELECT [ID] FROM [live].[Tasks] 
+                        WHERE [ID] = @id"
+                    , conn);
+
+                SqlParameter param = new SqlParameter("@serverID", System.Data.SqlDbType.Int);
+                param.Value = ID;
+                cmd.Parameters.Add(param);
+
+                cmd.Prepare();
+
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    if (!reader.Read())
+                        return null;
+                    task = new Task(connectionString) { ID = reader.GetInt32(0) };
+                }
+
+                log.DebugFormat("{0:S} - Retrieved task ", task.ToString());
+                return task;
+            }
+        }
     }
 }

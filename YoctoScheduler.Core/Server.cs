@@ -9,8 +9,6 @@ namespace YoctoScheduler.Core
     {
         private static readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(Server));
 
-        public int ServerID { get; set; }
-
         public Status Status { get; set; }
 
         public string Description { get; set; }
@@ -19,17 +17,16 @@ namespace YoctoScheduler.Core
 
         public DateTime LastScheduleCheck { get; protected set; }
 
-        public Server()
+        public Server(string connectionString) : base(connectionString)
         {
-            ServerID = INVALID_ID;
             LastScheduleCheck = DateTime.MinValue;
         }
 
         public override string ToString()
         {
-            return string.Format("{0:S}[ServerID={1:N0}, Status={2:S}, Description=\"{3:S}\", LastPing={4:S}, LastScheduleCheck={5:S}]",
+            return string.Format("{0:S}[{1:S}, Status={2:S}, Description=\"{3:S}\", LastPing={4:S}, LastScheduleCheck={5:S}]",
                 this.GetType().FullName,
-                ServerID,
+                base.ToString(),
                 Status.ToString(),
                 Description,
                 LastPing.ToString(LOG_TIME_FORMAT),
@@ -39,9 +36,8 @@ namespace YoctoScheduler.Core
         public static Server New(string connectionString, string Description)
         {
             #region Database entry
-            var server = new Server()
+            var server = new Server(connectionString)
             {
-                ConnectionString = connectionString,
                 Description = Description,
                 LastPing = DateTime.Parse("2000-01-01"),
                 Status = Status.Starting
@@ -65,7 +61,7 @@ namespace YoctoScheduler.Core
                 server.PopolateParameters(cmd);
 
                 cmd.Prepare();
-                server.ServerID = (int)cmd.ExecuteScalar();
+                server.ID = (int)cmd.ExecuteScalar();
             }
 
             #endregion
@@ -146,10 +142,10 @@ namespace YoctoScheduler.Core
             param.Value = LastPing;
             cmd.Parameters.Add(param);
 
-            if (ServerID != INVALID_ID)
+            if (HasValidID())
             {
                 param = new SqlParameter("@serverID", System.Data.SqlDbType.Int);
-                param.Value = ServerID;
+                param.Value = ID;
                 cmd.Parameters.Add(param);
             }
         }
