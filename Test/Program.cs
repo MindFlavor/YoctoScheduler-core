@@ -51,6 +51,8 @@ namespace Test
                                 Console.WriteLine("Syntax error, must specify a valid task id");
                                 continue;
                             }
+
+                            Console.WriteLine("TODO!!!");
                             //CreateExecution(int.Parse(tokens[1]));
                             break;
                         case "new_schedule":
@@ -78,7 +80,6 @@ namespace Test
                         default:
                             log.WarnFormat("Syntax error, unknown command \"{0:S}\". Type help for help, quit to quit.", tokens[0]);
                             break;
-
                     }
                 }
                 catch (Exception e)

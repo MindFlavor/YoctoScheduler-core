@@ -228,7 +228,6 @@ namespace YoctoScheduler.Core
                 using (SqlConnection conn = new SqlConnection(ConnectionString))
                 {
                     conn.Open();
-
                     // Get enabled schedules
                     var lSchedules = Schedule.GetAll(conn, false);
 
@@ -239,6 +238,12 @@ namespace YoctoScheduler.Core
                         {
                             var task = Task.RetrieveByID(conn, sched.TaskID);
                             log.InfoFormat("Startring schedulation {0:S} due to cron {1:S}", task.ToString(), sched.ToString());
+
+                            // in [live].[ExecutionStatus] we have a non clustered unique index avoiding double schedulations.
+                            // we can of course schedule twice a task provided it's been done manually.
+                            var es = ExecutionStatus.New(conn, task.ID, ID, sched.ID);
+
+                            log.InfoFormat("task execution created {0:S}", es.ToString());
                         }
                     });
                 }

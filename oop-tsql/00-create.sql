@@ -76,7 +76,7 @@ GO
 ALTER TABLE [live].[ExecutionStatus] CHECK CONSTRAINT [FK_ExecutionStatus_Schedule_ScheduleID]
 GO
 
-CREATE UNIQUE INDEX IX_SingleScheduleExecution ON [live].[ExecutionStatus]([TaskID], [ServerID], [ScheduleID]) INCLUDE([Status], [LastUpdate]);
+CREATE UNIQUE INDEX IX_SingleScheduleExecution ON [live].[ExecutionStatus]([TaskID], [ScheduleID]) INCLUDE([Status], [ServerID], [LastUpdate]);
 GO
 
 
