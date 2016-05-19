@@ -9,14 +9,10 @@ namespace YoctoScheduler.Core
 {
     public abstract class DatabaseItem
     {
-        public const string LOG_TIME_FORMAT = "yyyyMMdd hh:mm:ss";
+        public const string LOG_TIME_FORMAT = "yyyyMMdd HH:mm:ss";
 
-        public string ConnectionString { get; private set; }
-
-        public DatabaseItem(string ConnectionString)
-        {
-            this.ConnectionString = ConnectionString;
-        }
+        public DatabaseItem()
+        {  }
 
         protected static SqlConnection OpenConnection(string ConnectionString)
         {
@@ -26,14 +22,6 @@ namespace YoctoScheduler.Core
             return conn;
         }
 
-        protected virtual SqlConnection OpenConnection()
-        {
-            SqlConnection conn = new SqlConnection(ConnectionString);
-            conn.Open();
-
-            return conn;
-        }
-
-        public abstract void PersistChanges();
+        public abstract void PersistChanges(SqlConnection conn);
     }
 }

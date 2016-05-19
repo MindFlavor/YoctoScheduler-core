@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Data.SqlClient;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -21,7 +22,7 @@ namespace YoctoScheduler.Core
 
         public DateTime LastUpdate { get; set; }
 
-        public ExecutionStatus(string connectionString, int TaskID, int ServerID) : base(connectionString)
+        public ExecutionStatus(int TaskID, int ServerID) : base()
         {
             this.TaskID = TaskID;
             this.ServerID = ServerID;
@@ -52,7 +53,7 @@ namespace YoctoScheduler.Core
             return null;
         }
 
-        public override void PersistChanges()
+        public override void PersistChanges(SqlConnection conn)
         {
             throw new NotImplementedException();
         }

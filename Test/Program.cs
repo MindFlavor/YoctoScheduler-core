@@ -22,9 +22,14 @@ namespace Test
             log.InfoFormat("Test program v{0:S} started.", System.Reflection.Assembly.GetExecutingAssembly().GetName().Version);
             #endregion
 
-            srvInstance = YoctoScheduler.Core.Server.New(
-                System.Configuration.ConfigurationManager.ConnectionStrings["YoctoScheduler"].ConnectionString,
-                "Server di prova " + DateTime.Now.ToString());
+            using (System.Data.SqlClient.SqlConnection conn = new System.Data.SqlClient.SqlConnection(System.Configuration.ConfigurationManager.ConnectionStrings["YoctoScheduler"].ConnectionString))
+            {
+                conn.Open();
+                srvInstance = YoctoScheduler.Core.Server.New(
+                    conn,
+                    System.Configuration.ConfigurationManager.ConnectionStrings["YoctoScheduler"].ConnectionString,
+                    "Server di prova " + DateTime.Now.ToString());
+            }
 
             Console.WriteLine("Program running, please input a command!");
 
@@ -85,7 +90,12 @@ namespace Test
 
         static void CreateTask()
         {
-            var task = YoctoScheduler.Core.Task.New(System.Configuration.ConfigurationManager.ConnectionStrings["YoctoScheduler"].ConnectionString);
+            YoctoScheduler.Core.Task task;
+            using (System.Data.SqlClient.SqlConnection conn = new System.Data.SqlClient.SqlConnection(System.Configuration.ConfigurationManager.ConnectionStrings["YoctoScheduler"].ConnectionString))
+            {
+                conn.Open();
+                task = YoctoScheduler.Core.Task.New(conn);
+            }
             log.InfoFormat("Created task {0:S}", task.ToString());
         }
 
@@ -98,8 +108,12 @@ namespace Test
 
         static void CreateSchedule(int taskId, string cron)
         {
-            Schedule sched = Schedule.New(System.Configuration.ConfigurationManager.ConnectionStrings["YoctoScheduler"].ConnectionString,
-                taskId, cron, false);
+            Schedule sched;
+            using (System.Data.SqlClient.SqlConnection conn = new System.Data.SqlClient.SqlConnection(System.Configuration.ConfigurationManager.ConnectionStrings["YoctoScheduler"].ConnectionString))
+            {
+                conn.Open();
+                sched = Schedule.New(conn, taskId, cron, false);
+            }
             log.InfoFormat("Created schedule {0:S}", sched.ToString());
         }
     }

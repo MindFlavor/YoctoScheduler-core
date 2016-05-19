@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data.SqlClient;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -16,7 +17,7 @@ namespace YoctoScheduler.Core
         public Priority Priority { get; set; }
         public DateTime InsertDate { get; set; }
 
-        public ExecutionQueueItem(string connectionString, int TaskID) : base(connectionString)
+        public ExecutionQueueItem(int TaskID) : base()
         {
             this.TaskID = TaskID;
             this.Priority = Priority.Normal;
@@ -32,7 +33,7 @@ namespace YoctoScheduler.Core
                 InsertDate.ToString(LOG_TIME_FORMAT));
         }
 
-        public override void PersistChanges()
+        public override void PersistChanges(SqlConnection conn)
         {
             throw new NotImplementedException();
         }

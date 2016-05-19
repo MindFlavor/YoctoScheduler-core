@@ -13,7 +13,7 @@ namespace YoctoScheduler.Core
     {
         private static readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(Task));
 
-        public Task(string connectionString) : base(connectionString) { }
+        public Task() : base() { }
 
         public override string ToString()
         {
@@ -22,24 +22,21 @@ namespace YoctoScheduler.Core
                 base.ToString());
         }
 
-        public static Task New(string connectionString)
+        public static Task New(SqlConnection conn)
         {
             #region Database entry
-            var task = new Task(connectionString);
+            var task = new Task();
 
-            using (var conn = OpenConnection(connectionString))
-            {
-                SqlCommand cmd = new SqlCommand(
-                    @"INSERT INTO [live].[Tasks] 
+            SqlCommand cmd = new SqlCommand(
+                @"INSERT INTO [live].[Tasks] 
                         OUTPUT [INSERTED].[TaskID]
                         DEFAULT VALUES"
-                    , conn);
+                , conn);
 
-                task.PopolateParameters(cmd);
+            task.PopolateParameters(cmd);
 
-                cmd.Prepare();
-                task.ID = (int)cmd.ExecuteScalar();
-            }
+            cmd.Prepare();
+            task.ID = (int)cmd.ExecuteScalar();
             #endregion
 
             log.DebugFormat("{0:S} - Created task ", task.ToString());
@@ -50,20 +47,19 @@ namespace YoctoScheduler.Core
         {
         }
 
-        public override void PersistChanges()
+        public override void PersistChanges(SqlConnection conn)
         {
         }
 
-        public static Task RetrieveByID(string connectionString, int ID)
+        public static Task RetrieveByID(SqlConnection conn, int ID)
         {
             Task task;
-            using (var conn = OpenConnection(connectionString))
-            {
-                SqlCommand cmd = new SqlCommand(
-                    @"SELECT [TaskID] FROM [live].[Tasks] 
-                        WHERE [TaskID] = @id"
-                    , conn);
 
+            using (SqlCommand cmd = new SqlCommand(
+                @"SELECT [TaskID] FROM [live].[Tasks] 
+                        WHERE [TaskID] = @id"
+                , conn))
+            {
                 SqlParameter param = new SqlParameter("@id", System.Data.SqlDbType.Int);
                 param.Value = ID;
                 cmd.Parameters.Add(param);
@@ -74,7 +70,7 @@ namespace YoctoScheduler.Core
                 {
                     if (!reader.Read())
                         return null;
-                    task = ParseFromDataReader(connectionString, reader);
+                    task = ParseFromDataReader(reader);
                 }
 
                 log.DebugFormat("{0:S} - Retrieved task ", task.ToString());
@@ -82,10 +78,10 @@ namespace YoctoScheduler.Core
             }
         }
 
-        protected static Task ParseFromDataReader(string connectionString, SqlDataReader r)
+        protected static Task ParseFromDataReader(SqlDataReader r)
         {
-            return new Task(connectionString)
-            {                               
+            return new Task()
+            {
                 ID = r.GetInt32(0)
             };
         }

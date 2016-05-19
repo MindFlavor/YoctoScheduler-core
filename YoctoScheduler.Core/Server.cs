@@ -18,9 +18,12 @@ namespace YoctoScheduler.Core
 
         public DateTime LastScheduleCheck { get; protected set; }
 
-        public Server(string connectionString) : base(connectionString)
+        public string ConnectionString { get; set; }
+
+        public Server(string ConnectionString) : base()
         {
             LastScheduleCheck = DateTime.Now;
+            this.ConnectionString = ConnectionString;
         }
 
         public override string ToString()
@@ -34,9 +37,10 @@ namespace YoctoScheduler.Core
                 LastScheduleCheck.ToString(LOG_TIME_FORMAT));
         }
 
-        public static Server New(string connectionString, string Description)
+        public static Server New(SqlConnection conn, string connectionString, string Description)
         {
             #region Database entry
+
             var server = new Server(connectionString)
             {
                 Description = Description,
@@ -44,10 +48,8 @@ namespace YoctoScheduler.Core
                 Status = Status.Starting
             };
 
-            using (var conn = OpenConnection(connectionString))
-            {
-                SqlCommand cmd = new SqlCommand(
-                    @"INSERT INTO [live].[Servers]
+            using (SqlCommand cmd = new SqlCommand(
+                 @"INSERT INTO [live].[Servers]
                        ([Status]
                        ,[Description]
                        ,[LastPing])
@@ -57,14 +59,13 @@ namespace YoctoScheduler.Core
 		                 @description,
 		                 @lastping
                        )"
-                    , conn);
-
+                 , conn))
+            {
                 server.PopolateParameters(cmd);
 
                 cmd.Prepare();
                 server.ID = (int)cmd.ExecuteScalar();
             }
-
             #endregion
 
             log.DebugFormat("{0:S} - Created server ", server.ToString());
@@ -101,18 +102,17 @@ namespace YoctoScheduler.Core
             #region Set server as running
             log.DebugFormat("{0:S} - Setting server as running", server.ToString());
             server.Status = Status.Running;
-            server.PersistChanges();
+
+            server.PersistChanges(conn);
             log.InfoFormat("{0:S} - Server running", server.ToString());
             #endregion
 
             return server;
         }
 
-        public override void PersistChanges()
+        public override void PersistChanges(SqlConnection conn)
         {
-            using (var conn = OpenConnection())
-            {
-                SqlCommand cmd = new SqlCommand(
+            using (SqlCommand cmd = new SqlCommand(
                     @"UPDATE [live].[Servers]
                         SET    
                             [Status] = @status
@@ -120,8 +120,8 @@ namespace YoctoScheduler.Core
                             ,[LastPing] = @lastping
                         WHERE 
                             [ServerID] = @serverID"
-                    , conn);
-
+                    , conn))
+            {
                 PopolateParameters(cmd);
 
                 cmd.Prepare();
@@ -157,7 +157,11 @@ namespace YoctoScheduler.Core
             {
                 LastPing = DateTime.Now;
                 log.DebugFormat("{0:S} - Ping", this.ToString());
-                PersistChanges();
+                using (SqlConnection conn = new SqlConnection(ConnectionString))
+                {
+                    conn.Open();
+                    PersistChanges(conn);
+                }
 
                 // every minute
                 Thread.Sleep(1 * 60 * 1000);
@@ -170,8 +174,9 @@ namespace YoctoScheduler.Core
             {
                 // a server is dead if there is no update in the last 5 minutes
                 DateTime dtDead = DateTime.Now.Subtract(TimeSpan.FromMinutes(5));
-                using (var conn = OpenConnection())
+                using (var conn = new SqlConnection(ConnectionString))
                 {
+                    conn.Open();
                     SqlCommand cmd = new SqlCommand(
                         @"  UPDATE [live].[Servers]
                             SET [Status] = @statusToSet
@@ -220,18 +225,23 @@ namespace YoctoScheduler.Core
             {
                 log.DebugFormat("{0:S} - Check for tasks to start - Starting", this.ToString());
 
-                // Get enabled schedules
-                var lSchedules = Schedule.GetAll(ConnectionString, false);
-
-                // look for schedules to fire
-                Parallel.ForEach(lSchedules, sched =>
+                using (SqlConnection conn = new SqlConnection(ConnectionString))
                 {
-                    if(sched.Cron.GetNextOccurrence(LastScheduleCheck) < DateTime.Now)
+                    conn.Open();
+
+                    // Get enabled schedules
+                    var lSchedules = Schedule.GetAll(conn, false);
+
+                    // look for schedules to fire
+                    Parallel.ForEach(lSchedules, sched =>
                     {
-                        var task = Task.RetrieveByID(ConnectionString, sched.TaskID);
-                        log.InfoFormat("Startring schedulation {0:S} due to cron {1:S}", task.ToString(), sched.ToString());
-                    }
-                });
+                        if (sched.Cron.GetNextOccurrence(LastScheduleCheck) < DateTime.Now)
+                        {
+                            var task = Task.RetrieveByID(conn, sched.TaskID);
+                            log.InfoFormat("Startring schedulation {0:S} due to cron {1:S}", task.ToString(), sched.ToString());
+                        }
+                    });
+                }
 
                 LastScheduleCheck = DateTime.Now;
 

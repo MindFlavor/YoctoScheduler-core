@@ -17,8 +17,7 @@ namespace YoctoScheduler.Core
 
         public int TaskID { get; set; }
 
-        public Schedule(string connectionString, int TaskID)
-            : base(connectionString)
+        public Schedule(int TaskID) : base()
         {
             this.TaskID = TaskID;
         }
@@ -28,28 +27,26 @@ namespace YoctoScheduler.Core
             return string.Format("{0:S}[{1:S}, TaskID={2:N0}, Cron={3:S}, Enabled={4:S}]", this.GetType().FullName, base.ToString(), TaskID, Cron.ToString(), Enabled.ToString());
         }
 
-        public static Schedule New(string connectionString, int TaskID, string cronString, bool enabled)
+        public static Schedule New(SqlConnection conn, int TaskID, string cronString, bool enabled)
         {
             #region Check for existing TaskID
             // ideally this should be in a transaction (repeatable read at least) but we don't care
             // since referential integrity would kick in anyway.
-            if (Task.RetrieveByID(connectionString, TaskID) == null)
+            if (Task.RetrieveByID(conn, TaskID) == null)
                 throw new Exceptions.TaskNotFoundException(TaskID);
             #endregion
 
             NCrontab.CrontabSchedule cron = NCrontab.CrontabSchedule.Parse(cronString);
 
             #region Database entry
-            var schedule = new Schedule(connectionString, TaskID)
+            var schedule = new Schedule(TaskID)
             {
                 Cron = cron,
                 Enabled = enabled
             };
 
-            using (var conn = OpenConnection(connectionString))
-            {
-                SqlCommand cmd = new SqlCommand(
-                    @"INSERT INTO [live].[Schedules]
+            using (SqlCommand cmd = new SqlCommand(
+                @"INSERT INTO [live].[Schedules]
                        ([TaskID]
                        ,[Cron]
                        ,[Enabled])
@@ -59,8 +56,8 @@ namespace YoctoScheduler.Core
 		                 @cron,
 		                 @enabled
                        )"
-                    , conn);
-
+                , conn))
+            {
                 schedule.PopolateParameters(cmd);
 
                 cmd.Prepare();
@@ -73,10 +70,9 @@ namespace YoctoScheduler.Core
             return schedule;
         }
 
-        public override void PersistChanges()
+        public override void PersistChanges(SqlConnection conn)
         {
-            using (var conn = OpenConnection())
-            {
+            using (
                 SqlCommand cmd = new SqlCommand(
                     @"UPDATE [live].[Schedule]
                         SET    
@@ -85,8 +81,8 @@ namespace YoctoScheduler.Core
                             ,[Enabled] = @enabled
                         WHERE 
                             [ScheduleID] = @scheduleID"
-                    , conn);
-
+                    , conn))
+            { 
                 PopolateParameters(cmd);
 
                 cmd.Prepare();
@@ -116,9 +112,9 @@ namespace YoctoScheduler.Core
             }
         }
 
-        protected static Schedule ParseFromDataReader(string connectionString, SqlDataReader r)
+        protected static Schedule ParseFromDataReader(SqlConnection conn, SqlDataReader r)
         {
-            return new Schedule(connectionString, r.GetInt32(3))
+            return new Schedule(r.GetInt32(3))
             {
                 ID = r.GetInt32(0),
                 Cron = NCrontab.CrontabSchedule.Parse(r.GetString(1)),
@@ -126,28 +122,27 @@ namespace YoctoScheduler.Core
             };
         }
 
-        public static List<Schedule> GetAll(string connectionString, bool includeDisabled)
+        public static List<Schedule> GetAll(SqlConnection conn, bool includeDisabled)
         {
             List<Schedule> lItems = new List<Schedule>();
 
-            using (var conn = OpenConnection(connectionString))
-            {
-                string stmt = string.Format(@"SELECT 
+            string stmt = string.Format(@"SELECT 
                       [ScheduleID]
                       ,[Cron]
                       ,[Enabled]
                       ,[TaskID]
                   FROM[live].[Schedules] {0:S}",
-                  includeDisabled ? "" : "WHERE [Enabled] = 1");
+              includeDisabled ? "" : "WHERE [Enabled] = 1");
 
-                SqlCommand cmd = new SqlCommand(stmt, conn);
+            using (SqlCommand cmd = new SqlCommand(stmt, conn))
+            {
                 cmd.Prepare();
 
-                using(SqlDataReader reader = cmd.ExecuteReader())
+                using (SqlDataReader reader = cmd.ExecuteReader())
                 {
                     while (reader.Read())
                     {
-                        lItems.Add(ParseFromDataReader(connectionString, reader));
+                        lItems.Add(ParseFromDataReader(conn, reader));
                     }
                 }
             }

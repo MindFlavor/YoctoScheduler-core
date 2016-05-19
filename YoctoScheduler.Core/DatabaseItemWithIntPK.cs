@@ -17,7 +17,7 @@ namespace YoctoScheduler.Core
             return ID != INVALID_ID;
         }
 
-        public DatabaseItemWithIntPK(string connectionString) : base(connectionString)
+        public DatabaseItemWithIntPK() : base()
         {
             ID = INVALID_ID;
         }
