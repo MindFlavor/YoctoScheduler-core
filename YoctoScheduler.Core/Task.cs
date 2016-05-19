@@ -60,11 +60,11 @@ namespace YoctoScheduler.Core
             using (var conn = OpenConnection(connectionString))
             {
                 SqlCommand cmd = new SqlCommand(
-                    @"SELECT [ID] FROM [live].[Tasks] 
-                        WHERE [ID] = @id"
+                    @"SELECT [TaskID] FROM [live].[Tasks] 
+                        WHERE [TaskID] = @id"
                     , conn);
 
-                SqlParameter param = new SqlParameter("@serverID", System.Data.SqlDbType.Int);
+                SqlParameter param = new SqlParameter("@id", System.Data.SqlDbType.Int);
                 param.Value = ID;
                 cmd.Parameters.Add(param);
 
@@ -74,12 +74,20 @@ namespace YoctoScheduler.Core
                 {
                     if (!reader.Read())
                         return null;
-                    task = new Task(connectionString) { ID = reader.GetInt32(0) };
+                    task = ParseFromDataReader(connectionString, reader);
                 }
 
                 log.DebugFormat("{0:S} - Retrieved task ", task.ToString());
                 return task;
             }
+        }
+
+        protected static Task ParseFromDataReader(string connectionString, SqlDataReader r)
+        {
+            return new Task(connectionString)
+            {                               
+                ID = r.GetInt32(0)
+            };
         }
     }
 }

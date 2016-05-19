@@ -11,20 +11,7 @@ namespace YoctoScheduler.Core
     {
         private static readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(Schedule));
 
-        protected string _cron;
-
-        public string Cron
-        {
-            get
-            {
-                return _cron;
-            }
-            set
-            {
-                NCrontab.CrontabSchedule.Parse(value);
-                _cron = value;
-            }
-        }
+        public NCrontab.CrontabSchedule Cron { get; set; }
 
         public bool Enabled { get; set; }
 
@@ -38,10 +25,10 @@ namespace YoctoScheduler.Core
 
         public override string ToString()
         {
-            return string.Format("{0:S}[{1:S}, TaskID={2:N0}, Cron={3:S}, Enabled={4:S}]", this.GetType().FullName, base.ToString(), TaskID, Cron, Enabled.ToString());
+            return string.Format("{0:S}[{1:S}, TaskID={2:N0}, Cron={3:S}, Enabled={4:S}]", this.GetType().FullName, base.ToString(), TaskID, Cron.ToString(), Enabled.ToString());
         }
 
-        public static Schedule New(string connectionString, int TaskID, string cron, bool enabled)
+        public static Schedule New(string connectionString, int TaskID, string cronString, bool enabled)
         {
             #region Check for existing TaskID
             // ideally this should be in a transaction (repeatable read at least) but we don't care
@@ -49,6 +36,8 @@ namespace YoctoScheduler.Core
             if (Task.RetrieveByID(connectionString, TaskID) == null)
                 throw new Exceptions.TaskNotFoundException(TaskID);
             #endregion
+
+            NCrontab.CrontabSchedule cron = NCrontab.CrontabSchedule.Parse(cronString);
 
             #region Database entry
             var schedule = new Schedule(connectionString, TaskID)
@@ -125,6 +114,45 @@ namespace YoctoScheduler.Core
                 param.Value = ID;
                 cmd.Parameters.Add(param);
             }
+        }
+
+        protected static Schedule ParseFromDataReader(string connectionString, SqlDataReader r)
+        {
+            return new Schedule(connectionString, r.GetInt32(3))
+            {
+                ID = r.GetInt32(0),
+                Cron = NCrontab.CrontabSchedule.Parse(r.GetString(1)),
+                Enabled = r.GetBoolean(2)
+            };
+        }
+
+        public static List<Schedule> GetAll(string connectionString, bool includeDisabled)
+        {
+            List<Schedule> lItems = new List<Schedule>();
+
+            using (var conn = OpenConnection(connectionString))
+            {
+                string stmt = string.Format(@"SELECT 
+                      [ScheduleID]
+                      ,[Cron]
+                      ,[Enabled]
+                      ,[TaskID]
+                  FROM[live].[Schedules] {0:S}",
+                  includeDisabled ? "" : "WHERE [Enabled] = 1");
+
+                SqlCommand cmd = new SqlCommand(stmt, conn);
+                cmd.Prepare();
+
+                using(SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        lItems.Add(ParseFromDataReader(connectionString, reader));
+                    }
+                }
+            }
+
+            return lItems;
         }
     }
 }

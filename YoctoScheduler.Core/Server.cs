@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace YoctoScheduler.Core
 {
@@ -19,7 +20,7 @@ namespace YoctoScheduler.Core
 
         public Server(string connectionString) : base(connectionString)
         {
-            LastScheduleCheck = DateTime.MinValue;
+            LastScheduleCheck = DateTime.Now;
         }
 
         public override string ToString()
@@ -219,7 +220,18 @@ namespace YoctoScheduler.Core
             {
                 log.DebugFormat("{0:S} - Check for tasks to start - Starting", this.ToString());
 
-                // TODO
+                // Get enabled schedules
+                var lSchedules = Schedule.GetAll(ConnectionString, false);
+
+                // look for schedules to fire
+                Parallel.ForEach(lSchedules, sched =>
+                {
+                    if(sched.Cron.GetNextOccurrence(LastScheduleCheck) < DateTime.Now)
+                    {
+                        var task = Task.RetrieveByID(ConnectionString, sched.TaskID);
+                        log.InfoFormat("Startring schedulation {0:S} due to cron {1:S}", task.ToString(), sched.ToString());
+                    }
+                });
 
                 LastScheduleCheck = DateTime.Now;
 

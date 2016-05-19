@@ -11,7 +11,7 @@ namespace YoctoScheduler.Core
     {
         public const string LOG_TIME_FORMAT = "yyyyMMdd hh:mm:ss";
 
-        private string ConnectionString { get; set; }
+        public string ConnectionString { get; private set; }
 
         public DatabaseItem(string ConnectionString)
         {
