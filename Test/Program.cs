@@ -14,20 +14,22 @@ namespace Test
         private const string LOG4NET_CONFIG = "Test.log4net.xml";
         private static readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(Program));
 
-        static YoctoScheduler.Server.Server srvInstance;
+        static YoctoScheduler.Core.Server srvInstance;
         static void Main(string[] args)
         {
-            //var ctab = NCrontab.CrontabSchedule.Parse("* 1-3 * * *");
-            //Console.WriteLine(ctab.GetNextOccurrence(DateTime.Parse("2010-01-01 04:34")));
-            //return;
-
-
             #region setup logging        
             log4net.Config.XmlConfigurator.Configure(System.Reflection.Assembly.GetExecutingAssembly().GetManifestResourceStream(LOG4NET_CONFIG));
             log.InfoFormat("Test program v{0:S} started.", System.Reflection.Assembly.GetExecutingAssembly().GetName().Version);
             #endregion
 
-            srvInstance = YoctoScheduler.Server.Server.CreateServer("Server di prova " + DateTime.Now.ToString());
+            using (System.Data.SqlClient.SqlConnection conn = new System.Data.SqlClient.SqlConnection(System.Configuration.ConfigurationManager.ConnectionStrings["YoctoScheduler"].ConnectionString))
+            {
+                conn.Open();
+                srvInstance = YoctoScheduler.Core.Server.New(
+                    conn,
+                    System.Configuration.ConfigurationManager.ConnectionStrings["YoctoScheduler"].ConnectionString,
+                    "Server di prova " + DateTime.Now.ToString());
+            }
 
             Console.WriteLine("Program running, please input a command!");
 
@@ -49,15 +51,17 @@ namespace Test
                                 Console.WriteLine("Syntax error, must specify a valid task id");
                                 continue;
                             }
-                            CreateExecution(int.Parse(tokens[1]));
+
+                            Console.WriteLine("TODO!!!");
+                            //CreateExecution(int.Parse(tokens[1]));
                             break;
                         case "new_schedule":
-                            if (tokens.Length < 3)
+                            if (tokens.Length < 4)
                             {
-                                Console.WriteLine("Syntax error, must specify a valid task id and a valid crontab");
+                                Console.WriteLine("Syntax error, must specify a valid task id, a bool for enabled and a valid crontab");
                                 continue;
                             }
-                            CreateSchedule(int.Parse(tokens[1]), string.Join(" ", tokens.Skip(2)));
+                            CreateSchedule(int.Parse(tokens[1]), bool.Parse(tokens[2]), string.Join(" ", tokens.Skip(3)));
 
                             break;
                         case "quit":
@@ -76,7 +80,6 @@ namespace Test
                         default:
                             log.WarnFormat("Syntax error, unknown command \"{0:S}\". Type help for help, quit to quit.", tokens[0]);
                             break;
-
                     }
                 }
                 catch (Exception e)
@@ -88,36 +91,29 @@ namespace Test
 
         static void CreateTask()
         {
-            using (MasterModel mm = new MasterModel())
+            YoctoScheduler.Core.Task task;
+            using (System.Data.SqlClient.SqlConnection conn = new System.Data.SqlClient.SqlConnection(System.Configuration.ConfigurationManager.ConnectionStrings["YoctoScheduler"].ConnectionString))
             {
-                var task = new YoctoScheduler.Core.Task();
-                mm.Tasks.Add(task);
-                mm.SaveChanges();
-                log.InfoFormat("Created task id {0:S}", task.TaskID.ToString());
+                conn.Open();
+                task = YoctoScheduler.Core.Task.New(conn);
             }
+            log.InfoFormat("Created task {0:S}", task.ToString());
         }
 
-        static void CreateExecution(int TaskId)
-        {
-            var status = YoctoScheduler.Server.ExecutionStatus.CreateExecutionStatus(TaskId, srvInstance.Id);
+        //static void CreateExecution(int TaskId)
+        //{
+        //    var status = YoctoScheduler.Server.ExecutionStatus.CreateExecutionStatus(TaskId, srvInstance.Id);
 
-            log.InfoFormat("Created execution status", status.ToString());
-        }
+        //    log.InfoFormat("Created execution status", status.ToString());
+        //}
 
-        static void CreateSchedule(int taskId, string cron)
+        static void CreateSchedule(int taskId, bool enabled, string cron)
         {
             Schedule sched;
-            using (MasterModel mm = new MasterModel())
+            using (System.Data.SqlClient.SqlConnection conn = new System.Data.SqlClient.SqlConnection(System.Configuration.ConfigurationManager.ConnectionStrings["YoctoScheduler"].ConnectionString))
             {
-                var task = mm.Tasks.Where(t => t.TaskID == taskId).FirstOrDefault();
-                if (task == null)
-                    throw new YoctoScheduler.Core.Exceptions.TaskNotFoundException(taskId);
-
-                sched = new Schedule() { Cron = cron, Enabled = true };
-                task.Schedules = new List<Schedule>();
-                task.Schedules.Add(sched);
-
-                mm.SaveChanges();
+                conn.Open();
+                sched = Schedule.New(conn, taskId, cron, enabled);
             }
             log.InfoFormat("Created schedule {0:S}", sched.ToString());
         }

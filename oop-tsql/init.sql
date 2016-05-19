@@ -1,23 +1,10 @@
 USE [master];
 GO
-DROP DATABASE [YoctoScheduler.Core.MasterModel];
-GO
-CREATE DATABASE [YoctoScheduler.Core.MasterModel];
-GO
+--DROP DATABASE [YoctoScheduler];
+--GO
 
-SELECT * FROM [YoctoScheduler.Core.MasterModel].[dbo].[Servers];
-SELECT * FROM [YoctoScheduler.Core.MasterModel].[dbo].[Tasks];
-SELECT * FROM [YoctoScheduler.Core.MasterModel].[dbo].[ExecutionStatus];
-SELECT * FROM [YoctoScheduler.Core.MasterModel].[dbo].[Schedules];
+SELECT * FROM [YoctoScheduler].[live].[Servers];
+SELECT * FROM [YoctoScheduler].[live].[Tasks];
+SELECT * FROM [YoctoScheduler].[live].[ExecutionStatus];
+SELECT * FROM [YoctoScheduler].[live].[Schedules];
 
-INSERT INTO [YoctoScheduler.Core.MasterModel].dbo.[Servers]([Description], [Status], LastPing)
-VALUES('Prova', 2, '2010-01-01')
-GO
-INSERT INTO [YoctoScheduler.Core.MasterModel].dbo.[Servers]([Description], [Status], LastPing)
-VALUES('Prova2', 2, '2014-01-01')
-GO
-INSERT INTO [YoctoScheduler.Core.MasterModel].dbo.[Servers]([Description], [Status], LastPing)
-VALUES('Prova3', 2, '2014-04-01')
-GO
-
-UPDATE [YoctoScheduler.Core.MasterModel].[dbo].[ExecutionStatus] SET Status = 0
