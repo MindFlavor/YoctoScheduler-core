@@ -211,41 +211,67 @@ namespace YoctoScheduler.Core
             while (true)
             {
                 // a task is dead if there is no update in the last minute
+                log.DebugFormat("{0:S} - Check for tasks to start - Starting", this.ToString());
 
-                // TODO
+                DateTime dtExpired = DateTime.Now.Subtract(TimeSpan.FromMinutes(1));
 
-                // every min
-                Thread.Sleep(1 * 60 * 1000);
+                using (SqlConnection conn = new SqlConnection(ConnectionString))
+                {
+                    using (SqlTransaction trans = conn.BeginTransaction(System.Data.IsolationLevel.ReadCommitted))
+                    {
+                        var lExpired = LiveExecutionStatus.GetAll(conn, trans, dtExpired);
+                    }
+                }
+                // every 10 seconds 
+                Thread.Sleep(10 * 1000);
             }
         }
 
         protected void TasksThread()
         {
+            // modificare il processo perchè includa la coda di esecuzione ( [live].[Schedules]). 
+            // la query da utilizzare e'
+            /*
+             * SELECT * FROM [live].[Schedules] S WITH(XLOCK)
+                LEFT OUTER JOIN [live].[ExecutionQueue]  Q ON S.[ScheduleID] = Q.[ScheduleID]
+                LEFT OUTER JOIN [live].[ExecutionStatus] E ON S.[ScheduleID] = E.[ScheduleID]
+                WHERE
+		                Q.[ScheduleID] IS NULL 
+	                AND
+		                E.[ScheduleID] IS NULL  
+             * 
+             * questa query locka la schedules e serializza il suo accesso. mostra solo le 
+             * schedulazioni che non sono ne' in coda ne' in esecuzione
+             */
+
             while (true)
             {
                 log.DebugFormat("{0:S} - Check for tasks to start - Starting", this.ToString());
 
                 using (SqlConnection conn = new SqlConnection(ConnectionString))
                 {
-                    conn.Open();
-                    // Get enabled schedules
-                    var lSchedules = Schedule.GetAll(conn, false);
-
-                    // look for schedules to fire
-                    Parallel.ForEach(lSchedules, sched =>
+                    using (SqlTransaction trans = conn.BeginTransaction(System.Data.IsolationLevel.RepeatableRead))
                     {
-                        if (sched.Cron.GetNextOccurrence(LastScheduleCheck) < DateTime.Now)
+                        conn.Open();
+                        // Get enabled schedules
+                        var lSchedules = Schedule.GetAll(conn, false);
+
+                        // look for schedules to fire
+                        Parallel.ForEach(lSchedules, sched =>
                         {
-                            var task = Task.RetrieveByID(conn, sched.TaskID);
-                            log.InfoFormat("Startring schedulation {0:S} due to cron {1:S}", task.ToString(), sched.ToString());
+                            if (sched.Cron.GetNextOccurrence(LastScheduleCheck) < DateTime.Now)
+                            {
+                                var task = Task.RetrieveByID(conn, sched.TaskID);
+                                log.InfoFormat("Startring schedulation {0:S} due to cron {1:S}", task.ToString(), sched.ToString());
 
-                            // in [live].[ExecutionStatus] we have a non clustered unique index avoiding double schedulations.
-                            // we can of course schedule twice a task provided it's been done manually.
-                            var es = ExecutionStatus.New(conn, task.ID, ID, sched.ID);
+                                // in [live].[ExecutionStatus] we have a non clustered unique index avoiding double schedulations.
+                                // we can of course schedule twice a task provided it's been done manually.
+                                var es = LiveExecutionStatus.New(conn, trans, task.ID, ID, sched.ID);
 
-                            log.InfoFormat("task execution created {0:S}", es.ToString());
-                        }
-                    });
+                                log.InfoFormat("task execution created {0:S}", es.ToString());
+                            }
+                        });
+                    }
                 }
 
                 LastScheduleCheck = DateTime.Now;

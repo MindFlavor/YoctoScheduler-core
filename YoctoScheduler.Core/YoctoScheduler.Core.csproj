@@ -59,12 +59,14 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="DatabaseItem.cs" />
+    <Compile Include="DatabaseItemWithGUIDPK.cs" />
     <Compile Include="DatabaseItemWithIntPK.cs" />
+    <Compile Include="DeadExecutionStatus.cs" />
     <Compile Include="Exceptions\ElementNotFoundException.cs" />
     <Compile Include="Exceptions\ServerNotFoundException.cs" />
     <Compile Include="Exceptions\TaskNotFoundException.cs" />
     <Compile Include="ExecutionQueueItem.cs" />
-    <Compile Include="ExecutionStatus.cs" />
+    <Compile Include="LiveExecutionStatus.cs" />
     <Compile Include="Priority.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Schedule.cs" />

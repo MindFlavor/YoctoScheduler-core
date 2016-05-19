@@ -112,7 +112,7 @@ namespace YoctoScheduler.Core
             }
         }
 
-        protected static Schedule ParseFromDataReader(SqlConnection conn, SqlDataReader r)
+        protected static Schedule ParseFromDataReader(SqlDataReader r)
         {
             return new Schedule(r.GetInt32(3))
             {
@@ -142,7 +142,7 @@ namespace YoctoScheduler.Core
                 {
                     while (reader.Read())
                     {
-                        lItems.Add(ParseFromDataReader(conn, reader));
+                        lItems.Add(ParseFromDataReader(reader));
                     }
                 }
             }
