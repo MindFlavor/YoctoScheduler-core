@@ -54,12 +54,12 @@ namespace Test
                             //CreateExecution(int.Parse(tokens[1]));
                             break;
                         case "new_schedule":
-                            if (tokens.Length < 3)
+                            if (tokens.Length < 4)
                             {
-                                Console.WriteLine("Syntax error, must specify a valid task id and a valid crontab");
+                                Console.WriteLine("Syntax error, must specify a valid task id, a bool for enabled and a valid crontab");
                                 continue;
                             }
-                            CreateSchedule(int.Parse(tokens[1]), string.Join(" ", tokens.Skip(2)));
+                            CreateSchedule(int.Parse(tokens[1]), bool.Parse(tokens[2]), string.Join(" ", tokens.Skip(3)));
 
                             break;
                         case "quit":
@@ -106,13 +106,13 @@ namespace Test
         //    log.InfoFormat("Created execution status", status.ToString());
         //}
 
-        static void CreateSchedule(int taskId, string cron)
+        static void CreateSchedule(int taskId, bool enabled, string cron)
         {
             Schedule sched;
             using (System.Data.SqlClient.SqlConnection conn = new System.Data.SqlClient.SqlConnection(System.Configuration.ConfigurationManager.ConnectionStrings["YoctoScheduler"].ConnectionString))
             {
                 conn.Open();
-                sched = Schedule.New(conn, taskId, cron, false);
+                sched = Schedule.New(conn, taskId, cron, enabled);
             }
             log.InfoFormat("Created schedule {0:S}", sched.ToString());
         }

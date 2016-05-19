@@ -97,7 +97,7 @@ namespace YoctoScheduler.Core
             cmd.Parameters.Add(param);
 
             param = new SqlParameter("@cron", System.Data.SqlDbType.NVarChar, 255);
-            param.Value = Cron;
+            param.Value = Cron.ToString();
             cmd.Parameters.Add(param);
 
             param = new SqlParameter("@enabled", System.Data.SqlDbType.Bit);
