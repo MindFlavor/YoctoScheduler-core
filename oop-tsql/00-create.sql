@@ -43,6 +43,7 @@ GO
 
 CREATE TABLE [live].[ExecutionStatus](
 	[ID] INT IDENTITY(1,1) NOT NULL,
+	[ScheduleID] INT NULL,
 	[TaskID] INT NOT NULL,
 	[Status] INT NOT NULL,
 	[ServerID] INT NOT NULL,
@@ -68,6 +69,34 @@ GO
 ALTER TABLE [live].[ExecutionStatus] CHECK CONSTRAINT [FK_ExecutionStatus_Tasks_TaskID]
 GO
 
+ALTER TABLE [live].[ExecutionStatus]  WITH CHECK ADD  CONSTRAINT [FK_ExecutionStatus_Schedule_ScheduleID] FOREIGN KEY([ScheduleID])
+REFERENCES [live].[Schedules] ([ScheduleID])
+GO
+
+ALTER TABLE [live].[ExecutionStatus] CHECK CONSTRAINT [FK_ExecutionStatus_Schedule_ScheduleID]
+GO
+
+CREATE UNIQUE INDEX IX_SingleScheduleExecution ON [live].[ExecutionStatus]([TaskID], [ServerID], [ScheduleID]) INCLUDE([Status], [LastUpdate]);
+GO
+
+
+CREATE TABLE [live].[ExecutionQueue] (
+	[ID] INT IDENTITY(1,1) NOT NULL,
+	[TaskID] INT NOT NULL,
+	[Priority] INT NOT NULL,
+	[InsertDate] DATETIME NOT NULL DEFAULT(GETDATE()),
+ CONSTRAINT [PK_ExecutionQueue] PRIMARY KEY CLUSTERED 
+(
+	[ID] ASC
+));
+GO
+
+ALTER TABLE [live].[ExecutionQueue] WITH CHECK ADD  CONSTRAINT [FK_ExecutionQueue_Tasks_TaskID] FOREIGN KEY([TaskID])
+REFERENCES [live].[Tasks] ([TaskID])
+GO
+
+ALTER TABLE [live].[ExecutionQueue] CHECK CONSTRAINT [FK_ExecutionQueue_Tasks_TaskID]
+GO
 
 ----------------
 USE [master];
