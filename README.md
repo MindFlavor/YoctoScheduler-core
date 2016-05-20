@@ -1,22 +1,22 @@
 # Intro
-YoctoScheduler is a mulithread, multiprocess scheduling system. Each server in  a cluster should be indpendent from the others while maintaining some architectural constraints.
+YoctoScheduler is a muli-thread, multi-process scheduling system. Each server in  a cluster should be indpendent from the others while maintaining some architectural constraints.
 
 # Legend
 
 Entity Name | Description
-------------|---------
-```Task``` | Atomic execution block. A task will never migrate between servers.
-```Server``` | Schedulator and executor process. A server manipulates the compainon database.
-```Task status``` | A ```task``` can either be alive or dead. If not alive there is also a description of why is not running.
-```Schedulation``` | A predefined fire time for a ```Task```. It supports the ```NCronTab``` syntax to be flexible (up to the single minute).
-```Workflow``` | A collection of task to be orchestrated as a single entity.
+------------|---------|
+Task | Atomic execution block. A task will never migrate between servers. |
+Server | Schedulator and executor process. A server manipulates the companion database.
+Task status | A ```task``` can either be alive or dead. If not alive there is also a description of why is not running.
+Schedule | A predefined fire time for a ```Task```. It supports the ```NCronTab``` syntax to be flexible (up to the single minute).
+Workflow | A collection of task to be orchestrated as a single entity.
 
 # Requisites
 
 ## Mandatory
 * Each server must be independent and must rely on the companion database only.
-* A schedulation must fire at most *once*.
-* If a schedulation fires when there are no servers running the schedulation is *lost*.
+* A schedule must fire at most *once*.
+* If a schedule fires when there are no servers running the schedule is *lost*.
 * Each task should be atomic and transactional. A task might fail at any moment and can be restarted on the same server (or another one).
   > this constraint can be relaxed at first
 * Each task must update its status at least each ***to_define_task_update_frequency*** seconds. An update will update the ```LastUpdate``` field in the ```[live].[ExecutionStatus]``` table.
