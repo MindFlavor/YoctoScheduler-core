@@ -255,7 +255,7 @@ namespace YoctoScheduler.Core
                     using (SqlTransaction trans = conn.BeginTransaction(System.Data.IsolationLevel.RepeatableRead))
                     {
                         // Get enabled schedules
-                        var lSchedules = Schedule.GetAll(conn, false);
+                        var lSchedules = Schedule.GetAll(conn, trans, false);
 
                         // look for schedules to fire
                         Parallel.ForEach(lSchedules, sched =>

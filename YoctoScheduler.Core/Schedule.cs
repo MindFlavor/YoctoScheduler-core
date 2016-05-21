@@ -122,7 +122,7 @@ namespace YoctoScheduler.Core
             };
         }
 
-        public static List<Schedule> GetAll(SqlConnection conn, bool includeDisabled)
+        public static List<Schedule> GetAll(SqlConnection conn, SqlTransaction trans, bool includeDisabled)
         {
             List<Schedule> lItems = new List<Schedule>();
 
@@ -134,7 +134,7 @@ namespace YoctoScheduler.Core
                   FROM[live].[Schedules] {0:S}",
               includeDisabled ? "" : "WHERE [Enabled] = 1");
 
-            using (SqlCommand cmd = new SqlCommand(stmt, conn))
+            using (SqlCommand cmd = new SqlCommand(stmt,  conn, trans))
             {
                 cmd.Prepare();
 
