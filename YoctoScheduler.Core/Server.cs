@@ -264,11 +264,8 @@ namespace YoctoScheduler.Core
                                 var task = Task.RetrieveByID(conn, sched.TaskID);
                                 log.InfoFormat("Startring schedulation {0:S} due to cron {1:S}", task.ToString(), sched.ToString());
 
-                                // in [live].[ExecutionStatus] we have a non clustered unique index avoiding double schedulations.
-                                // we can of course schedule twice a task provided it's been done manually.
-                                var es = LiveExecutionStatus.New(conn, trans, task.ID, ID, sched.ID);
-
-                                log.InfoFormat("task execution created {0:S}", es.ToString());
+                                var qi = ExecutionQueueItem.New(conn, trans, task.ID, Priority.Normal, sched.ID);
+                                log.InfoFormat("Execution enqueued {0:S}", qi.ToString());
                             }
                         });
                     }

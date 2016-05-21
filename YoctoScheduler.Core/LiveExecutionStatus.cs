@@ -92,7 +92,7 @@ namespace YoctoScheduler.Core
 
             if (HasValidID())
             {
-                param = new SqlParameter("@GUID", System.Data.SqlDbType.Int);
+                param = new SqlParameter("@GUID", System.Data.SqlDbType.UniqueIdentifier);
                 param.Value = GUID;
                 cmd.Parameters.Add(param);
             }
