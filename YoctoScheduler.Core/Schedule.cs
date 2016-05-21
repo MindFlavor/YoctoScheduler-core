@@ -134,7 +134,41 @@ namespace YoctoScheduler.Core
                   FROM[live].[Schedules] {0:S}",
               includeDisabled ? "" : "WHERE [Enabled] = 1");
 
-            using (SqlCommand cmd = new SqlCommand(stmt,  conn, trans))
+            using (SqlCommand cmd = new SqlCommand(stmt, conn, trans))
+            {
+                cmd.Prepare();
+
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        lItems.Add(ParseFromDataReader(reader));
+                    }
+                }
+            }
+
+            return lItems;
+        }
+        public static List<Schedule> GetEnabledNotRunning(SqlConnection conn, SqlTransaction trans)
+        {
+            List<Schedule> lItems = new List<Schedule>();
+
+            string stmt = @"SELECT 
+                                    S.[ScheduleID]
+                                    ,S.[Cron]
+                                    ,S.[Enabled]
+                                    ,S.[TaskID] 
+                                FROM [live].[Schedules] S WITH(XLOCK)
+                                LEFT OUTER JOIN [live].[ExecutionQueue]  Q ON S.[ScheduleID] = Q.[ScheduleID]
+                                LEFT OUTER JOIN [live].[ExecutionStatus] E ON S.[ScheduleID] = E.[ScheduleID]
+                                WHERE
+		                                Q.[ScheduleID] IS NULL 
+	                                AND
+		                                E.[ScheduleID] IS NULL  
+					                AND
+						                S.Enabled = 1;";
+
+            using (SqlCommand cmd = new SqlCommand(stmt, conn, trans))
             {
                 cmd.Prepare();
 
