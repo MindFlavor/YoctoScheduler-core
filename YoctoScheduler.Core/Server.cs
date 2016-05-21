@@ -217,6 +217,7 @@ namespace YoctoScheduler.Core
 
                 using (SqlConnection conn = new SqlConnection(ConnectionString))
                 {
+                    conn.Open();
                     using (SqlTransaction trans = conn.BeginTransaction(System.Data.IsolationLevel.ReadCommitted))
                     {
                         var lExpired = LiveExecutionStatus.GetAll(conn, trans, dtExpired);
@@ -250,9 +251,9 @@ namespace YoctoScheduler.Core
 
                 using (SqlConnection conn = new SqlConnection(ConnectionString))
                 {
+                    conn.Open();
                     using (SqlTransaction trans = conn.BeginTransaction(System.Data.IsolationLevel.RepeatableRead))
                     {
-                        conn.Open();
                         // Get enabled schedules
                         var lSchedules = Schedule.GetAll(conn, false);
 
