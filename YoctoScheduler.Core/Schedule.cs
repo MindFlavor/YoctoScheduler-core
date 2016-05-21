@@ -27,12 +27,12 @@ namespace YoctoScheduler.Core
             return string.Format("{0:S}[{1:S}, TaskID={2:N0}, Cron={3:S}, Enabled={4:S}]", this.GetType().FullName, base.ToString(), TaskID, Cron.ToString(), Enabled.ToString());
         }
 
-        public static Schedule New(SqlConnection conn, int TaskID, string cronString, bool enabled)
+        public static Schedule New(SqlConnection conn, SqlTransaction trans, int TaskID, string cronString, bool enabled)
         {
             #region Check for existing TaskID
             // ideally this should be in a transaction (repeatable read at least) but we don't care
             // since referential integrity would kick in anyway.
-            if (Task.RetrieveByID(conn, TaskID) == null)
+            if (Task.RetrieveByID(conn, trans, TaskID) == null)
                 throw new Exceptions.TaskNotFoundException(TaskID);
             #endregion
 
@@ -56,7 +56,7 @@ namespace YoctoScheduler.Core
 		                 @cron,
 		                 @enabled
                        )"
-                , conn))
+                , conn, trans))
             {
                 schedule.PopolateParameters(cmd);
 

@@ -113,7 +113,7 @@ namespace Test
             using (System.Data.SqlClient.SqlConnection conn = new System.Data.SqlClient.SqlConnection(System.Configuration.ConfigurationManager.ConnectionStrings["YoctoScheduler"].ConnectionString))
             {
                 conn.Open();
-                sched = Schedule.New(conn, taskId, cron, enabled);
+                sched = Schedule.New(conn, null, taskId, cron, enabled);
             }
             log.InfoFormat("Created schedule {0:S}", sched.ToString());
         }

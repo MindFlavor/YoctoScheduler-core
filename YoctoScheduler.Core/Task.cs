@@ -51,14 +51,14 @@ namespace YoctoScheduler.Core
         {
         }
 
-        public static Task RetrieveByID(SqlConnection conn, int ID)
+        public static Task RetrieveByID(SqlConnection conn, SqlTransaction trans, int ID)
         {
             Task task;
 
             using (SqlCommand cmd = new SqlCommand(
                 @"SELECT [TaskID] FROM [live].[Tasks] 
                         WHERE [TaskID] = @id"
-                , conn))
+                , conn, trans))
             {
                 SqlParameter param = new SqlParameter("@id", System.Data.SqlDbType.Int);
                 param.Value = ID;

@@ -262,13 +262,15 @@ namespace YoctoScheduler.Core
                         {
                             if (sched.Cron.GetNextOccurrence(LastScheduleCheck) < DateTime.Now)
                             {
-                                var task = Task.RetrieveByID(conn, sched.TaskID);
+                                var task = Task.RetrieveByID(conn, trans, sched.TaskID);
                                 log.InfoFormat("Startring schedulation {0:S} due to cron {1:S}", task.ToString(), sched.ToString());
 
                                 var qi = ExecutionQueueItem.New(conn, trans, task.ID, Priority.Normal, sched.ID);
                                 log.InfoFormat("Execution enqueued {0:S}", qi.ToString());
                             }
                         });
+
+                        trans.Commit();
                     }
                 }
 

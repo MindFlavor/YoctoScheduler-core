@@ -47,7 +47,7 @@ namespace YoctoScheduler.Core
                        (
                        [TaskID]
                        ,[Priority]
-                       ,[SchduleID]
+                       ,[ScheduleID]
                        ,[InsertDate])
                 OUTPUT INSERTED.[GUID]
                  VALUES
