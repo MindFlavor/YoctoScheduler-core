@@ -13,10 +13,9 @@ namespace YoctoScheduler.Core
 
         public Status Status { get; set; }
 
-        public DeadExecutionStatus(LiveExecutionStatus des, Status Status) : base(des.TaskID, des.ServerID)
+        public DeadExecutionStatus(LiveExecutionStatus des, Status Status) : base(des.TaskID, des.ServerID, des.ScheduleID)
         {
             GUID = des.GUID;
-            this.ScheduleID = des.ScheduleID;
             this.LastUpdate = des.LastUpdate;
 
             this.Status = Status;            

@@ -93,6 +93,72 @@ namespace YoctoScheduler.Core
             }
         }
 
+        public static ExecutionQueueItem GetAndLockFirst(SqlConnection conn, SqlTransaction trans)
+        {
+            string stmt =
+                    @"SELECT TOP 1
+		                    [GUID]
+		                    ,[TaskID]
+		                    ,[Priority]
+		                    ,[ScheduleID]
+		                    ,[InsertDate]
+                      FROM [live].[ExecutionQueue] WITH (XLOCK)
+                      ORDER BY 
+		                    [Priority] DESC,
+		                    [InsertDate] DESC;";
+
+            using (SqlCommand cmd = new SqlCommand(stmt, conn, trans))
+            {
+                cmd.Prepare();
+
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    if (reader.Read())
+                        return ParseFromDataReader(reader);
+                    else
+                        return null;
+                }
+            }
+        }
+
+        protected static ExecutionQueueItem ParseFromDataReader(SqlDataReader r)
+        {
+            var les = new ExecutionQueueItem(r.GetInt32(1), (Priority)r.GetInt32(2))
+            {
+                GUID = r.GetGuid(0),
+                InsertDate = r.GetDateTime(4)
+            };
+
+            if (!r.IsDBNull(3))
+            {
+                les.ScheduleID = r.GetInt32(3);
+            }
+
+            return les;
+        }
+
+        public void Delete(SqlConnection conn, SqlTransaction trans)
+        {
+            using (SqlCommand cmd = new SqlCommand(
+                @"DELETE FROM [live].[ExecutionQueue]
+	                    WHERE 
+		                    [GUID] = @GUID;",
+                conn, trans))
+            {
+                SqlParameter param = new SqlParameter("@GUID", System.Data.SqlDbType.UniqueIdentifier);
+                param.Value = GUID;
+                cmd.Parameters.Add(param);
+
+                cmd.Prepare();
+                if (cmd.ExecuteNonQuery() != 1)
+                {
+                    throw new Exceptions.ConcurrencyException(
+                        string.Format("Delete from [live].[ExecutionQueue] failed because no entry with GUID {0:S} was found", GUID.ToString(),
+                        null));
+                }
+            }
+        }
+
         public override void PersistChanges(SqlConnection conn)
         {
             throw new NotImplementedException();

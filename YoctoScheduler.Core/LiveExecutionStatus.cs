@@ -22,10 +22,11 @@ namespace YoctoScheduler.Core
 
         public DateTime LastUpdate { get; set; }
 
-        public LiveExecutionStatus(int TaskID, int ServerID) : base()
+        public LiveExecutionStatus(int TaskID, int ServerID, int? ScheduleID) : base()
         {
             this.TaskID = TaskID;
             this.ServerID = ServerID;
+            this.ScheduleID = ScheduleID;
 
             LastUpdate = DateTime.Now;
         }
@@ -42,10 +43,7 @@ namespace YoctoScheduler.Core
 
         public static LiveExecutionStatus New(SqlConnection conn, SqlTransaction trans, int TaskID, int ServerID, int? ScheduleID)
         {
-            LiveExecutionStatus es = new LiveExecutionStatus(TaskID, ServerID)
-            {
-                ScheduleID = ScheduleID,
-            };
+            LiveExecutionStatus es = new LiveExecutionStatus(TaskID, ServerID, ScheduleID);
 
             #region Database entry
             using (SqlCommand cmd = new SqlCommand(
@@ -105,16 +103,15 @@ namespace YoctoScheduler.Core
 
         protected static LiveExecutionStatus ParseFromDataReader(SqlDataReader r)
         {
-           var les= new LiveExecutionStatus(r.GetInt32(2), r.GetInt32(3))
+            int? ScheduleID = null;
+            if (!r.IsDBNull(1))
+                ScheduleID = r.GetInt32(1);
+
+            var les = new LiveExecutionStatus(r.GetInt32(2), r.GetInt32(3), ScheduleID)
             {
                 GUID = r.GetGuid(0),                
                 LastUpdate = r.GetDateTime(4)
             };
-
-            if (!r.IsDBNull(1))
-            {
-                les.ScheduleID = r.GetInt32(1);
-            }
 
             return les;
         }

@@ -92,10 +92,17 @@ namespace YoctoScheduler.Core
             t.Start();
             #endregion
 
-            #region task thread
-            t = new Thread(new ThreadStart(server.TasksThread));
+            #region schedule task thread
+            t = new Thread(new ThreadStart(server.TasksScheduledThread));
             t.IsBackground = true;
             log.DebugFormat("{0:S} - Starting task thread thread", server.ToString());
+            t.Start();
+            #endregion
+
+            #region dequeue task thread
+            t = new Thread(new ThreadStart(server.DequeueTasksThread));
+            t.IsBackground = true;
+            log.DebugFormat("{0:S} - Starting dequeue task thread", server.ToString());
             t.Start();
             #endregion
 
@@ -221,6 +228,8 @@ namespace YoctoScheduler.Core
                     using (SqlTransaction trans = conn.BeginTransaction(System.Data.IsolationLevel.ReadCommitted))
                     {
                         var lExpired = LiveExecutionStatus.GetAll(conn, trans, dtExpired);
+
+                        // TODO insert into dead table and remove from live
                     }
                 }
                 // every 10 seconds 
@@ -228,7 +237,45 @@ namespace YoctoScheduler.Core
             }
         }
 
-        protected void TasksThread()
+        protected void DequeueTasksThread()
+        {
+            while (true)
+            {
+                // a task is dead if there is no update in the last minute
+                //log.DebugFormat("{0:S} - Check for enqueued tasks to start", this.ToString());
+
+                DateTime dtExpired = DateTime.Now.Subtract(TimeSpan.FromMinutes(1));
+
+                using (SqlConnection conn = new SqlConnection(ConnectionString))
+                {
+                    conn.Open();
+                    using (SqlTransaction trans = conn.BeginTransaction(System.Data.IsolationLevel.ReadCommitted))
+                    {
+                        var lToStart = ExecutionQueueItem.GetAndLockFirst(conn, trans);
+                        if(lToStart != null)
+                        {
+                            log.DebugFormat("Starting enqueued task {0:S}", lToStart.ToString());
+
+                            // add to live table
+                            var les = LiveExecutionStatus.New(conn, trans, lToStart.TaskID, this.ID, lToStart.ScheduleID);
+
+                            // start the execution
+                            // TODO this is just a mockup
+                            log.InfoFormat("Started live execution status {0:S}", les.ToString());
+
+                            // remove from pending execution queue
+                            lToStart.Delete(conn, trans);
+                        }
+
+                        trans.Commit();
+                    }
+                }
+                // every second
+                Thread.Sleep(1 * 1000);
+            }
+        }
+
+        protected void TasksScheduledThread()
         {
             // modificare il processo perchè includa la coda di esecuzione ( [live].[Schedules]). 
             // la query da utilizzare e'
