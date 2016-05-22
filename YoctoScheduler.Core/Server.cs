@@ -305,7 +305,7 @@ namespace YoctoScheduler.Core
                         var lSchedules = Schedule.GetEnabledNotRunning(conn, trans);
 
                         // look for schedules to fire
-                        Parallel.ForEach(lSchedules, sched =>
+                        lSchedules.ForEach(sched =>
                         {
                             if (sched.Cron.GetNextOccurrence(LastScheduleCheck) < DateTime.Now)
                             {
