@@ -42,7 +42,7 @@ namespace YoctoScheduler.Core
         }
         protected internal void PopolateParameters(SqlCommand cmd)
         {
-            throw new NotImplementedException();       
+            // nothing to do right now
         }
 
         public override void PersistChanges(SqlConnection conn, SqlTransaction trans)

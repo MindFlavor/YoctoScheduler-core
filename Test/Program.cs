@@ -33,7 +33,7 @@ namespace Test
                         "Server di prova " + DateTime.Now.ToString());
 
                     trans.Commit();
-                }                
+                }
             }
 
             Console.WriteLine("Program running, please input a command!");
@@ -56,9 +56,7 @@ namespace Test
                                 Console.WriteLine("Syntax error, must specify a valid task id");
                                 continue;
                             }
-
-                            Console.WriteLine("TODO!!!");
-                            //CreateExecution(int.Parse(tokens[1]));
+                            CreateExecution(int.Parse(tokens[1]));
                             break;
                         case "new_schedule":
                             if (tokens.Length < 4)
@@ -69,6 +67,46 @@ namespace Test
                             CreateSchedule(int.Parse(tokens[1]), bool.Parse(tokens[2]), string.Join(" ", tokens.Skip(3)));
 
                             break;
+                        case "new_secret":
+                            if (tokens.Length < 2)
+                            {
+                                Console.WriteLine("Syntax error, must specify a valid certificate thumbprint and something to encrypt");
+                                continue;
+                            }
+
+                            string sToEnc = string.Join(" ", tokens.Skip(2));
+                            using (System.Data.SqlClient.SqlConnection conn = new System.Data.SqlClient.SqlConnection(System.Configuration.ConfigurationManager.ConnectionStrings["YoctoScheduler"].ConnectionString))
+                            {
+                                conn.Open();
+                                using (var trans = conn.BeginTransaction())
+                                {
+                                    var secret = YoctoScheduler.Core.Secret.New(conn, trans, tokens[1], sToEnc);
+                                    trans.Commit();
+
+                                    log.InfoFormat("Created secret {0:S}", secret.ToString());
+                                }
+                            }
+                            break;
+                        case "get_secret":
+                            if (tokens.Length < 2)
+                            {
+                                Console.WriteLine("Syntax error, must specify a valid secret ID");
+                                continue;
+                            }
+
+                            using (System.Data.SqlClient.SqlConnection conn = new System.Data.SqlClient.SqlConnection(System.Configuration.ConfigurationManager.ConnectionStrings["YoctoScheduler"].ConnectionString))
+                            {
+                                conn.Open();
+                                using (var trans = conn.BeginTransaction())
+                                {
+                                    var secret = YoctoScheduler.Core.Secret.RetrieveByID(conn, trans, int.Parse(tokens[1]));
+                                    trans.Commit();
+
+                                    log.InfoFormat("Retrieved secret {0:S}. Plain text is = \"{1:S}\".", secret.ToString(), secret.PlainTextValue);
+                                }
+                            }
+                            break;
+
                         case "quit":
                             fDone = true;
                             break;
@@ -77,6 +115,7 @@ namespace Test
                             Console.WriteLine("\tnew_task");
                             Console.WriteLine("\tnew_execution <task_id>");
                             Console.WriteLine("\tnew_schedule <task_id> <cron expression>");
+                            Console.WriteLine("\tnew_secret <thumbprint> <string to encrypt");
                             Console.WriteLine("\tquit");
                             Console.WriteLine("\thelp");
                             break;
@@ -105,14 +144,26 @@ namespace Test
             log.InfoFormat("Created task {0:S}", task.ToString());
         }
 
-        //static void CreateExecution(int TaskId)
-        //{
-        //    var status = YoctoScheduler.Server.ExecutionStatus.CreateExecutionStatus(TaskId, srvInstance.Id);
+        static void CreateExecution(int TaskId)
+        {
+            using (System.Data.SqlClient.SqlConnection conn = new System.Data.SqlClient.SqlConnection(System.Configuration.ConfigurationManager.ConnectionStrings["YoctoScheduler"].ConnectionString))
+            {
+                conn.Open();
+                using (var trans = conn.BeginTransaction())
+                {
+                    var task = YoctoScheduler.Core.Task.RetrieveByID(conn, trans, TaskId);
+                    if (task == null)
+                        throw new YoctoScheduler.Core.Exceptions.TaskNotFoundException(TaskId);
 
-        //    log.InfoFormat("Created execution status", status.ToString());
-        //}
+                    var eqi = YoctoScheduler.Core.ExecutionQueueItem.New(conn, trans, TaskId, Priority.Normal, null);
+                    trans.Commit();
+                    log.InfoFormat("Task enqueued for execution: {0:S}", eqi.ToString());
+                }
+            }
+        }
 
         static void CreateSchedule(int taskId, bool enabled, string cron)
+
         {
             Schedule sched;
             using (System.Data.SqlClient.SqlConnection conn = new System.Data.SqlClient.SqlConnection(System.Configuration.ConfigurationManager.ConnectionStrings["YoctoScheduler"].ConnectionString))

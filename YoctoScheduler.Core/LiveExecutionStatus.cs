@@ -16,7 +16,7 @@ namespace YoctoScheduler.Core
 
         public int TaskID { get; set; }
 
-         public int ServerID { get; set; }
+        public int ServerID { get; set; }
 
         public int? ScheduleID { get; set; }
 
@@ -35,7 +35,7 @@ namespace YoctoScheduler.Core
         {
             return string.Format("{0:S}[{1:S0}, TaskID={2:N0}, ServerID={3:N0}, ScheduleID={4:S}, LastUpdate={5:S}]",
                 this.GetType().FullName,
-                base.ToString(), 
+                base.ToString(),
                 TaskID, ServerID,
                 ScheduleID.HasValue ? ScheduleID.Value.ToString() : "<null>",
                 LastUpdate.ToString());
@@ -98,7 +98,7 @@ namespace YoctoScheduler.Core
 
             var les = new LiveExecutionStatus(r.GetInt32(2), r.GetInt32(3), ScheduleID)
             {
-                GUID = r.GetGuid(0),                
+                GUID = r.GetGuid(0),
                 LastUpdate = r.GetDateTime(4)
             };
 
@@ -108,6 +108,30 @@ namespace YoctoScheduler.Core
         public static List<LiveExecutionStatus> GetAll(SqlConnection conn, SqlTransaction trans)
         {
             return GetAll(conn, trans, DateTime.Parse("1990-01-01"));
+        }
+
+        public static List<LiveExecutionStatus> GetAndLockAll(SqlConnection conn, SqlTransaction trans, DateTime minLastUpdate)
+        {
+            List<LiveExecutionStatus> lItems = new List<LiveExecutionStatus>();
+
+            using (SqlCommand cmd = new SqlCommand(tsql.Extractor.Get("LiveExecutionStatus.GetAndLockAll"), conn, trans))
+            {
+                var param = new SqlParameter("@lastUpdate", System.Data.SqlDbType.DateTime);
+                param.Value = minLastUpdate;
+                cmd.Parameters.Add(param);
+
+                cmd.Prepare();
+
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        lItems.Add(ParseFromDataReader(reader));
+                    }
+                }
+            }
+
+            return lItems;
         }
 
         public static List<LiveExecutionStatus> GetAll(SqlConnection conn, SqlTransaction trans, DateTime minLastUpdate)

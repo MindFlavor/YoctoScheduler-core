@@ -6,6 +6,8 @@ CREATE SCHEMA [live];
 GO
 CREATE SCHEMA [dead];
 GO
+CREATE SCHEMA [lookup];
+GO
 
 CREATE TABLE [live].[Servers](
 	[ServerID] INT IDENTITY(1,1) NOT NULL,
@@ -144,6 +146,18 @@ REFERENCES [live].[Schedules] ([ScheduleID])
 GO
 
 ALTER TABLE [live].[ExecutionQueue] CHECK CONSTRAINT [FK_ExecutionQueue_ScheduleID]
+GO
+
+--------------------------
+
+CREATE TABLE [lookup].[Secret] (
+	[SecretID]		INT IDENTITY(1,1),
+	[Blob]			VARBINARY(MAX),
+	[Thumbprint]	CHAR(40),
+ CONSTRAINT [PK_[Secret] PRIMARY KEY CLUSTERED 
+(
+	[SecretID]
+));
 GO
 
 ----------------

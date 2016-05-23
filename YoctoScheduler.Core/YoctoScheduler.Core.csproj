@@ -68,6 +68,9 @@
     <Compile Include="Exceptions\TaskNotFoundException.cs" />
     <Compile Include="Exceptions\TSQLNotFoundException.cs" />
     <Compile Include="ExecutionQueueItem.cs" />
+    <Compile Include="Secret.cs" />
+    <Compile Include="Tasks\Factory.cs" />
+    <Compile Include="Tasks\ITask.cs" />
     <Compile Include="LiveExecutionStatus.cs" />
     <Compile Include="Priority.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -75,6 +78,7 @@
     <Compile Include="Server.cs" />
     <Compile Include="Status.cs" />
     <Compile Include="Task.cs" />
+    <Compile Include="Tasks\Watchdog.cs" />
     <Compile Include="tsql\Extractor.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -128,6 +132,18 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="tsql\Task\RetrieveByID.sql" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="tsql\LiveExecutionStatus\GetAndLockAll.sql" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="tsql\Secret\New.sql" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="tsql\Secret\PersistChanges.sql" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="tsql\Secret\RetrieveByID.sql" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

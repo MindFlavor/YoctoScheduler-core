@@ -206,7 +206,7 @@ namespace YoctoScheduler.Core
                     conn.Open();
                     using (SqlTransaction trans = conn.BeginTransaction(System.Data.IsolationLevel.ReadCommitted))
                     {
-                        var lExpired = LiveExecutionStatus.GetAll(conn, trans, dtExpired);
+                        var lExpired = LiveExecutionStatus.GetAndLockAll(conn, trans, dtExpired);
 
                         // TODO insert into dead table and remove from live
                     }
