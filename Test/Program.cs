@@ -116,6 +116,7 @@ namespace Test
                             Console.WriteLine("\tnew_execution <task_id>");
                             Console.WriteLine("\tnew_schedule <task_id> <cron expression>");
                             Console.WriteLine("\tnew_secret <thumbprint> <string to encrypt");
+                            Console.WriteLine("\tget_secret <secret_id>");
                             Console.WriteLine("\tquit");
                             Console.WriteLine("\thelp");
                             break;

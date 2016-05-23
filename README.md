@@ -52,6 +52,7 @@ As now the ```Test console``` project is just a demo server with a tiny command 
 
 The test client accepts simple commands. The output will be garbled as the log goes there too. To test a schedule you have to create a task first and then schedule it.
 
+### Task
 You can add a new task with
 
 ```
@@ -60,12 +61,36 @@ new_task
 
 If successful the output will tell you the task ID.
 
+### Schedule
+
 To add a schedule just call the ```new_schedule``` command specifying the task ID, if it should be enabled and the cron statement. For example this command will schedule the task 2 to fire every minute. The schedule will be enabled.
 
 ```
 new_schedule 2 true * * * * *
 ```
 For details on the cron syntax refer here: [https://github.com/atifaziz/NCrontab](https://github.com/atifaziz/NCrontab).
+
+### Secret
+
+You can create a secret using the ```new_secret``` command. You have to specify the certificate thumbprint (as found in ```My``` certificate store) and the text to encrypt.
+
+```
+new_secret DE7017CAE4B519373569B051394AB7052FAE0264 This should be encrypted
+```
+
+If you need a self signed certificate you can use this PS (from [http://www.virtues.it/2015/09/howto-create-self-signed-certificates-posh40/](http://www.virtues.it/2015/09/howto-create-self-signed-certificates-posh40/)). Official TechNet docs are [here](https://technet.microsoft.com/library/hh848633).
+
+```ps1
+New-SelfSignedCertificate -DnsName "YoctoScheduler" -CertStoreLocation Cert:\CurrentUser\My
+```
+Look the thumbprint in the certificate store. The thumbprint is case *insensitive*.
+
+
+You can also test the retrieval of a secret using the ```get_secret``` command. It takes the secret ID and should display the plain text:
+
+```
+get_secret 3
+```
 
 ## Debug
 
