@@ -27,16 +27,13 @@ namespace YoctoScheduler.Core
             #region Database entry
             var task = new Task();
 
-            SqlCommand cmd = new SqlCommand(
-                @"INSERT INTO [live].[Tasks] 
-                        OUTPUT [INSERTED].[TaskID]
-                        DEFAULT VALUES"
-                , conn);
+            using (SqlCommand cmd = new SqlCommand(tsql.Extractor.Get("Task.New"), conn))
+            {
+                task.PopolateParameters(cmd);
 
-            task.PopolateParameters(cmd);
-
-            cmd.Prepare();
-            task.ID = (int)cmd.ExecuteScalar();
+                cmd.Prepare();
+                task.ID = (int)cmd.ExecuteScalar();
+            }
             #endregion
 
             log.DebugFormat("{0:S} - Created task ", task.ToString());
@@ -45,20 +42,19 @@ namespace YoctoScheduler.Core
         }
         protected internal void PopolateParameters(SqlCommand cmd)
         {
+            throw new NotImplementedException();       
         }
 
-        public override void PersistChanges(SqlConnection conn)
+        public override void PersistChanges(SqlConnection conn, SqlTransaction trans)
         {
+            throw new NotImplementedException();
         }
 
         public static Task RetrieveByID(SqlConnection conn, SqlTransaction trans, int ID)
         {
             Task task;
 
-            using (SqlCommand cmd = new SqlCommand(
-                @"SELECT [TaskID] FROM [live].[Tasks] 
-                        WHERE [TaskID] = @id"
-                , conn, trans))
+            using (SqlCommand cmd = new SqlCommand(tsql.Extractor.Get("Task.RetrieveByID"), conn, trans))
             {
                 SqlParameter param = new SqlParameter("@id", System.Data.SqlDbType.Int);
                 param.Value = ID;

@@ -42,19 +42,7 @@ namespace YoctoScheduler.Core
             };
 
             #region Database entry
-            using (SqlCommand cmd = new SqlCommand(
-                @"INSERT INTO [live].[ExecutionQueue]
-                       (
-                       [TaskID]
-                       ,[Priority]
-                       ,[ScheduleID]
-                       ,[InsertDate])
-                OUTPUT INSERTED.[GUID]
-                 VALUES
-                       (@TaskID
-                       ,@Priority
-                       ,@ScheduleID
-                       ,@InsertDate)", conn, trans))
+            using (SqlCommand cmd = new SqlCommand(tsql.Extractor.Get("ExecutionQueueItem.New"), conn, trans))
             {
                 es.PopolateParameters(cmd);
                 es.GUID = (Guid)cmd.ExecuteScalar();
@@ -95,19 +83,7 @@ namespace YoctoScheduler.Core
 
         public static ExecutionQueueItem GetAndLockFirst(SqlConnection conn, SqlTransaction trans)
         {
-            string stmt =
-                    @"SELECT TOP 1
-		                    [GUID]
-		                    ,[TaskID]
-		                    ,[Priority]
-		                    ,[ScheduleID]
-		                    ,[InsertDate]
-                      FROM [live].[ExecutionQueue] WITH (XLOCK)
-                      ORDER BY 
-		                    [Priority] DESC,
-		                    [InsertDate] DESC;";
-
-            using (SqlCommand cmd = new SqlCommand(stmt, conn, trans))
+            using (SqlCommand cmd = new SqlCommand(tsql.Extractor.Get("ExecutionQueueItem.GetAndLockFirst"), conn, trans))
             {
                 cmd.Prepare();
 
@@ -139,11 +115,7 @@ namespace YoctoScheduler.Core
 
         public void Delete(SqlConnection conn, SqlTransaction trans)
         {
-            using (SqlCommand cmd = new SqlCommand(
-                @"DELETE FROM [live].[ExecutionQueue]
-	                    WHERE 
-		                    [GUID] = @GUID;",
-                conn, trans))
+            using (SqlCommand cmd = new SqlCommand(tsql.Extractor.Get("ExecutionQueueItem.Delete"), conn, trans))
             {
                 SqlParameter param = new SqlParameter("@GUID", System.Data.SqlDbType.UniqueIdentifier);
                 param.Value = GUID;
@@ -159,7 +131,7 @@ namespace YoctoScheduler.Core
             }
         }
 
-        public override void PersistChanges(SqlConnection conn)
+        public override void PersistChanges(SqlConnection conn, SqlTransaction trans)
         {
             throw new NotImplementedException();
         }

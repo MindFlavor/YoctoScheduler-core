@@ -25,10 +25,15 @@ namespace Test
             using (System.Data.SqlClient.SqlConnection conn = new System.Data.SqlClient.SqlConnection(System.Configuration.ConfigurationManager.ConnectionStrings["YoctoScheduler"].ConnectionString))
             {
                 conn.Open();
-                srvInstance = YoctoScheduler.Core.Server.New(
-                    conn,
-                    System.Configuration.ConfigurationManager.ConnectionStrings["YoctoScheduler"].ConnectionString,
-                    "Server di prova " + DateTime.Now.ToString());
+                using (var trans = conn.BeginTransaction())
+                {
+                    srvInstance = YoctoScheduler.Core.Server.New(
+                        conn, trans,
+                        System.Configuration.ConfigurationManager.ConnectionStrings["YoctoScheduler"].ConnectionString,
+                        "Server di prova " + DateTime.Now.ToString());
+
+                    trans.Commit();
+                }                
             }
 
             Console.WriteLine("Program running, please input a command!");

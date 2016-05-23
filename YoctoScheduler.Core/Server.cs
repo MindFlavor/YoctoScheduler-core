@@ -37,7 +37,7 @@ namespace YoctoScheduler.Core
                 LastScheduleCheck.ToString(LOG_TIME_FORMAT));
         }
 
-        public static Server New(SqlConnection conn, string connectionString, string Description)
+        public static Server New(SqlConnection conn, SqlTransaction trans, string connectionString, string Description)
         {
             #region Database entry
 
@@ -48,18 +48,7 @@ namespace YoctoScheduler.Core
                 Status = Status.Starting
             };
 
-            using (SqlCommand cmd = new SqlCommand(
-                 @"INSERT INTO [live].[Servers]
-                       ([Status]
-                       ,[Description]
-                       ,[LastPing])
-	             OUTPUT [INSERTED].[ServerID]    
-                 VALUES(
-                         @status,
-		                 @description,
-		                 @lastping
-                       )"
-                 , conn))
+            using (SqlCommand cmd = new SqlCommand(tsql.Extractor.Get("Server.New"), conn, trans))
             {
                 server.PopolateParameters(cmd);
 
@@ -110,24 +99,16 @@ namespace YoctoScheduler.Core
             log.DebugFormat("{0:S} - Setting server as running", server.ToString());
             server.Status = Status.Running;
 
-            server.PersistChanges(conn);
+            server.PersistChanges(conn, trans);
             log.InfoFormat("{0:S} - Server running", server.ToString());
             #endregion
 
             return server;
         }
 
-        public override void PersistChanges(SqlConnection conn)
+        public override void PersistChanges(SqlConnection conn, SqlTransaction trans)
         {
-            using (SqlCommand cmd = new SqlCommand(
-                    @"UPDATE [live].[Servers]
-                        SET    
-                            [Status] = @status
-                            ,[Description] = @description
-                            ,[LastPing] = @lastping
-                        WHERE 
-                            [ServerID] = @serverID"
-                    , conn))
+            using (SqlCommand cmd = new SqlCommand(tsql.Extractor.Get("Server.PersistChanges"), conn, trans))
             {
                 PopolateParameters(cmd);
 
@@ -167,7 +148,11 @@ namespace YoctoScheduler.Core
                 using (SqlConnection conn = new SqlConnection(ConnectionString))
                 {
                     conn.Open();
-                    PersistChanges(conn);
+                    using (SqlTransaction trans = conn.BeginTransaction())
+                    {
+                        PersistChanges(conn, trans);
+                        trans.Commit();
+                    }
                 }
 
                 // every minute
@@ -184,13 +169,7 @@ namespace YoctoScheduler.Core
                 using (var conn = new SqlConnection(ConnectionString))
                 {
                     conn.Open();
-                    SqlCommand cmd = new SqlCommand(
-                        @"  UPDATE [live].[Servers]
-                            SET [Status] = @statusToSet
-                            WHERE 
-                                [LastPing] < @dt 
-                                AND [Status] > @minStatus"
-                    , conn);
+                    SqlCommand cmd = new SqlCommand(tsql.Extractor.Get("Server.ClearOldServersThread"), conn);
 
                     SqlParameter param = new SqlParameter("@statusToSet", System.Data.SqlDbType.Int);
                     param.Value = Status.Dead;
@@ -302,7 +281,7 @@ namespace YoctoScheduler.Core
                     using (SqlTransaction trans = conn.BeginTransaction(System.Data.IsolationLevel.RepeatableRead))
                     {
                         // Get enabled schedules
-                        var lSchedules = Schedule.GetEnabledNotRunning(conn, trans);
+                        var lSchedules = Schedule.GetAndLockEnabledNotRunning(conn, trans);
 
                         // look for schedules to fire
                         lSchedules.ForEach(sched =>

@@ -1,0 +1,3 @@
+﻿INSERT INTO [live].[Tasks] 
+OUTPUT [INSERTED].[TaskID]
+DEFAULT VALUES;

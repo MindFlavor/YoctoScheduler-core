@@ -12,3 +12,4 @@ SELECT * FROM [YoctoScheduler].[live].[Schedules];
 
 --DELETE FROM [YoctoScheduler].[live].[ExecutionQueue];
 --DELETE FROM [YoctoScheduler].[live].[ExecutionStatus];
+--DELETE FROM [YoctoScheduler].[live].[Servers] WHERE [Status] < 0;

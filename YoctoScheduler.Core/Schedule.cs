@@ -45,18 +45,7 @@ namespace YoctoScheduler.Core
                 Enabled = enabled
             };
 
-            using (SqlCommand cmd = new SqlCommand(
-                @"INSERT INTO [live].[Schedules]
-                       ([TaskID]
-                       ,[Cron]
-                       ,[Enabled])
-	             OUTPUT [INSERTED].[ScheduleID]    
-                 VALUES(
-                         @taskID,
-		                 @cron,
-		                 @enabled
-                       )"
-                , conn, trans))
+            using (SqlCommand cmd = new SqlCommand(tsql.Extractor.Get("Schedule.New"), conn, trans))
             {
                 schedule.PopolateParameters(cmd);
 
@@ -70,18 +59,10 @@ namespace YoctoScheduler.Core
             return schedule;
         }
 
-        public override void PersistChanges(SqlConnection conn)
+        public override void PersistChanges(SqlConnection conn, SqlTransaction trans)
         {
             using (
-                SqlCommand cmd = new SqlCommand(
-                    @"UPDATE [live].[Schedule]
-                        SET    
-                            [TaskID] = @taskID
-                            ,[Cron] = @cron
-                            ,[Enabled] = @enabled
-                        WHERE 
-                            [ScheduleID] = @scheduleID"
-                    , conn))
+                SqlCommand cmd = new SqlCommand(tsql.Extractor.Get("Schedule.PersistChanges"), conn, trans))
             { 
                 PopolateParameters(cmd);
 
@@ -126,13 +107,7 @@ namespace YoctoScheduler.Core
         {
             List<Schedule> lItems = new List<Schedule>();
 
-            string stmt = string.Format(@"SELECT 
-                      [ScheduleID]
-                      ,[Cron]
-                      ,[Enabled]
-                      ,[TaskID]
-                  FROM[live].[Schedules] {0:S}",
-              includeDisabled ? "" : "WHERE [Enabled] = 1");
+            string stmt = includeDisabled ? tsql.Extractor.Get("Schedule.GetAll") : tsql.Extractor.Get("Schedule.GetAllEnabledOnly");
 
             using (SqlCommand cmd = new SqlCommand(stmt, conn, trans))
             {
@@ -149,26 +124,11 @@ namespace YoctoScheduler.Core
 
             return lItems;
         }
-        public static List<Schedule> GetEnabledNotRunning(SqlConnection conn, SqlTransaction trans)
+        public static List<Schedule> GetAndLockEnabledNotRunning(SqlConnection conn, SqlTransaction trans)
         {
             List<Schedule> lItems = new List<Schedule>();
 
-            string stmt = @"SELECT 
-                                    S.[ScheduleID]
-                                    ,S.[Cron]
-                                    ,S.[Enabled]
-                                    ,S.[TaskID] 
-                                FROM [live].[Schedules] S WITH(XLOCK)
-                                LEFT OUTER JOIN [live].[ExecutionQueue]  Q ON S.[ScheduleID] = Q.[ScheduleID]
-                                LEFT OUTER JOIN [live].[ExecutionStatus] E ON S.[ScheduleID] = E.[ScheduleID]
-                                WHERE
-		                                Q.[ScheduleID] IS NULL 
-	                                AND
-		                                E.[ScheduleID] IS NULL  
-					                AND
-						                S.Enabled = 1;";
-
-            using (SqlCommand cmd = new SqlCommand(stmt, conn, trans))
+            using (SqlCommand cmd = new SqlCommand(tsql.Extractor.Get("Schedule.GetAndLockEnabledNotRunning"), conn, trans))
             {
                 cmd.Prepare();
 

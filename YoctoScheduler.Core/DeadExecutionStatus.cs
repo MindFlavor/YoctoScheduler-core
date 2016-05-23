@@ -18,7 +18,7 @@ namespace YoctoScheduler.Core
             GUID = des.GUID;
             this.LastUpdate = des.LastUpdate;
 
-            this.Status = Status;            
+            this.Status = Status;
         }
 
         public override string ToString()
@@ -34,22 +34,7 @@ namespace YoctoScheduler.Core
             DeadExecutionStatus des = new DeadExecutionStatus(les, status);
 
             #region Database entry
-            using (SqlCommand cmd = new SqlCommand(
-                @"INSERT INTO [dead].[ExecutionStatus]
-                       ([GUID]
-                       ,[ScheduleID]
-                       ,[TaskID]
-                       ,[ServerID]
-                       ,[LastUpdate]
-                       ,[Status])
-                 VALUES
-                       (
-                        @GUID
-                        @ScheduleID
-                       ,@TaskID
-                       ,@ServerID
-                       ,@LastUpdate
-                       ,@Status)", conn, trans))
+            using (SqlCommand cmd = new SqlCommand(tsql.Extractor.Get("DeadExecutionStatus.New"), conn, trans))
             {
                 des.PopolateParameters(cmd);
             }

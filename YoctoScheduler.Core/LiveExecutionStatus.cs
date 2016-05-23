@@ -46,18 +46,7 @@ namespace YoctoScheduler.Core
             LiveExecutionStatus es = new LiveExecutionStatus(TaskID, ServerID, ScheduleID);
 
             #region Database entry
-            using (SqlCommand cmd = new SqlCommand(
-                @"INSERT INTO [live].[ExecutionStatus]
-                       ([ScheduleID]
-                       ,[TaskID]
-                       ,[ServerID]
-                       ,[LastUpdate])
-                OUTPUT INSERTED.[GUID]
-                 VALUES
-                       (@ScheduleID
-                       ,@TaskID
-                       ,@ServerID
-                       ,@LastUpdate)", conn, trans))
+            using (SqlCommand cmd = new SqlCommand(tsql.Extractor.Get("LiveExecutionStatus.New"), conn, trans))
             {
                 es.PopolateParameters(cmd);
                 es.GUID = (Guid)cmd.ExecuteScalar();
@@ -96,7 +85,7 @@ namespace YoctoScheduler.Core
             }
         }
 
-        public override void PersistChanges(SqlConnection conn)
+        public override void PersistChanges(SqlConnection conn, SqlTransaction trans)
         {
             throw new NotImplementedException();
         }
@@ -125,19 +114,7 @@ namespace YoctoScheduler.Core
         {
             List<LiveExecutionStatus> lItems = new List<LiveExecutionStatus>();
 
-            string stmt =
-                    @"SELECT 
-                       [GUID]
-                      ,[ScheduleID]
-                      ,[TaskID]
-                      ,[ServerID]
-                      ,[LastUpdate]
-                  FROM [live].[ExecutionStatus]
-                  WITH(XLOCK)
-                  WHERE 
-                       [LastUpdate] >= @lastUpdate";
-
-            using (SqlCommand cmd = new SqlCommand(stmt, conn, trans))
+            using (SqlCommand cmd = new SqlCommand(tsql.Extractor.Get("LiveExecutionStatus.GetAll"), conn, trans))
             {
                 var param = new SqlParameter("@lastUpdate", System.Data.SqlDbType.DateTime);
                 param.Value = minLastUpdate;

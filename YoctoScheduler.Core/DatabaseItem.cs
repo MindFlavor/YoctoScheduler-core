@@ -22,6 +22,6 @@ namespace YoctoScheduler.Core
             return conn;
         }
 
-        public abstract void PersistChanges(SqlConnection conn);
+        public abstract void PersistChanges(SqlConnection conn, SqlTransaction trans);
     }
 }
