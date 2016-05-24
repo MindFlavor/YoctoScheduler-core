@@ -17,3 +17,4 @@ SERVER_POLL_DISABLE_DEAD_TASKS_SLEEP_MS | Time in milliseconds between a server 
 SERVER_POLL_TASK_QUEUE_SLEEP_MS | Time in milliseconds between a server check for tasks to execute. | 1 second
 SERVER_POLL_TASK_SCHEDULER_SLEEP_MS | Time in milliseconds between a server check for tasks to schedule. | 10 seconds
 TASK_MAXIMUM_UPDATE_LAG_MS| Maximum allowed time in milliseconds between task updates before declaring it dead. | 1 minute
+SERVER_MAXIMUM_UPDATE_LAG_MS | Maximum allowed time in milliseconds between server updates before declaring it dead. | 5 minutes

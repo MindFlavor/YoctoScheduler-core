@@ -168,8 +168,9 @@ namespace YoctoScheduler.Core
         {
             while (true)
             {
-                // a server is dead if there is no update in the last 5 minutes
-                DateTime dtDead = DateTime.Now.Subtract(TimeSpan.FromMinutes(5));
+                // a server is dead if there is no update in the last xxx msseconds
+                DateTime dtDead = DateTime.Now.Subtract(TimeSpan.FromMilliseconds(int.Parse(Configuration["SERVER_MAXIMUM_UPDATE_LAG_MS"])));
+
                 using (var conn = new SqlConnection(ConnectionString))
                 {
                     conn.Open();
@@ -234,11 +235,6 @@ namespace YoctoScheduler.Core
         {
             while (true)
             {
-                // a task is dead if there is no update in the last minute
-                //log.DebugFormat("{0:S} - Check for enqueued tasks to start", this.ToString());
-
-                DateTime dtExpired = DateTime.Now.Subtract(TimeSpan.FromMinutes(1));
-
                 using (SqlConnection conn = new SqlConnection(ConnectionString))
                 {
                     conn.Open();
