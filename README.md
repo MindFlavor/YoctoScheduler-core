@@ -46,7 +46,7 @@ As now the ```Test console``` project is just a demo server with a tiny command 
 
 ## Configuration
 
-1. Configure [Test\App.config](Test\App.config) ```connectionStrings``` node to point to the database installed before.
+See the specific section: [configuration](docs/configuration.md).
 
 ## Testing
 
