@@ -8,7 +8,7 @@
 VALUES
     (
     @GUID
-    @ScheduleID
+    ,@ScheduleID
     ,@TaskID
     ,@ServerID
     ,@LastUpdate

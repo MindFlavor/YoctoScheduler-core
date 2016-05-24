@@ -7,4 +7,4 @@
 FROM [live].[ExecutionStatus]
 WITH(XLOCK)
 WHERE 
-    [LastUpdate] >= @lastUpdate;
+    [LastUpdate] < @lastUpdate;

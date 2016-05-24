@@ -9,7 +9,7 @@ namespace YoctoScheduler.Core.Tasks
     public interface ITask
     {
         void Start();
-        void Stop();
+        void Abort();
 
         bool IsAlive();
     }

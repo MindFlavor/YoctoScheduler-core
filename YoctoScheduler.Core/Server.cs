@@ -200,9 +200,9 @@ namespace YoctoScheduler.Core
             while (true)
             {
                 // a task is dead if there is no update in the last minute
-                log.DebugFormat("{0:S} - Check for tasks to start - Starting", this.ToString());
+                log.DebugFormat("{0:S} - Check for dead tasks", this.ToString());
 
-                DateTime dtExpired = DateTime.Now.Subtract(TimeSpan.FromMinutes(1));
+                DateTime dtExpired = DateTime.Now.Subtract(TimeSpan.FromMilliseconds(int.Parse(Configuration["TASK_MAXIMUM_UPDATE_LAG_MS"])));
 
                 using (SqlConnection conn = new SqlConnection(ConnectionString))
                 {
@@ -211,7 +211,18 @@ namespace YoctoScheduler.Core
                     {
                         var lExpired = LiveExecutionStatus.GetAndLockAll(conn, trans, dtExpired);
 
-                        // TODO insert into dead table and remove from live
+                        foreach (var les in lExpired)
+                        {
+                            // insert into dead table 
+                            var des = DeadExecutionStatus.New(conn, trans, les, Status.Dead);
+
+                            log.InfoFormat("Setting LiveExecutionStatus {0:S} as dead", les.ToString());
+                            // remove from live table
+                            les.Delete(conn, trans);
+
+                        }
+
+                        trans.Commit();
                     }
                 }
 
@@ -291,7 +302,7 @@ namespace YoctoScheduler.Core
                             if (sched.Cron.GetNextOccurrence(LastScheduleCheck) < DateTime.Now)
                             {
                                 var task = Task.RetrieveByID(conn, trans, sched.TaskID);
-                                log.InfoFormat("Startring schedulation {0:S} due to cron {1:S}", task.ToString(), sched.ToString());
+                                log.InfoFormat("Starting schedulation {0:S} due to cron {1:S}", task.ToString(), sched.ToString());
 
                                 var qi = ExecutionQueueItem.New(conn, trans, task.ID, Priority.Normal, sched.ID);
                                 log.InfoFormat("Execution enqueued {0:S}", qi.ToString());

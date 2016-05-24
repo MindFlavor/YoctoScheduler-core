@@ -157,5 +157,23 @@ namespace YoctoScheduler.Core
 
             return lItems;
         }
+
+        public void Delete(SqlConnection conn, SqlTransaction trans)
+        {
+            using (SqlCommand cmd = new SqlCommand(tsql.Extractor.Get("LiveExecutionStatus.Delete"), conn, trans))
+            {
+                SqlParameter param = new SqlParameter("@GUID", System.Data.SqlDbType.UniqueIdentifier);
+                param.Value = GUID;
+                cmd.Parameters.Add(param);
+
+                cmd.Prepare();
+                if (cmd.ExecuteNonQuery() != 1)
+                {
+                    throw new Exceptions.ConcurrencyException(
+                        string.Format("Delete from [live].[ExecutionStatus] failed because no entry with GUID {0:S} was found", GUID.ToString(),
+                        null));
+                }
+            }
+        }
     }
 }

@@ -37,6 +37,8 @@ namespace YoctoScheduler.Core
             using (SqlCommand cmd = new SqlCommand(tsql.Extractor.Get("DeadExecutionStatus.New"), conn, trans))
             {
                 des.PopolateParameters(cmd);
+                cmd.Prepare();
+                cmd.ExecuteNonQuery();
             }
             #endregion
             log.DebugFormat("Created dead excecution {0:S}", des.ToString());

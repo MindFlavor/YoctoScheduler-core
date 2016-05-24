@@ -72,8 +72,8 @@
     <Compile Include="Exceptions\TSQLNotFoundException.cs" />
     <Compile Include="ExecutionQueueItem.cs" />
     <Compile Include="Secret.cs" />
-    <Compile Include="Tasks\Factory.cs" />
-    <Compile Include="Tasks\ITask.cs" />
+    <Compile Include="ExecutionTask\Factory.cs" />
+    <Compile Include="ExecutionTask\ITask.cs" />
     <Compile Include="LiveExecutionStatus.cs" />
     <Compile Include="Priority.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -81,7 +81,7 @@
     <Compile Include="Server.cs" />
     <Compile Include="Status.cs" />
     <Compile Include="Task.cs" />
-    <Compile Include="Tasks\Watchdog.cs" />
+    <Compile Include="ExecutionTask\Watchdog.cs" />
     <Compile Include="tsql\Extractor.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -150,6 +150,9 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="tsql\Configuration\GetAll.sql" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="tsql\LiveExecutionStatus\Delete.sql" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

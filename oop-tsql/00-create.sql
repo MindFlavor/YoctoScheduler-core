@@ -180,6 +180,8 @@ INSERT INTO [configuration].[General]([Item], [Value]) VALUES('SERVER_POLL_DISAB
 INSERT INTO [configuration].[General]([Item], [Value]) VALUES('SERVER_POLL_DISABLE_DEAD_TASKS_SLEEP_MS',	1 * 10 * 1000); -- 10 seconds
 INSERT INTO [configuration].[General]([Item], [Value]) VALUES('SERVER_POLL_TASK_QUEUE_SLEEP_MS',			1 * 01 * 1000); -- 1 second
 INSERT INTO [configuration].[General]([Item], [Value]) VALUES('SERVER_POLL_TASK_SCHEDULER_SLEEP_MS',		1 * 10 * 1000); -- 10 seconds
+
+INSERT INTO [configuration].[General]([Item], [Value]) VALUES('TASK_MAXIMUM_UPDATE_LAG_MS',					1 * 60 * 1000); -- one minute
 ----------------
 USE [master];
 GO
