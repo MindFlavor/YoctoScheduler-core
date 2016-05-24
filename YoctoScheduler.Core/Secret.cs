@@ -19,10 +19,11 @@ namespace YoctoScheduler.Core
         {
             get
             {
-                var cert = GetCertificate();
+                X509Certificate2 cert = GetCertificate();
+                var alg = cert.GetKeyAlgorithm();
 
                 RSACryptoServiceProvider rsa = cert.PrivateKey as RSACryptoServiceProvider;
-                var bBuf = rsa.Decrypt(EncryptedValue, false);
+                var bBuf = rsa.Decrypt(EncryptedValue, true);
                 return System.Text.Encoding.Unicode.GetString(bBuf);
             }
             set
@@ -30,7 +31,7 @@ namespace YoctoScheduler.Core
                 var cert = GetCertificate();
 
                 RSACryptoServiceProvider rsa = cert.PublicKey.Key as RSACryptoServiceProvider;
-                var bBuf = rsa.Encrypt(System.Text.Encoding.Unicode.GetBytes(value), false);
+                var bBuf = rsa.Encrypt(System.Text.Encoding.Unicode.GetBytes(value), true);
                 EncryptedValue = bBuf;
             }
         }
