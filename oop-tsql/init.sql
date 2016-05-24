@@ -3,6 +3,7 @@ GO
 --DROP DATABASE [YoctoScheduler];
 --GO
 
+SELECT * FROM [YoctoScheduler].[configuration].[General];
 SELECT * FROM [YoctoScheduler].[live].[Servers];
 SELECT * FROM [YoctoScheduler].[live].[Tasks];
 SELECT 'queue', * FROM [YoctoScheduler].[live].[ExecutionQueue];

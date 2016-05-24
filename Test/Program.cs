@@ -22,9 +22,16 @@ namespace Test
             log.InfoFormat("Test program v{0:S} started.", System.Reflection.Assembly.GetExecutingAssembly().GetName().Version);
             #endregion
 
+
+
             using (System.Data.SqlClient.SqlConnection conn = new System.Data.SqlClient.SqlConnection(System.Configuration.ConfigurationManager.ConnectionStrings["YoctoScheduler"].ConnectionString))
             {
                 conn.Open();
+
+                #region setup Configuration
+                Server.Configuration = new Configuration(conn);
+                #endregion
+
                 using (var trans = conn.BeginTransaction())
                 {
                     srvInstance = YoctoScheduler.Core.Server.New(

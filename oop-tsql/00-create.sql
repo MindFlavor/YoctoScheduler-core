@@ -8,6 +8,8 @@ CREATE SCHEMA [dead];
 GO
 CREATE SCHEMA [lookup];
 GO
+CREATE SCHEMA [configuration];
+GO
 
 CREATE TABLE [live].[Servers](
 	[ServerID] INT IDENTITY(1,1) NOT NULL,
@@ -154,12 +156,30 @@ CREATE TABLE [lookup].[Secret] (
 	[SecretID]		INT IDENTITY(1,1),
 	[Blob]			VARBINARY(MAX),
 	[Thumbprint]	CHAR(40),
- CONSTRAINT [PK_[Secret] PRIMARY KEY CLUSTERED 
+ CONSTRAINT [PK_Secret] PRIMARY KEY CLUSTERED 
 (
 	[SecretID]
 ));
 GO
 
+----------------
+CREATE TABLE [configuration].[General] (
+	[Item]			NVARCHAR(255),
+	[Value]			NVARCHAR(MAX)
+ CONSTRAINT [PK_General] PRIMARY KEY CLUSTERED 
+(
+	[Item]
+));
+GO
+
+------------------------------------------------------
+------------------- Default values -------------------
+------------------------------------------------------
+INSERT INTO [configuration].[General]([Item], [Value]) VALUES('SERVER_KEEPALIVE_SLEEP_MS',					1 * 60 * 1000); -- one minute
+INSERT INTO [configuration].[General]([Item], [Value]) VALUES('SERVER_POLL_DISABLE_DEAD_SERVERS_SLEEP_MS',	1 * 60 * 1000); -- one minute
+INSERT INTO [configuration].[General]([Item], [Value]) VALUES('SERVER_POLL_DISABLE_DEAD_TASKS_SLEEP_MS',	1 * 10 * 1000); -- 10 seconds
+INSERT INTO [configuration].[General]([Item], [Value]) VALUES('SERVER_POLL_TASK_QUEUE_SLEEP_MS',			1 * 01 * 1000); -- 1 second
+INSERT INTO [configuration].[General]([Item], [Value]) VALUES('SERVER_POLL_TASK_SCHEDULER_SLEEP_MS',		1 * 10 * 1000); -- 10 seconds
 ----------------
 USE [master];
 GO

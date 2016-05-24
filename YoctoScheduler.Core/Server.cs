@@ -10,6 +10,8 @@ namespace YoctoScheduler.Core
     {
         private static readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(Server));
 
+        public static Configuration Configuration { get; set; }
+
         public Status Status { get; set; }
 
         public string Description { get; set; }
@@ -22,6 +24,9 @@ namespace YoctoScheduler.Core
 
         public Server(string ConnectionString) : base()
         {
+            if (Configuration == null)
+                throw new Exceptions.ConfigurationNotInitializedException();
+
             LastScheduleCheck = DateTime.Now;
             this.ConnectionString = ConnectionString;
         }
@@ -155,8 +160,7 @@ namespace YoctoScheduler.Core
                     }
                 }
 
-                // every minute
-                Thread.Sleep(1 * 60 * 1000);
+                Thread.Sleep(int.Parse(Configuration["SERVER_KEEPALIVE_SLEEP_MS"]));
             }
         }
 
@@ -187,8 +191,7 @@ namespace YoctoScheduler.Core
                     cmd.ExecuteNonQuery();
                 }
 
-                // every min
-                Thread.Sleep(1 * 60 * 1000);
+                Thread.Sleep(int.Parse(Configuration["SERVER_POLL_DISABLE_DEAD_SERVERS_SLEEP_MS"]));
             }
         }
 
@@ -211,8 +214,8 @@ namespace YoctoScheduler.Core
                         // TODO insert into dead table and remove from live
                     }
                 }
-                // every 10 seconds 
-                Thread.Sleep(10 * 1000);
+
+                Thread.Sleep(int.Parse(Configuration["SERVER_POLL_DISABLE_DEAD_TASKS_SLEEP_MS"]));
             }
         }
 
@@ -249,8 +252,7 @@ namespace YoctoScheduler.Core
                         trans.Commit();
                     }
                 }
-                // every second
-                Thread.Sleep(1 * 1000);
+                Thread.Sleep(int.Parse(Configuration["SERVER_POLL_TASK_QUEUE_SLEEP_MS"]));
             }
         }
 
@@ -302,9 +304,7 @@ namespace YoctoScheduler.Core
 
                 LastScheduleCheck = DateTime.Now;
 
-                log.DebugFormat("{0:S} - Check for tasks to start - Completed", this.ToString());
-                // every 30 seconds
-                Thread.Sleep(10 * 1000);
+                Thread.Sleep(int.Parse(Configuration["SERVER_POLL_TASK_SCHEDULER_SLEEP_MS"]));
             }
         }
     }
