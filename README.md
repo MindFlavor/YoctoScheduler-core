@@ -92,11 +92,11 @@ You can also test the retrieval of a secret using the ```get_secret``` command. 
 get_secret 3
 ```
 
-There is a bug in PS generated certificates. See the [```System.Security.Cryptography.CryptographicException: Invalid provider type specified```](docs\System.Security.Cryptography.CryptographicException.md) known issues section how to resolve this.
+There is a bug in PS generated certificates. See the [```System.Security.Cryptography.CryptographicException: Invalid provider type specified```](docs/System.Security.Cryptography.CryptographicException.md) known issues section how to resolve this.
 
 ## Known issues
 
-* [```System.Security.Cryptography.CryptographicException: Invalid provider type specified```](docs\System.Security.Cryptography.CryptographicException.md).
+* [```System.Security.Cryptography.CryptographicException: Invalid provider type specified```](docs/System.Security.Cryptography.CryptographicException.md).
 
 ## Debug
 
