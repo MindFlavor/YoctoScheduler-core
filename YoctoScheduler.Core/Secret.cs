@@ -22,8 +22,6 @@ namespace YoctoScheduler.Core
                 X509Certificate2 cert = GetCertificate();
                 var alg = cert.GetKeyAlgorithm();
 
-                cert.HasCngKey();
-
                 RSACryptoServiceProvider rsa = cert.PrivateKey as RSACryptoServiceProvider;
                 var bBuf = rsa.Decrypt(EncryptedValue, true);
                 return System.Text.Encoding.Unicode.GetString(bBuf);
