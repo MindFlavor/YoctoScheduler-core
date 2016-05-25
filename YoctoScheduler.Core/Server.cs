@@ -200,9 +200,9 @@ namespace YoctoScheduler.Core
         {
             while (true)
             {
-                // a task is dead if there is no update in the last minute
                 log.DebugFormat("{0:S} - Check for dead tasks", this.ToString());
 
+                // a task is dead if there is no update in the xxx milliseconds (1 minute default)
                 DateTime dtExpired = DateTime.Now.Subtract(TimeSpan.FromMilliseconds(int.Parse(Configuration["TASK_MAXIMUM_UPDATE_LAG_MS"])));
 
                 using (SqlConnection conn = new SqlConnection(ConnectionString))
@@ -215,7 +215,7 @@ namespace YoctoScheduler.Core
                         foreach (var les in lExpired)
                         {
                             // insert into dead table 
-                            var des = DeadExecutionStatus.New(conn, trans, les, Status.Dead);
+                            var des = DeadExecutionStatus.New(conn, trans, les, Status.Dead, null);
 
                             log.InfoFormat("Setting LiveExecutionStatus {0:S} as dead", les.ToString());
                             // remove from live table
@@ -238,7 +238,7 @@ namespace YoctoScheduler.Core
                 using (SqlConnection conn = new SqlConnection(ConnectionString))
                 {
                     conn.Open();
-                    using (SqlTransaction trans = conn.BeginTransaction(System.Data.IsolationLevel.ReadCommitted))
+                    using (SqlTransaction trans = conn.BeginTransaction(System.Data.IsolationLevel.Serializable))
                     {
                         var lToStart = ExecutionQueueItem.GetAndLockFirst(conn, trans);
                         if(lToStart != null)
@@ -250,6 +250,8 @@ namespace YoctoScheduler.Core
 
                             // start the execution
                             // TODO this is just a mockup
+                            var wd = ExecutionTask.Factory.NewTask(this, les);
+                            wd.Start();
                             log.InfoFormat("Started live execution status {0:S}", les.ToString());
 
                             // remove from pending execution queue
@@ -287,7 +289,7 @@ namespace YoctoScheduler.Core
                 using (SqlConnection conn = new SqlConnection(ConnectionString))
                 {
                     conn.Open();
-                    using (SqlTransaction trans = conn.BeginTransaction(System.Data.IsolationLevel.RepeatableRead))
+                    using (SqlTransaction trans = conn.BeginTransaction(System.Data.IsolationLevel.Serializable))
                     {
                         // Get enabled schedules
                         var lSchedules = Schedule.GetAndLockEnabledNotRunning(conn, trans);

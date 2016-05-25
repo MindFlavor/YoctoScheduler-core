@@ -13,12 +13,19 @@ namespace YoctoScheduler.Core
 
         public Status Status { get; set; }
 
-        public DeadExecutionStatus(LiveExecutionStatus des, Status Status) : base(des.TaskID, des.ServerID, des.ScheduleID)
+        public string ReturnCode { get; set; }
+
+        public DeadExecutionStatus(LiveExecutionStatus des, Status Status)
+            : this(des, Status, null) { }
+
+        public DeadExecutionStatus(LiveExecutionStatus des, Status Status, string ReturnCode) : base(des.TaskID, des.ServerID, des.ScheduleID)
         {
             GUID = des.GUID;
             this.LastUpdate = des.LastUpdate;
 
             this.Status = Status;
+            this.ReturnCode = ReturnCode;
+            this.Inserted = Inserted;
         }
 
         public override string ToString()
@@ -29,9 +36,9 @@ namespace YoctoScheduler.Core
                 Status.ToString());
         }
 
-        public static DeadExecutionStatus New(SqlConnection conn, SqlTransaction trans, LiveExecutionStatus les, Status status)
+        public static DeadExecutionStatus New(SqlConnection conn, SqlTransaction trans, LiveExecutionStatus les, Status status, string ReturnCode)
         {
-            DeadExecutionStatus des = new DeadExecutionStatus(les, status);
+            DeadExecutionStatus des = new DeadExecutionStatus(les, status, ReturnCode);
 
             #region Database entry
             using (SqlCommand cmd = new SqlCommand(tsql.Extractor.Get("DeadExecutionStatus.New"), conn, trans))
@@ -51,6 +58,14 @@ namespace YoctoScheduler.Core
 
             SqlParameter param = new SqlParameter("@Status", System.Data.SqlDbType.Int);
             param.Value = Status;
+            cmd.Parameters.Add(param);
+
+
+            param = new SqlParameter("@ReturnCode", System.Data.SqlDbType.NVarChar, -1);
+            if (string.IsNullOrEmpty(ReturnCode))
+                param.Value = DBNull.Value;
+            else
+                param.Value = ReturnCode;
             cmd.Parameters.Add(param);
         }
     }

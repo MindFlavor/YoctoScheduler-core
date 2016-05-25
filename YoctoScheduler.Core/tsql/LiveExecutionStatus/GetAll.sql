@@ -3,6 +3,7 @@
     ,[ScheduleID]
     ,[TaskID]
     ,[ServerID]
+	,[Inserted]
     ,[LastUpdate]
 FROM [live].[ExecutionStatus]
 WHERE 

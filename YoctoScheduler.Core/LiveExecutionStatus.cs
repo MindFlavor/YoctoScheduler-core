@@ -22,6 +22,8 @@ namespace YoctoScheduler.Core
 
         public DateTime LastUpdate { get; set; }
 
+        public DateTime Inserted { get; set; }
+
         public LiveExecutionStatus(int TaskID, int ServerID, int? ScheduleID) : base()
         {
             this.TaskID = TaskID;
@@ -29,15 +31,17 @@ namespace YoctoScheduler.Core
             this.ScheduleID = ScheduleID;
 
             LastUpdate = DateTime.Now;
+            Inserted = DateTime.Now;
         }
 
         public override string ToString()
         {
-            return string.Format("{0:S}[{1:S0}, TaskID={2:N0}, ServerID={3:N0}, ScheduleID={4:S}, LastUpdate={5:S}]",
+            return string.Format("{0:S}[{1:S0}, TaskID={2:N0}, ServerID={3:N0}, ScheduleID={4:S}, Inserted={5:S}, LastUpdate={6:S}]",
                 this.GetType().FullName,
                 base.ToString(),
                 TaskID, ServerID,
                 ScheduleID.HasValue ? ScheduleID.Value.ToString() : "<null>",
+                Inserted.ToString(),
                 LastUpdate.ToString());
         }
 
@@ -77,6 +81,10 @@ namespace YoctoScheduler.Core
             param.Value = LastUpdate;
             cmd.Parameters.Add(param);
 
+            param = new SqlParameter("@Inserted", System.Data.SqlDbType.DateTime);
+            param.Value = Inserted;
+            cmd.Parameters.Add(param);
+
             if (HasValidID())
             {
                 param = new SqlParameter("@GUID", System.Data.SqlDbType.UniqueIdentifier);
@@ -99,7 +107,8 @@ namespace YoctoScheduler.Core
             var les = new LiveExecutionStatus(r.GetInt32(2), r.GetInt32(3), ScheduleID)
             {
                 GUID = r.GetGuid(0),
-                LastUpdate = r.GetDateTime(4)
+                LastUpdate = r.GetDateTime(5),
+                Inserted = r.GetDateTime(4)
             };
 
             return les;
@@ -156,6 +165,28 @@ namespace YoctoScheduler.Core
             }
 
             return lItems;
+        }
+
+        public void UpdateKeepAlive(SqlConnection conn, SqlTransaction trans)
+        {
+            using (SqlCommand cmd = new SqlCommand(tsql.Extractor.Get("LiveExecutionStatus.UpdateKeepAlive"), conn, trans))
+            {
+                SqlParameter param = new SqlParameter("@GUID", System.Data.SqlDbType.UniqueIdentifier);
+                param.Value = GUID;
+                cmd.Parameters.Add(param);
+
+                param = new SqlParameter("@lastUpdate", System.Data.SqlDbType.DateTime);
+                param.Value = DateTime.Now;
+                cmd.Parameters.Add(param);
+
+                cmd.Prepare();
+                if (cmd.ExecuteNonQuery() != 1)
+                {
+                    throw new Exceptions.ConcurrencyException(
+                        string.Format("Update from [live].[ExecutionStatus] failed because no entry with GUID {0:S} was found", GUID.ToString(),
+                        null));
+                }
+            }
         }
 
         public void Delete(SqlConnection conn, SqlTransaction trans)

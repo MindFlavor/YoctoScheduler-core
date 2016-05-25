@@ -52,6 +52,7 @@ CREATE TABLE [live].[ExecutionStatus](
 	[ScheduleID] INT NULL,
 	[TaskID] INT NOT NULL,	
 	[ServerID] INT NOT NULL,
+	[Inserted] DATETIME NOT NULL,
 	[LastUpdate] DATETIME NOT NULL,
  CONSTRAINT [PK_ExecutionStatus] PRIMARY KEY CLUSTERED 
 (
@@ -92,7 +93,9 @@ CREATE TABLE [dead].[ExecutionStatus](
 	[ScheduleID] INT NULL,
 	[TaskID] INT NOT NULL,	
 	[Status] INT NOT NULL,
+	[ReturnCode] NVARCHAR(MAX) NULL,
 	[ServerID] INT NOT NULL,
+	[Inserted] DATETIME NOT NULL,
 	[LastUpdate] DATETIME NOT NULL,
  CONSTRAINT [PK_ExecutionStatus] PRIMARY KEY CLUSTERED 
 (
@@ -150,6 +153,9 @@ GO
 ALTER TABLE [live].[ExecutionQueue] CHECK CONSTRAINT [FK_ExecutionQueue_ScheduleID]
 GO
 
+CREATE INDEX IDX_PriorityInsertDate ON [live].[ExecutionQueue]([Priority], [InsertDate])
+GO
+
 --------------------------
 
 CREATE TABLE [lookup].[Secret] (
@@ -182,6 +188,9 @@ INSERT INTO [configuration].[General]([Item], [Value]) VALUES('SERVER_POLL_TASK_
 INSERT INTO [configuration].[General]([Item], [Value]) VALUES('SERVER_POLL_TASK_SCHEDULER_SLEEP_MS',		1 * 10 * 1000); -- 10 seconds
 
 INSERT INTO [configuration].[General]([Item], [Value]) VALUES('TASK_MAXIMUM_UPDATE_LAG_MS',					1 * 60 * 1000); -- one minute
+INSERT INTO [configuration].[General]([Item], [Value]) VALUES('SERVER_MAXIMUM_UPDATE_LAG_MS',				5 * 60 * 1000); -- 5 minutes
+
+INSERT INTO [configuration].[General]([Item], [Value]) VALUES('WATCHDOG_SLEEP_MS',								2 * 1000);  -- 2 seconds
 ----------------
 USE [master];
 GO

@@ -2,14 +2,18 @@
     ([GUID]
     ,[ScheduleID]
     ,[TaskID]
-    ,[ServerID]
+    ,[ServerID]	
+	,[Inserted]
     ,[LastUpdate]
-    ,[Status])
+    ,[Status]
+	,[ReturnCode])
 VALUES
     (
     @GUID
     ,@ScheduleID
     ,@TaskID
     ,@ServerID
+	,@Inserted
     ,@LastUpdate
-    ,@Status)
+    ,@Status
+	,@ReturnCode);

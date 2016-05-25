@@ -12,9 +12,9 @@ namespace YoctoScheduler.Core
         Idle = 100,
         Starting = 200,
         Running = 300,
-        CompletedSuccessfully = 1000,
-        CompletedWithFailure = -2000,
-        CompletedWithException = -3000,
+        Completed = 1000,
+        Aborted = -2000,
+        Exception = -3000,
         Dead = -100
     }
 }

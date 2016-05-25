@@ -4,7 +4,7 @@
 	,[Priority]
 	,[ScheduleID]
 	,[InsertDate]
-FROM [live].[ExecutionQueue] WITH (XLOCK)
+FROM [live].[ExecutionQueue] WITH (TABLOCKX)
 ORDER BY 
 	[Priority] DESC,
 	[InsertDate] DESC;
