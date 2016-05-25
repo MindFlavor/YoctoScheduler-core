@@ -13,21 +13,27 @@ namespace YoctoScheduler.Core
     {
         private static readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(Task));
 
-        public Task() : base() { }
+        public bool ReenqueueOnDead { get; set; }
+
+        public Task(bool ReenqueueOnDead) : base()
+        {
+            this.ReenqueueOnDead = ReenqueueOnDead;
+        }
 
         public override string ToString()
         {
-            return string.Format("{0:S}[{1:S}]",
+            return string.Format("{0:S}[{1:S}, ReenqueueOnDead={2:S}]",
                 this.GetType().FullName,
-                base.ToString());
+                base.ToString(),
+                ReenqueueOnDead.ToString());
         }
 
-        public static Task New(SqlConnection conn)
+        public static Task New(SqlConnection conn,SqlTransaction trans,  bool ReenqueueOnDead )
         {
             #region Database entry
-            var task = new Task();
+            var task = new Task(ReenqueueOnDead);
 
-            using (SqlCommand cmd = new SqlCommand(tsql.Extractor.Get("Task.New"), conn))
+            using (SqlCommand cmd = new SqlCommand(tsql.Extractor.Get("Task.New"), conn, trans))
             {
                 task.PopolateParameters(cmd);
 
@@ -42,7 +48,9 @@ namespace YoctoScheduler.Core
         }
         protected internal void PopolateParameters(SqlCommand cmd)
         {
-            // nothing to do right now
+            SqlParameter param = new SqlParameter("@ReenqueueOnDead", System.Data.SqlDbType.Bit);
+            param.Value = ReenqueueOnDead;
+            cmd.Parameters.Add(param);
         }
 
         public override void PersistChanges(SqlConnection conn, SqlTransaction trans)
@@ -76,7 +84,7 @@ namespace YoctoScheduler.Core
 
         protected static Task ParseFromDataReader(SqlDataReader r)
         {
-            return new Task()
+            return new Task(r.GetBoolean(1))
             {
                 ID = r.GetInt32(0)
             };

@@ -217,10 +217,17 @@ namespace YoctoScheduler.Core
                             // insert into dead table 
                             var des = DeadExecutionStatus.New(conn, trans, les, Status.Dead, null);
 
-                            log.InfoFormat("Setting LiveExecutionStatus {0:S} as dead", les.ToString());
+                            log.WarnFormat("Setting LiveExecutionStatus {0:S} as dead", les.ToString());
                             // remove from live table
                             les.Delete(conn, trans);
 
+                            // if required, reenqueue
+                            var task = Task.RetrieveByID(conn, trans, les.TaskID);
+                            if (task.ReenqueueOnDead)
+                            {
+                                log.InfoFormat("Reenqueuing {0:S} as requested", task.ToString());
+                                ExecutionQueueItem.New(conn, trans, task.ID, Priority.Normal, les.ScheduleID);
+                            }                            
                         }
 
                         trans.Commit();

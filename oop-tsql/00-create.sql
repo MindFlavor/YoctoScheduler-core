@@ -24,6 +24,7 @@ GO
 
 CREATE TABLE [live].[Tasks](
 	[TaskID] INT IDENTITY(1,1) NOT NULL,
+	[ReenqueueOnDead] BIT NOT NULL
  CONSTRAINT [PK_Tasks] PRIMARY KEY CLUSTERED 
 (
 	[TaskID] ASC
@@ -39,6 +40,7 @@ CREATE TABLE [live].[Schedules](
 (
 	[ScheduleID] ASC
 ));
+
 GO
 ALTER TABLE [live].[Schedules]  WITH CHECK ADD  CONSTRAINT [FK_Schedules.Tasks_TaskID] FOREIGN KEY([TaskID])
 REFERENCES [live].[Tasks] ([TaskID])
@@ -124,7 +126,6 @@ GO
 
 ALTER TABLE [dead].[ExecutionStatus] CHECK CONSTRAINT [FK_dExecutionStatus_Schedule_ScheduleID]
 GO
-
 
 
 CREATE TABLE [live].[ExecutionQueue] (

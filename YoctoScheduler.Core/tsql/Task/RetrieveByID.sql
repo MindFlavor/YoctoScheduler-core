@@ -1,3 +1,6 @@
-﻿SELECT [TaskID] FROM [live].[Tasks] 
+﻿SELECT 
+	[TaskID]
+	,[ReenqueueOnDead]
+	FROM [live].[Tasks] 
 WHERE 
 	[TaskID] = @id;

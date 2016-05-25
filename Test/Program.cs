@@ -55,7 +55,12 @@ namespace Test
                     switch (tokens[0])
                     {
                         case "new_task":
-                            CreateTask();
+                            if (tokens.Length < 2)
+                            {
+                                Console.WriteLine("Syntax error, must specify if the task must be restarted in case determined dead");
+                                continue;
+                            }
+                            CreateTask(bool.Parse(tokens[1]));
                             break;
                         case "new_execution":
                             if (tokens.Length < 2)
@@ -141,13 +146,17 @@ namespace Test
             }
         }
 
-        static void CreateTask()
+        static void CreateTask(bool ReenqueueOnDead)
         {
             YoctoScheduler.Core.Task task;
             using (System.Data.SqlClient.SqlConnection conn = new System.Data.SqlClient.SqlConnection(System.Configuration.ConfigurationManager.ConnectionStrings["YoctoScheduler"].ConnectionString))
             {
                 conn.Open();
-                task = YoctoScheduler.Core.Task.New(conn);
+                using (var trans = conn.BeginTransaction())
+                {
+                    task = YoctoScheduler.Core.Task.New(conn, trans, ReenqueueOnDead);
+                    trans.Commit();
+                }
             }
             log.InfoFormat("Created task {0:S}", task.ToString());
         }
@@ -171,7 +180,6 @@ namespace Test
         }
 
         static void CreateSchedule(int taskId, bool enabled, string cron)
-
         {
             Schedule sched;
             using (System.Data.SqlClient.SqlConnection conn = new System.Data.SqlClient.SqlConnection(System.Configuration.ConfigurationManager.ConnectionStrings["YoctoScheduler"].ConnectionString))

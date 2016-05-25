@@ -1,3 +1,7 @@
-﻿INSERT INTO [live].[Tasks] 
+﻿INSERT INTO [live].[Tasks] (
+	[ReenqueueOnDead]
+	)
 OUTPUT [INSERTED].[TaskID]
-DEFAULT VALUES;
+VALUES(
+        @ReenqueueOnDead
+    )
