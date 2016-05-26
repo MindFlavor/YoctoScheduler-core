@@ -16,6 +16,8 @@ CREATE TABLE [live].[Servers](
 	[Status] INT NOT NULL,
 	[Description] NVARCHAR(MAX) NULL,
 	[LastPing] DATETIME NOT NULL,
+	[HostName] NVARCHAR(MAX) NOT NULL,
+	[IPs] XML NOT NULL
  CONSTRAINT [PK_Servers] PRIMARY KEY CLUSTERED 
 (
 	[ServerID] ASC
@@ -192,6 +194,11 @@ INSERT INTO [configuration].[General]([Item], [Value]) VALUES('TASK_MAXIMUM_UPDA
 INSERT INTO [configuration].[General]([Item], [Value]) VALUES('SERVER_MAXIMUM_UPDATE_LAG_MS',				5 * 60 * 1000); -- 5 minutes
 
 INSERT INTO [configuration].[General]([Item], [Value]) VALUES('WATCHDOG_SLEEP_MS',								2 * 1000);  -- 2 seconds
+GO
 ----------------
 USE [master];
 GO
+
+-- for Azure DB
+--CREATE USER fagiolo WITH PASSWORD='10CottoEMangiato';
+--EXEC sp_addrolemember 'db_owner', 'fagiolo'

@@ -22,6 +22,10 @@ namespace YoctoScheduler.Core
 
         public string ConnectionString { get; set; }
 
+        public string HostName { get; set; }
+
+        public List<string> IPs { get; set; }
+
         public Server(string ConnectionString) : base()
         {
             if (Configuration == null)
@@ -29,17 +33,26 @@ namespace YoctoScheduler.Core
 
             LastScheduleCheck = DateTime.Now;
             this.ConnectionString = ConnectionString;
+            this.HostName = System.Net.Dns.GetHostName();
+
+            this.IPs = new List<string>();
+            foreach(var ip in System.Net.Dns.GetHostAddresses(System.Net.Dns.GetHostName()))
+            {
+                IPs.Add(ip.ToString());
+            }
         }
 
         public override string ToString()
         {
-            return string.Format("{0:S}[{1:S}, Status={2:S}, Description=\"{3:S}\", LastPing={4:S}, LastScheduleCheck={5:S}]",
+            return string.Format("{0:S}[{1:S}, Status={2:S}, Description=\"{3:S}\", LastPing={4:S}, LastScheduleCheck={5:S}, HostName={6:S}, IPs=[{7:S}]]",
                 this.GetType().FullName,
                 base.ToString(),
                 Status.ToString(),
                 Description,
                 LastPing.ToString(LOG_TIME_FORMAT),
-                LastScheduleCheck.ToString(LOG_TIME_FORMAT));
+                LastScheduleCheck.ToString(LOG_TIME_FORMAT),
+                HostName,
+                string.Join(", ", IPs));
         }
 
         public static Server New(SqlConnection conn, SqlTransaction trans, string connectionString, string Description)
@@ -130,6 +143,26 @@ namespace YoctoScheduler.Core
 
             param = new SqlParameter("@description", System.Data.SqlDbType.NVarChar, -1);
             param.Value = Description;
+            cmd.Parameters.Add(param);
+
+            param = new SqlParameter("@HostName", System.Data.SqlDbType.NVarChar, -1);
+            param.Value = HostName;
+            cmd.Parameters.Add(param);
+
+            param = new SqlParameter("@IPs", System.Data.SqlDbType.Xml, -1);
+            #region Prepare XML
+            System.Xml.XmlDocument doc = new System.Xml.XmlDocument();
+            var nRoot = doc.CreateElement("IPs");
+            doc.AppendChild(nRoot);
+
+            foreach(var ip in IPs)
+            {
+                var nElem = doc.CreateElement("IP");
+                nElem.InnerText = ip;
+                nRoot.AppendChild(nElem);
+            }
+            #endregion
+            param.Value = doc.InnerXml;
             cmd.Parameters.Add(param);
 
             param = new SqlParameter("@lastping", System.Data.SqlDbType.DateTime);
