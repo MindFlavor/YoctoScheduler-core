@@ -56,9 +56,9 @@ The test client accepts simple commands. The output will be garbled as the log g
 You can add a new task with
 
 ```
-new_task
+new_task true|false
 ```
-
+The parameter specifies if the task should be re-enqueued in case declared dead.
 If successful the output will tell you the task ID.
 
 ### Schedule

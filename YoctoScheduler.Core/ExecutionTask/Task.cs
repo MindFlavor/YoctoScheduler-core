@@ -49,20 +49,6 @@ namespace YoctoScheduler.Core.ExecutionTask
             tExecution.Abort();
             tExecution.Join();
             tExecution = null;
-
-            #region set the execution as aborted
-            using (SqlConnection conn = new SqlConnection(Server.ConnectionString))
-            {
-                conn.Open();
-                using (var trans = conn.BeginTransaction())
-                {
-                    var d = DeadExecutionStatus.New(conn, trans, LiveExecutionStatus, Status.Aborted, null);
-                    LiveExecutionStatus.Delete(conn, trans);
-
-                    trans.Commit();
-                }
-            }
-            #endregion
         }
 
         protected void WatchdogThread()
@@ -98,6 +84,9 @@ namespace YoctoScheduler.Core.ExecutionTask
         {
             try
             {
+                // register this task so it can be interrupted by proper message sent to the server
+                Server.RegisterTask(this);
+
                 log.DebugFormat("Excecution thread started");
                 string retVal = Do();
                 fRunning = false;
@@ -117,8 +106,28 @@ namespace YoctoScheduler.Core.ExecutionTask
                 #endregion
 
             }
+            catch (ThreadAbortException tae)
+            {
+                log.InfoFormat("Excecution thread aborted: {0:S}", tae.ToString());
+                fRunning = false;
+
+                #region set the execution as aborted
+                using (SqlConnection conn = new SqlConnection(Server.ConnectionString))
+                {
+                    conn.Open();
+                    using (var trans = conn.BeginTransaction())
+                    {
+                        var d = DeadExecutionStatus.New(conn, trans, LiveExecutionStatus, Status.Aborted, null);
+                        LiveExecutionStatus.Delete(conn, trans);
+
+                        trans.Commit();
+                    }
+                }
+                #endregion
+            }
             catch (Exception exce)
             {
+                log.WarnFormat("Excecution thread exceptioned: {0:S}", exce.ToString());
                 fRunning = false;
 
                 #region Set as exceptioned
@@ -134,6 +143,14 @@ namespace YoctoScheduler.Core.ExecutionTask
                     }
                 }
                 #endregion
+            }
+            finally
+            {
+                // not really needed, added to be foolproof
+                fRunning = false;
+
+                // deregister itself from server
+                Server.DeregisterTask(this);
             }
         }
 

@@ -13,6 +13,8 @@ SELECT 'live', * FROM [YoctoScheduler].[live].[ExecutionStatus];
 SELECT 'dead' ,* FROM [YoctoScheduler].[dead].[ExecutionStatus];
 SELECT * FROM [YoctoScheduler].[live].[Schedules];
 
+SELECT * FROM [YoctoScheduler].[commands].[Server];
+
 --DELETE FROM [YoctoScheduler].[live].[ExecutionQueue];
 --DELETE FROM [YoctoScheduler].[live].[ExecutionStatus];
 --DELETE FROM [YoctoScheduler].[live].[Servers];

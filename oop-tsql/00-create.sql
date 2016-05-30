@@ -1,3 +1,9 @@
+IF EXISTS(SELECT * FROM sys.databases WHERE name = 'YoctoScheduler')
+BEGIN
+	DROP DATABASE [YoctoScheduler];
+END
+GO
+
 CREATE DATABASE [YoctoScheduler];
 GO
 USE [YoctoScheduler];
@@ -9,6 +15,8 @@ GO
 CREATE SCHEMA [lookup];
 GO
 CREATE SCHEMA [configuration];
+GO
+CREATE SCHEMA [commands];
 GO
 
 CREATE TABLE [live].[Servers](
@@ -180,7 +188,26 @@ CREATE TABLE [configuration].[General] (
 	[Item]
 ));
 GO
+------------------------------------------------------
+------------------- Server commands-------------------
+------------------------------------------------------
+CREATE TABLE [commands].[Server] (
+	[ID]		INT IDENTITY(1,1)
+	,[ServerID]	INT					NOT NULL
+	,[Command]	INT					NOT NULL
+	,[Payload]	NVARCHAR(MAX)		NULL
+ CONSTRAINT [PK_ServerCommands] PRIMARY KEY CLUSTERED 
+(
+	[ID]
+));
 
+ALTER TABLE [commands].[Server]  WITH CHECK ADD CONSTRAINT [FK_commandsServer_Servers_ServerID] FOREIGN KEY([ServerID])
+REFERENCES [live].[Servers] ([ServerID])
+ON DELETE CASCADE;
+GO
+
+CREATE NONCLUSTERED INDEX idx_commandsServer_ServerID ON [commands].[Server](ServerID);
+GO
 ------------------------------------------------------
 ------------------- Default values -------------------
 ------------------------------------------------------
@@ -189,11 +216,15 @@ INSERT INTO [configuration].[General]([Item], [Value]) VALUES('SERVER_POLL_DISAB
 INSERT INTO [configuration].[General]([Item], [Value]) VALUES('SERVER_POLL_DISABLE_DEAD_TASKS_SLEEP_MS',	1 * 10 * 1000); -- 10 seconds
 INSERT INTO [configuration].[General]([Item], [Value]) VALUES('SERVER_POLL_TASK_QUEUE_SLEEP_MS',			1 * 01 * 1000); -- 1 second
 INSERT INTO [configuration].[General]([Item], [Value]) VALUES('SERVER_POLL_TASK_SCHEDULER_SLEEP_MS',		1 * 10 * 1000); -- 10 seconds
+INSERT INTO [configuration].[General]([Item], [Value]) VALUES('SERVER_POLL_COMMANDS_SLEEP_MS',				1 * 03 * 1000); -- 3 seconds
 
 INSERT INTO [configuration].[General]([Item], [Value]) VALUES('TASK_MAXIMUM_UPDATE_LAG_MS',					1 * 60 * 1000); -- one minute
 INSERT INTO [configuration].[General]([Item], [Value]) VALUES('SERVER_MAXIMUM_UPDATE_LAG_MS',				5 * 60 * 1000); -- 5 minutes
 
 INSERT INTO [configuration].[General]([Item], [Value]) VALUES('WATCHDOG_SLEEP_MS',								2 * 1000);  -- 2 seconds
+
+
+
 GO
 ----------------
 USE [master];

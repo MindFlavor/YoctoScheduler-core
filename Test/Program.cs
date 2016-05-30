@@ -70,6 +70,15 @@ namespace Test
                             }
                             CreateExecution(int.Parse(tokens[1]));
                             break;
+                        case "new_command":
+                            if (tokens.Length < 4)
+                            {
+                                Console.WriteLine("Syntax error, must specify a valid server id, a command id and a payload");
+                                continue;
+                            }
+                            CreateCommand(int.Parse(tokens[1]), int.Parse(tokens[2]), string.Join(" ", tokens.Skip(3)));
+                            break;
+
                         case "new_schedule":
                             if (tokens.Length < 4)
                             {
@@ -129,6 +138,8 @@ namespace Test
                             Console.WriteLine("\tnew_schedule <task_id> <cron expression>");
                             Console.WriteLine("\tnew_secret <thumbprint> <string to encrypt");
                             Console.WriteLine("\tget_secret <secret_id>");
+                            Console.WriteLine("\tnew_command <server_id> <command> <payload>");
+
                             Console.WriteLine("\tquit");
                             Console.WriteLine("\thelp");
                             break;
@@ -144,6 +155,23 @@ namespace Test
                     log.ErrorFormat("Exception: " + e.ToString());
                 }
             }
+        }
+
+        static void CreateCommand(int serverID, int command, string payload)
+        {
+            YoctoScheduler.Core.Commands.Command cmd = (YoctoScheduler.Core.Commands.Command)command;
+            YoctoScheduler.Core.Commands.GenericCommand gc;
+
+            using (System.Data.SqlClient.SqlConnection conn = new System.Data.SqlClient.SqlConnection(System.Configuration.ConfigurationManager.ConnectionStrings["YoctoScheduler"].ConnectionString))
+            {
+                conn.Open();
+                using (var trans = conn.BeginTransaction())
+                {
+                    gc = YoctoScheduler.Core.Commands.GenericCommand.New(conn, trans, serverID, cmd, payload);
+                    trans.Commit();
+                }
+            }
+            log.InfoFormat("Created command {0:S}", gc.ToString());
         }
 
         static void CreateTask(bool ReenqueueOnDead)

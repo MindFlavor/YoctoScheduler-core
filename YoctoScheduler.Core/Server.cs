@@ -26,6 +26,30 @@ namespace YoctoScheduler.Core
 
         public List<string> IPs { get; set; }
 
+        public System.Collections.Concurrent.ConcurrentDictionary<Guid, YoctoScheduler.Core.ExecutionTask.Task> _liveTasks = new System.Collections.Concurrent.ConcurrentDictionary<Guid, YoctoScheduler.Core.ExecutionTask.Task>();
+
+        public void RegisterTask(YoctoScheduler.Core.ExecutionTask.Task task)
+        {
+            log.DebugFormat("Server {0:S} registering task {1:S}", this.ToString(), task.ToString());
+            if (!_liveTasks.TryAdd(task.LiveExecutionStatus.GUID, task))
+            {
+                log.WarnFormat("Registration failed for server {0:S}, task {1:S}", this.ToString(), task.ToString());
+                throw new Exceptions.ConcurrencyException(string.Format("LiveExecutionStatus with GUID {0:S} already found in _liveTasks", task.LiveExecutionStatus.GUID.ToString()));
+            }
+        }
+
+        public void DeregisterTask(YoctoScheduler.Core.ExecutionTask.Task task)
+        {
+            YoctoScheduler.Core.ExecutionTask.Task t;
+
+            log.DebugFormat("Server {0:S} deregistering task {1:S}", this.ToString(), task.ToString());
+            if (!_liveTasks.TryRemove(task.LiveExecutionStatus.GUID, out t))
+            {
+                log.WarnFormat("Deregistration failed for server {0:S}, task {1:S}", this.ToString(), task.ToString());
+                throw new Exceptions.ConcurrencyException(string.Format("LiveExecutionStatus with GUID {0:S} not found in _liveTasks", task.LiveExecutionStatus.GUID.ToString()));
+            }
+        }
+
         public Server(string ConnectionString) : base()
         {
             if (Configuration == null)
@@ -36,7 +60,7 @@ namespace YoctoScheduler.Core
             this.HostName = System.Net.Dns.GetHostName();
 
             this.IPs = new List<string>();
-            foreach(var ip in System.Net.Dns.GetHostAddresses(System.Net.Dns.GetHostName()))
+            foreach (var ip in System.Net.Dns.GetHostAddresses(System.Net.Dns.GetHostName()))
             {
                 IPs.Add(ip.ToString());
             }
@@ -44,7 +68,7 @@ namespace YoctoScheduler.Core
 
         public override string ToString()
         {
-            return string.Format("{0:S}[{1:S}, Status={2:S}, Description=\"{3:S}\", LastPing={4:S}, LastScheduleCheck={5:S}, HostName={6:S}, IPs=[{7:S}]]",
+            return string.Format("{0:S}[{1:S}, Status={2:S}, Description=\"{3:S}\", LastPing={4:S}, LastScheduleCheck={5:S}, HostName={6:S}, IPs=[{7:S}, _liveTasks.Count={8:N0}]]",
                 this.GetType().FullName,
                 base.ToString(),
                 Status.ToString(),
@@ -52,7 +76,8 @@ namespace YoctoScheduler.Core
                 LastPing.ToString(LOG_TIME_FORMAT),
                 LastScheduleCheck.ToString(LOG_TIME_FORMAT),
                 HostName,
-                string.Join(", ", IPs));
+                string.Join(", ", IPs),
+                _liveTasks.Count);
         }
 
         public static Server New(SqlConnection conn, SqlTransaction trans, string connectionString, string Description)
@@ -113,6 +138,14 @@ namespace YoctoScheduler.Core
             t.Start();
             #endregion
 
+            #region commands thread
+            t = new Thread(new ThreadStart(server.CommandsThread));
+            t.IsBackground = true;
+            log.DebugFormat("{0:S} - Starting server commands thread", server.ToString());
+            t.Start();
+            #endregion
+
+
             #region Set server as running
             log.DebugFormat("{0:S} - Setting server as running", server.ToString());
             server.Status = Status.Running;
@@ -155,7 +188,7 @@ namespace YoctoScheduler.Core
             var nRoot = doc.CreateElement("IPs");
             doc.AppendChild(nRoot);
 
-            foreach(var ip in IPs)
+            foreach (var ip in IPs)
             {
                 var nElem = doc.CreateElement("IP");
                 nElem.InnerText = ip;
@@ -260,7 +293,7 @@ namespace YoctoScheduler.Core
                             {
                                 log.InfoFormat("Reenqueuing {0:S} as requested", task.ToString());
                                 ExecutionQueueItem.New(conn, trans, task.ID, Priority.Normal, les.ScheduleID);
-                            }                            
+                            }
                         }
 
                         trans.Commit();
@@ -281,7 +314,7 @@ namespace YoctoScheduler.Core
                     using (SqlTransaction trans = conn.BeginTransaction(System.Data.IsolationLevel.Serializable))
                     {
                         var lToStart = ExecutionQueueItem.GetAndLockFirst(conn, trans);
-                        if(lToStart != null)
+                        if (lToStart != null)
                         {
                             log.DebugFormat("Starting enqueued task {0:S}", lToStart.ToString());
 
@@ -354,6 +387,58 @@ namespace YoctoScheduler.Core
                 LastScheduleCheck = DateTime.Now;
 
                 Thread.Sleep(int.Parse(Configuration["SERVER_POLL_TASK_SCHEDULER_SLEEP_MS"]));
+            }
+        }
+
+        protected void CommandsThread()
+        {
+            while (true)
+            {
+                log.DebugFormat("{0:S} - Check for server commands", this.ToString());
+
+                List<Commands.GenericCommand> commands = null;
+
+                using (SqlConnection conn = new SqlConnection(ConnectionString))
+                {
+                    conn.Open();
+                    using (SqlTransaction trans = conn.BeginTransaction(System.Data.IsolationLevel.ReadCommitted))
+                    {
+                        commands = Commands.GenericCommand.DequeueByServerID(conn, trans, this.ID);
+                        trans.Commit();
+                    }
+                }
+
+                if (commands.Count > 0)
+                {
+                    // process commands
+                    log.InfoFormat("Retrieved {0:N0} commands", commands.Count);
+                    foreach (var cmd in commands)
+                    {
+                        if (cmd is Commands.KillExecutionTask)
+                        {
+                            Commands.KillExecutionTask kt = (Commands.KillExecutionTask)cmd;
+                            log.InfoFormat("Kill task requested (LiveExecutionStatusGUID = {0:S}", kt.LiveExecutionStatusGUID.ToString());
+
+                            // get the LiveExecutionStatus and request the kill. 
+                            // Do not remove it from the list here as it will be done by the task once dead.
+                            YoctoScheduler.Core.ExecutionTask.Task t;
+                            if (!_liveTasks.TryGetValue(kt.LiveExecutionStatusGUID, out t))
+                            {
+                                log.WarnFormat("LiveExecutionStatusGUID == {0:S} not found. Maybe it's already dead?", kt.LiveExecutionStatusGUID.ToString());
+                            }
+                            else
+                            {
+                                t.Abort();
+                            }
+                        }
+                        else if (cmd is Commands.RestartServer)
+                        {
+                            log.WarnFormat("Restart server requested");
+                        }
+                    }
+                }
+
+                Thread.Sleep(int.Parse(Configuration["SERVER_POLL_COMMANDS_SLEEP_MS"]));
             }
         }
     }
