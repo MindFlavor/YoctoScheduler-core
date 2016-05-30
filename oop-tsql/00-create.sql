@@ -170,12 +170,12 @@ GO
 --------------------------
 
 CREATE TABLE [lookup].[Secret] (
-	[SecretID]		INT IDENTITY(1,1),
+	[SecretName]	NVARCHAR(255),
 	[Blob]			VARBINARY(MAX),
 	[Thumbprint]	CHAR(40),
  CONSTRAINT [PK_Secret] PRIMARY KEY CLUSTERED 
 (
-	[SecretID]
+	[SecretName]
 ));
 GO
 

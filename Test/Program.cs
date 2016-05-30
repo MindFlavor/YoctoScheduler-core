@@ -89,19 +89,19 @@ namespace Test
 
                             break;
                         case "new_secret":
-                            if (tokens.Length < 2)
+                            if (tokens.Length < 3)
                             {
-                                Console.WriteLine("Syntax error, must specify a valid certificate thumbprint and something to encrypt");
+                                Console.WriteLine("Syntax error, must specify a secret name, a valid certificate thumbprint and something to encrypt");
                                 continue;
                             }
 
-                            string sToEnc = string.Join(" ", tokens.Skip(2));
+                            string sToEnc = string.Join(" ", tokens.Skip(3));
                             using (System.Data.SqlClient.SqlConnection conn = new System.Data.SqlClient.SqlConnection(System.Configuration.ConfigurationManager.ConnectionStrings["YoctoScheduler"].ConnectionString))
                             {
                                 conn.Open();
                                 using (var trans = conn.BeginTransaction())
                                 {
-                                    var secret = YoctoScheduler.Core.Secret.New(conn, trans, tokens[1], sToEnc);
+                                    var secret = YoctoScheduler.Core.Secret.New(conn, trans, tokens[1], tokens[2], sToEnc);
                                     trans.Commit();
 
                                     log.InfoFormat("Created secret {0:S}", secret.ToString());
@@ -111,7 +111,7 @@ namespace Test
                         case "get_secret":
                             if (tokens.Length < 2)
                             {
-                                Console.WriteLine("Syntax error, must specify a valid secret ID");
+                                Console.WriteLine("Syntax error, must specify a valid secret name");
                                 continue;
                             }
 
@@ -120,7 +120,7 @@ namespace Test
                                 conn.Open();
                                 using (var trans = conn.BeginTransaction())
                                 {
-                                    var secret = YoctoScheduler.Core.Secret.RetrieveByID(conn, trans, int.Parse(tokens[1]));
+                                    var secret = YoctoScheduler.Core.Secret.RetrieveByID(conn, trans, tokens[1]);
                                     trans.Commit();
 
                                     log.InfoFormat("Retrieved secret {0:S}. Plain text is = \"{1:S}\".", secret.ToString(), secret.PlainTextValue);

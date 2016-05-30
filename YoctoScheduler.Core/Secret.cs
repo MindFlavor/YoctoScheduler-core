@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace YoctoScheduler.Core
 {
-    public class Secret : DatabaseItemWithIntPK
+    public class Secret : DatabaseItemWithNVarCharPK
     {
         private static readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(Secret));
 
@@ -37,20 +37,25 @@ namespace YoctoScheduler.Core
         }
         public string Thumbprint { get; set; }
 
-        public Secret(string Thumbprint)
+        public Secret(string name, string Thumbprint)
         {
+            this.ID = name;
             this.Thumbprint = Thumbprint;
         }
 
-        public static Secret New(SqlConnection conn, SqlTransaction trans, string thumbprint, string plainTextValue)
+        public static Secret New(SqlConnection conn, SqlTransaction trans, string name, string thumbprint, string plainTextValue)
         {
-            Secret es = new Secret(thumbprint) { PlainTextValue = plainTextValue };
+            Secret es = new Secret(name, thumbprint) { PlainTextValue = plainTextValue };
 
             #region Database entry
             using (SqlCommand cmd = new SqlCommand(tsql.Extractor.Get("Secret.New"), conn, trans))
             {
                 es.PopolateParameters(cmd);
-                es.ID = (int)cmd.ExecuteScalar();
+                int iRet = cmd.ExecuteNonQuery();
+                if (iRet != 1)
+                {
+                    throw new Exception(string.Format("Failed to create a new Secret. Modified rows are {0:N0}.", iRet));
+                }
             }
             #endregion
             log.DebugFormat("Created Secret {0:S}", es.ToString());
@@ -67,34 +72,19 @@ namespace YoctoScheduler.Core
             param.Value = Thumbprint;
             cmd.Parameters.Add(param);
 
-            if (HasValidID())
-            {
-                param = new SqlParameter("@SecretID", System.Data.SqlDbType.Int);
-                param.Value = ID;
-                cmd.Parameters.Add(param);
-            }
+            param = new SqlParameter("@SecretName", System.Data.SqlDbType.NVarChar, 255);
+            param.Value = ID;
+            cmd.Parameters.Add(param);
         }
 
-        public override void PersistChanges(SqlConnection conn, SqlTransaction trans)
-        {
-            #region Database entry
-            using (SqlCommand cmd = new SqlCommand(tsql.Extractor.Get("Secret.PersistChanges"), conn, trans))
-            {
-                PopolateParameters(cmd);
-                cmd.ExecuteNonQuery();
-            }
-            #endregion
-            log.DebugFormat("Updated Secret {0:S}", this.ToString());
-        }
-
-        public static Secret RetrieveByID(SqlConnection conn, SqlTransaction trans, int ID)
+        public static Secret RetrieveByID(SqlConnection conn, SqlTransaction trans, string SecretName)
         {
             Secret secret;
 
             using (SqlCommand cmd = new SqlCommand(tsql.Extractor.Get("Secret.RetrieveByID"), conn, trans))
             {
-                SqlParameter param = new SqlParameter("@SecretID", System.Data.SqlDbType.Int);
-                param.Value = ID;
+                SqlParameter param = new SqlParameter("@SecretName", System.Data.SqlDbType.NVarChar, 255);
+                param.Value = SecretName;
                 cmd.Parameters.Add(param);
 
                 cmd.Prepare();
@@ -102,7 +92,7 @@ namespace YoctoScheduler.Core
                 using (SqlDataReader reader = cmd.ExecuteReader())
                 {
                     if (!reader.Read())
-                        return null;
+                        throw new Exceptions.SecretNotFoundException(SecretName);
                     secret = ParseFromDataReader(reader);
                 }
 
@@ -113,10 +103,9 @@ namespace YoctoScheduler.Core
 
         protected static Secret ParseFromDataReader(SqlDataReader r)
         {
-            return new Secret(r.GetString(2))
+            return new Secret(r.GetString(0), r.GetString(2))
             {
-                ID = r.GetInt32(0),
-                EncryptedValue = (byte[])r.GetValue(1)                
+                EncryptedValue = (byte[])r.GetValue(1)
             };
         }
 
@@ -137,6 +126,11 @@ namespace YoctoScheduler.Core
             return string.Format("{0:S}[{1:S}, Thumbprint={2:S}, EncryptedValue={3:S}]",
                 this.GetType().FullName,
                 base.ToString(), Thumbprint, EncryptedValue);
+        }
+
+        public override void PersistChanges(SqlConnection conn, SqlTransaction trans)
+        {
+            throw new NotImplementedException();
         }
     }
 }

@@ -10,7 +10,7 @@ namespace YoctoScheduler.Core.ExecutionTask
     {
         private static readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(MockTask));
 
-        public MockTask(Server Server, LiveExecutionStatus LiveExecutionStatus) : base(Server, LiveExecutionStatus)
+        public MockTask(Server Server, string configPayload, LiveExecutionStatus LiveExecutionStatus) : base(Server, configPayload, LiveExecutionStatus)
         {
         }
 
@@ -21,6 +21,11 @@ namespace YoctoScheduler.Core.ExecutionTask
             log.DebugFormat("Do() returing Ok!");
 
             return "Ok!";
+        }
+
+        public override void ValidateConfiguration()
+        {
+            // nothing to do
         }
     }
 }

@@ -1,5 +1,4 @@
 ﻿INSERT INTO [lookup].[Secret]
-           ([Blob], [Thumbprint])
-	OUTPUT [INSERTED].[SecretID]    
+           ([SecretName], [Blob], [Thumbprint])
     VALUES
-           (@Blob, @Thumbprint);
+           (@SecretName, @Blob, @Thumbprint);

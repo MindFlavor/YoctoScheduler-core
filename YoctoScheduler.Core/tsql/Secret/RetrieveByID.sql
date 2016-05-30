@@ -1,8 +1,8 @@
 ﻿SELECT
-		[SecretID]
+		[SecretName]
 		,[Blob]
 		,[Thumbprint]
   FROM	
 		[lookup].[Secret]
   WHERE 
-		[SecretID] = @SecretID;
+		[SecretName] = @SecretName;

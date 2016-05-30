@@ -66,10 +66,12 @@
     <Compile Include="DatabaseItem.cs" />
     <Compile Include="DatabaseItemWithGUIDPK.cs" />
     <Compile Include="DatabaseItemWithIntPK.cs" />
+    <Compile Include="DatabaseItemWithNVarCharPK.cs" />
     <Compile Include="DeadExecutionStatus.cs" />
     <Compile Include="Exceptions\ConcurrencyException.cs" />
     <Compile Include="Exceptions\ConfigurationNotInitializedException.cs" />
     <Compile Include="Exceptions\ElementNotFoundException.cs" />
+    <Compile Include="Exceptions\SecretNotFoundException.cs" />
     <Compile Include="Exceptions\ServerNotFoundException.cs" />
     <Compile Include="Exceptions\TaskNotFoundException.cs" />
     <Compile Include="Exceptions\TSQLNotFoundException.cs" />
@@ -143,9 +145,6 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="tsql\Secret\New.sql" />
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="tsql\Secret\PersistChanges.sql" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="tsql\Secret\RetrieveByID.sql" />

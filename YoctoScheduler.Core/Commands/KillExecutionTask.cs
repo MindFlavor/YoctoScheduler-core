@@ -18,7 +18,7 @@ namespace YoctoScheduler.Core.Commands
             }
             catch (Exception e)
             {
-                throw new FormatException("Cannot parse KillTask from Payload. It must be a number", e);
+                throw new FormatException("Cannot parse KillTask from Payload. It must be a GUID", e);
             }
         }
     }

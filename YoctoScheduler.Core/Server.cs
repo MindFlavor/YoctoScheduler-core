@@ -323,7 +323,7 @@ namespace YoctoScheduler.Core
 
                             // start the execution
                             // TODO this is just a mockup
-                            var wd = ExecutionTask.Factory.NewTask(this, les);
+                            var wd = ExecutionTask.Factory.NewTask(this, "type_to_read_from_db", "config_to_read_from_db", les);
                             wd.Start();
                             log.InfoFormat("Started live execution status {0:S}", les.ToString());
 

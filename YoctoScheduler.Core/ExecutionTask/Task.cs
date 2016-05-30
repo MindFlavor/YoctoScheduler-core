@@ -19,12 +19,23 @@ namespace YoctoScheduler.Core.ExecutionTask
 
         protected bool fRunning;
 
+        protected string configPayload { get; set; }
+
         public LiveExecutionStatus LiveExecutionStatus { get; protected set; }
 
-        public Task(Server Server, LiveExecutionStatus LiveExecutionStatus)
+        public Task(Server Server, string configPayload, LiveExecutionStatus LiveExecutionStatus)
         {
             this.Server = Server;
+            this.configPayload = configPayload;
             this.LiveExecutionStatus = LiveExecutionStatus;
+
+            this.ValidateConfiguration();
+        }
+
+        public Task(Server server, LiveExecutionStatus liveExecutionStatus)
+        {
+            Server = server;
+            LiveExecutionStatus = liveExecutionStatus;
         }
 
         public override string ToString()
@@ -39,6 +50,9 @@ namespace YoctoScheduler.Core.ExecutionTask
 
         public void Start()
         {
+            if (LiveExecutionStatus == null)
+                throw new FormatException("Cannot start a non live task (ie with null as LiveExecutionStatus)");
+
             tWatchdog = new Thread(new ThreadStart(WatchdogThread));
             tWatchdog.IsBackground = true;
             tWatchdog.Start();
@@ -46,6 +60,9 @@ namespace YoctoScheduler.Core.ExecutionTask
 
         public void Abort()
         {
+            if(!IsAlive())
+                throw new Exception("Cannot abort a non live task");
+
             tExecution.Abort();
             tExecution.Join();
             tExecution = null;
@@ -160,5 +177,10 @@ namespace YoctoScheduler.Core.ExecutionTask
         }
 
         public abstract string Do();
+
+        // This should throw an exception in case of problems
+        // ie. NumberFormatException if a number cannot be parsed from a string with 
+        // message like "Cannot convert the parameter to a number"
+        public abstract void ValidateConfiguration();
     }
 }
