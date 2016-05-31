@@ -48,7 +48,12 @@ As now the ```Test console``` project is just a demo server with a tiny command 
 
 See the specific section: [configuration](docs/configuration.md).
 
+## Interaction
+
+Check out the [REST API reference](rest/rest.md), the command line tool is just for debugging purposes.
+
 ## Testing
+
 
 The test client accepts simple commands. The output will be garbled as the log goes there too. To test a schedule you have to create a task first and then schedule it.
 
