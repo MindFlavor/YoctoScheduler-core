@@ -15,7 +15,7 @@ namespace Test
         private const string LOG4NET_CONFIG = "Test.log4net.xml";
         private static readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(Program));
 
-        static YoctoScheduler.Core.Server srvInstance;
+        public static YoctoScheduler.Core.Server srvInstance;
         static void Main(string[] args)
         {
             #region setup logging        
@@ -44,6 +44,15 @@ namespace Test
                 }
             }
 
+            #region Startup Owin
+            string baseAddress = FindAvailablePort();
+
+            // Start OWIN host 
+            YoctoScheduler.WebAPI.Startup.ConnectionString = srvInstance.ConnectionString;
+            var owin = Microsoft.Owin.Hosting.WebApp.Start<YoctoScheduler.WebAPI.Startup>(url: baseAddress);
+            log.InfoFormat("WebAPI initilized at {0:S}", baseAddress);
+            #endregion
+
             Console.WriteLine("Program running, please input a command!");
 
             bool fDone = false;
@@ -62,7 +71,7 @@ namespace Test
                                 continue;
                             }
                             CreateMockTask(bool.Parse(tokens[1]), int.Parse(tokens[2]), tokens[3]);
-                            break;
+                            break;                      
                         case "new_execution":
                             if (tokens.Length < 2)
                             {
@@ -156,6 +165,25 @@ namespace Test
                     log.ErrorFormat("Exception: " + e.ToString());
                 }
             }
+        }
+
+        static string FindAvailablePort()
+        {
+            int port = 9000; // preferred port
+
+            var ipGlobalProperties = System.Net.NetworkInformation.IPGlobalProperties.GetIPGlobalProperties();
+            var tcpConnInfoArray = ipGlobalProperties.GetActiveTcpConnections();
+
+            bool fFound = false;
+            while (!fFound)
+            {
+                var rPort = tcpConnInfoArray.FirstOrDefault(p => p.LocalEndPoint.Port == port);
+                fFound = rPort == null;
+                if (!fFound)
+                    port++;
+            }
+
+            return "http://*:" + port + "/";      
         }
 
         static void CreateCommand(int serverID, int command, string payload)

@@ -2,11 +2,12 @@
 using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Threading;
-using System.Threading.Tasks;
+using System.Xml;
 using YoctoScheduler.Core.Database;
 
 namespace YoctoScheduler.Core
 {
+    [System.Runtime.Serialization.DataContract]
     public class Server : DatabaseItemWithIntPK
     {
         public const string TEMPLATE_START = "%%[";
@@ -16,18 +17,24 @@ namespace YoctoScheduler.Core
 
         public static Configuration Configuration { get; set; }
 
+        [System.Runtime.Serialization.DataMember]
         public TaskStatus Status { get; set; }
 
+        [System.Runtime.Serialization.DataMember]
         public string Description { get; set; }
 
+        [System.Runtime.Serialization.DataMember]
         public DateTime LastPing { get; set; }
 
+        [System.Runtime.Serialization.DataMember]
         public DateTime LastScheduleCheck { get; protected set; }
 
         public string ConnectionString { get; set; }
 
+        [System.Runtime.Serialization.DataMember]
         public string HostName { get; set; }
 
+        [System.Runtime.Serialization.DataMember]
         public List<string> IPs { get; set; }
 
         public System.Collections.Concurrent.ConcurrentDictionary<Guid, YoctoScheduler.Core.ExecutionTasks.Watchdog> _liveTasks = new System.Collections.Concurrent.ConcurrentDictionary<Guid, YoctoScheduler.Core.ExecutionTasks.Watchdog>();
@@ -239,7 +246,7 @@ namespace YoctoScheduler.Core
 
         protected string DetemplatePayload(string payload)
         {
-            while(true)
+            while (true)
             {
                 int iStart = payload.IndexOf(TEMPLATE_START);
                 if (iStart == -1)
@@ -364,7 +371,6 @@ namespace YoctoScheduler.Core
                     // NewTask could raise an exception if the task constructon fails
                     // to parse the payload. We should avoid letting this starve the queue and put it in failed state.
                     // In order to do so, we commit the transaction before instantiating the Task's watchdog.
-
                     using (SqlConnection conn = new SqlConnection(ConnectionString))
                     {
                         conn.Open();
@@ -463,7 +469,8 @@ namespace YoctoScheduler.Core
                         // look for schedules to fire
                         lSchedules.ForEach(sched =>
                         {
-                            if (sched.Cron.GetNextOccurrence(LastScheduleCheck) < DateTime.Now)
+                            NCrontab.CrontabSchedule cs = NCrontab.CrontabSchedule.Parse(sched.Cron);
+                            if (cs.GetNextOccurrence(LastScheduleCheck) < DateTime.Now)
                             {
                                 var task = YoctoScheduler.Core.Database.Task.RetrieveByID(conn, trans, sched.TaskID);
                                 log.InfoFormat("Starting schedulation {0:S} due to cron {1:S}", task.ToString(), sched.ToString());
@@ -534,5 +541,49 @@ namespace YoctoScheduler.Core
                 Thread.Sleep(int.Parse(Configuration["SERVER_POLL_COMMANDS_SLEEP_MS"]));
             }
         }
+
+        #region Database
+        public static List<Server> GetAll(SqlConnection conn, SqlTransaction trans)
+        {
+            List<Server> lServers = new List<Server>();
+
+            using (SqlCommand cmd = new SqlCommand(Database.tsql.Extractor.Get("Server.GetAll"), conn, trans))
+            {
+                cmd.Prepare();
+
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        lServers.Add(ParseFromDataReader(reader));
+                    }
+                }
+            }
+
+            return lServers;
+        }
+
+        protected static Server ParseFromDataReader(SqlDataReader r)
+        {
+            List<string> lIPs = new List<string>();
+            string xmlStr = r.GetString(5);
+            XmlDocument doc = new XmlDocument();
+            doc.LoadXml(xmlStr);
+            foreach (XmlNode node in doc.SelectNodes("IPs/IP"))
+            {
+                lIPs.Add(node.InnerText);
+            }
+
+            return new Server(null)
+            {
+                ID = r.GetInt32(0),
+                Status = (TaskStatus)r.GetInt32(1),
+                Description = r.GetString(2),
+                LastPing = r.GetDateTime(3),
+                HostName = r.GetString(4),
+                IPs = lIPs
+            };
+        }
+        #endregion
     }
 }

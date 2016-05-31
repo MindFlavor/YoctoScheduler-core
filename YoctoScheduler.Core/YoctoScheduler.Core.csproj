@@ -37,6 +37,9 @@
     <AssemblyOriginatorKeyFile>
     </AssemblyOriginatorKeyFile>
   </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationIcon>sched.ico</ApplicationIcon>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="log4net, Version=1.2.15.0, Culture=neutral, PublicKeyToken=669e0ddf0bb1aa2a, processorArchitecture=MSIL">
       <HintPath>..\packages\log4net.2.0.5\lib\net45-full\log4net.dll</HintPath>
@@ -64,6 +67,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ExecutionTasks\JsonBasedTask.cs" />
+    <Compile Include="ExecutionTasks\TSQL\Configuration.cs" />
+    <Compile Include="ExecutionTasks\TSQL\TSQLTask.cs" />
     <Compile Include="ServerCommand.cs" />
     <Compile Include="Commands\KillExecutionTask.cs" />
     <Compile Include="Commands\RestartServer.cs" />
@@ -173,6 +178,10 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Database\tsql\Commands\DequeueByServerID.sql" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Database\tsql\Server\GetAll.sql" />
+    <Content Include="sched.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

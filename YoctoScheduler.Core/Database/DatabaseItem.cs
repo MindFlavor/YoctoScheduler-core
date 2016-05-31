@@ -7,6 +7,8 @@ using System.Threading.Tasks;
 
 namespace YoctoScheduler.Core.Database
 {
+
+    [System.Runtime.Serialization.DataContract]
     public abstract class DatabaseItem
     {
         public const string LOG_TIME_FORMAT = "yyyyMMdd HH:mm:ss";

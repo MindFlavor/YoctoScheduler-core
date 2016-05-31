@@ -6,9 +6,11 @@ using System.Threading.Tasks;
 
 namespace YoctoScheduler.Core.Database
 {
+    [System.Runtime.Serialization.DataContract]
     public abstract class DatabaseItemWithGUIDPK : DatabaseItem
     {
 
+        [System.Runtime.Serialization.DataMember]
         public Guid GUID { get; set; }
 
         public bool HasValidID()

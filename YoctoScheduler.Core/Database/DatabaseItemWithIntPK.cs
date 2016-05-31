@@ -6,10 +6,12 @@ using System.Threading.Tasks;
 
 namespace YoctoScheduler.Core.Database
 {
+    [System.Runtime.Serialization.DataContract]
     public abstract class DatabaseItemWithIntPK : DatabaseItem
     {
         public const int INVALID_ID = -1;
 
+        [System.Runtime.Serialization.DataMember]
         public int ID { get; set; }
 
         public bool HasValidID()

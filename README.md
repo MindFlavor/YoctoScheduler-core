@@ -110,6 +110,8 @@ There is a bug in PS generated certificates. See the [```System.Security.Cryptog
 
 * [```System.Security.Cryptography.CryptographicException: Invalid provider type specified```](docs/System.Security.Cryptography.CryptographicException.md).
 
+* [```Access denied``` during Owin initialization](docs\owin-access-denied.md).
+
 ## Debug
 
 TODO

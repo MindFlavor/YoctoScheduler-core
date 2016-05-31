@@ -7,14 +7,18 @@ using System.Threading.Tasks;
 
 namespace YoctoScheduler.Core.Database
 {
+    [System.Runtime.Serialization.DataContract]
     public class Schedule : DatabaseItemWithIntPK
     {
         private static readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(Schedule));
 
-        public NCrontab.CrontabSchedule Cron { get; set; }
+        [System.Runtime.Serialization.DataMember]
+        public string Cron { get; set; }
 
+        [System.Runtime.Serialization.DataMember]
         public bool Enabled { get; set; }
 
+        [System.Runtime.Serialization.DataMember]
         public int TaskID { get; set; }
 
         public Schedule(int TaskID) : base()
@@ -25,6 +29,12 @@ namespace YoctoScheduler.Core.Database
         public override string ToString()
         {
             return string.Format("{0:S}[{1:S}, TaskID={2:N0}, Cron={3:S}, Enabled={4:S}]", this.GetType().FullName, base.ToString(), TaskID, Cron.ToString(), Enabled.ToString());
+        }
+
+
+        public Schedule Clone(SqlConnection conn, SqlTransaction trans)
+        {
+            return New(conn, trans, TaskID, Cron, Enabled);
         }
 
         public static Schedule New(SqlConnection conn, SqlTransaction trans, int TaskID, string cronString, bool enabled)
@@ -41,7 +51,7 @@ namespace YoctoScheduler.Core.Database
             #region Database entry
             var schedule = new Schedule(TaskID)
             {
-                Cron = cron,
+                Cron = cronString,
                 Enabled = enabled
             };
 
@@ -98,7 +108,7 @@ namespace YoctoScheduler.Core.Database
             return new Schedule(r.GetInt32(3))
             {
                 ID = r.GetInt32(0),
-                Cron = NCrontab.CrontabSchedule.Parse(r.GetString(1)),
+                Cron = r.GetString(1),
                 Enabled = r.GetBoolean(2)
             };
         }
