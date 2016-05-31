@@ -50,7 +50,7 @@ See the specific section: [configuration](docs/configuration.md).
 
 ## Interaction
 
-Check out the [REST API reference](rest/rest.md), the command line tool is just for debugging purposes.
+Check out the [REST API reference](docs/rest/rest.md), the command line tool is just for debugging purposes.
 
 ## Testing
 
