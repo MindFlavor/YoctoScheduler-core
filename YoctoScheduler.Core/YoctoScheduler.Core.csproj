@@ -181,6 +181,7 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Database\tsql\Server\GetAll.sql" />
+    <EmbeddedResource Include="Database\tsql\Task\GetAll.sql" />
     <Content Include="sched.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
