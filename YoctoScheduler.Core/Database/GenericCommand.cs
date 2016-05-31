@@ -5,17 +5,17 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace YoctoScheduler.Core.Commands
+namespace YoctoScheduler.Core.Database
 {
     public class GenericCommand : DatabaseItemWithIntPK
     {
         private static readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(GenericCommand));
 
         public int ServerID { get; set; }
-        protected Command Command { get; set; }
+        protected ServerCommand Command { get; set; }
         protected string Payload { get; set; }
 
-        public GenericCommand(int ServerID, Command Command, string Payload)
+        public GenericCommand(int ServerID, ServerCommand Command, string Payload)
         {
             this.ServerID = ServerID;
             this.Command = Command;
@@ -29,16 +29,16 @@ namespace YoctoScheduler.Core.Commands
                 base.ToString(), ServerID, Command.ToString(), Payload);
         }
 
-        public static GenericCommand New(SqlConnection conn, SqlTransaction trans, int ServerID, Command Command, string Payload)
+        public static GenericCommand New(SqlConnection conn, SqlTransaction trans, int ServerID, ServerCommand Command, string Payload)
         {
             GenericCommand gsc = null;
             switch (Command)
             {
-                case Command.RestartServer:
-                    gsc = new RestartServer(ServerID, Payload);
+                case ServerCommand.RestartServer:
+                    gsc = new Commands.RestartServer(ServerID, Payload);
                     break;
-                case Command.KillTask:
-                    gsc = new KillExecutionTask(ServerID, Payload);
+                case ServerCommand.KillTask:
+                    gsc = new Commands.KillExecutionTask(ServerID, Payload);
                     break;
                 default:
                     throw new NotSupportedException(string.Format("Command {0:S} is not supported at this time", Command.ToString()));
@@ -111,17 +111,17 @@ namespace YoctoScheduler.Core.Commands
         {
             int id = r.GetInt32(0);
             int serverID = r.GetInt32(1);
-            Command command = (Command)r.GetInt32(2);
+            ServerCommand command = (ServerCommand)r.GetInt32(2);
             string payload = null;
             if (!r.IsDBNull(3))
                 payload = r.GetString(3);
 
             switch (command)
             {
-                case Command.RestartServer:
-                    return new RestartServer(serverID, payload) { ID = id };
-                case Command.KillTask:
-                    return new KillExecutionTask(serverID, payload) { ID = id };
+                case ServerCommand.RestartServer:
+                    return new Commands.RestartServer(serverID, payload) { ID = id };
+                case ServerCommand.KillTask:
+                    return new Commands.KillExecutionTask(serverID, payload) { ID = id };
             }
 
             throw new NotSupportedException(string.Format("Command {0:S} is not supported at this time", command));

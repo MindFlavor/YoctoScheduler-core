@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 
 namespace YoctoScheduler.Core.Commands
 {
-    public class RestartServer : GenericCommand
+    public class RestartServer : Database.GenericCommand
     {
-        public RestartServer(int ServerID, string Payload) : base(ServerID, Command.RestartServer, Payload)
+        public RestartServer(int ServerID, string Payload) : base(ServerID, ServerCommand.RestartServer, Payload)
         {     }
     }
 }

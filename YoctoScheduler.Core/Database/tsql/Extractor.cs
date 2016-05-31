@@ -4,11 +4,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace YoctoScheduler.Core.tsql
+namespace YoctoScheduler.Core.Database.tsql
 {
     public class Extractor
     {
-        public const string PREFIX = "YoctoScheduler.Core.tsql.";
+        public const string PREFIX = "YoctoScheduler.Core.Database.tsql.";
         public const string SUFFIX = ".sql";
 
         private Extractor() { }

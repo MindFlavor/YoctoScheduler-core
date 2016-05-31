@@ -5,12 +5,13 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using YoctoScheduler.Core.Database;
 
-namespace YoctoScheduler.Core.ExecutionTask
+namespace YoctoScheduler.Core.ExecutionTasks
 {
-    public abstract class Task : ITask
+    public class Watchdog
     {
-        private static readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(Task));
+        private static readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(Watchdog));
 
         public Server Server { get; protected set; }
 
@@ -19,23 +20,15 @@ namespace YoctoScheduler.Core.ExecutionTask
 
         protected bool fRunning;
 
-        protected string configPayload { get; set; }
+        public ITask Task { get; protected set; }
 
         public LiveExecutionStatus LiveExecutionStatus { get; protected set; }
 
-        public Task(Server Server, string configPayload, LiveExecutionStatus LiveExecutionStatus)
+        public Watchdog(Server Server, ITask task, LiveExecutionStatus LiveExecutionStatus)
         {
             this.Server = Server;
-            this.configPayload = configPayload;
+            this.Task = task;
             this.LiveExecutionStatus = LiveExecutionStatus;
-
-            this.ValidateConfiguration();
-        }
-
-        public Task(Server server, LiveExecutionStatus liveExecutionStatus)
-        {
-            Server = server;
-            LiveExecutionStatus = liveExecutionStatus;
         }
 
         public override string ToString()
@@ -105,7 +98,7 @@ namespace YoctoScheduler.Core.ExecutionTask
                 Server.RegisterTask(this);
 
                 log.DebugFormat("Excecution thread started");
-                string retVal = Do();
+                string retVal = Task.Do();
                 fRunning = false;
 
                 #region Set as completed
@@ -114,7 +107,7 @@ namespace YoctoScheduler.Core.ExecutionTask
                     conn.Open();
                     using (var trans = conn.BeginTransaction())
                     {
-                        var d = DeadExecutionStatus.New(conn, trans, LiveExecutionStatus, Status.Completed, retVal);
+                        var d = DeadExecutionStatus.New(conn, trans, LiveExecutionStatus, TaskStatus.Completed, retVal);
                         LiveExecutionStatus.Delete(conn, trans);
 
                         trans.Commit();
@@ -134,7 +127,7 @@ namespace YoctoScheduler.Core.ExecutionTask
                     conn.Open();
                     using (var trans = conn.BeginTransaction())
                     {
-                        var d = DeadExecutionStatus.New(conn, trans, LiveExecutionStatus, Status.Aborted, null);
+                        var d = DeadExecutionStatus.New(conn, trans, LiveExecutionStatus, TaskStatus.Aborted, null);
                         LiveExecutionStatus.Delete(conn, trans);
 
                         trans.Commit();
@@ -153,7 +146,7 @@ namespace YoctoScheduler.Core.ExecutionTask
                     conn.Open();
                     using (var trans = conn.BeginTransaction())
                     {
-                        var d = DeadExecutionStatus.New(conn, trans, LiveExecutionStatus, Status.Exception, exce.ToString());
+                        var d = DeadExecutionStatus.New(conn, trans, LiveExecutionStatus, TaskStatus.ExceptionDuringExecution, exce.ToString());
                         LiveExecutionStatus.Delete(conn, trans);
 
                         trans.Commit();
@@ -174,13 +167,6 @@ namespace YoctoScheduler.Core.ExecutionTask
         public virtual bool IsAlive()
         {
             return fRunning && (tExecution != null) && (tExecution.IsAlive);
-        }
-
-        public abstract string Do();
-
-        // This should throw an exception in case of problems
-        // ie. NumberFormatException if a number cannot be parsed from a string with 
-        // message like "Cannot convert the parameter to a number"
-        public abstract void ValidateConfiguration();
+        }       
     }
 }

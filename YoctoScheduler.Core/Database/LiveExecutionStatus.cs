@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace YoctoScheduler.Core
+namespace YoctoScheduler.Core.Database
 {
 
     public class LiveExecutionStatus : DatabaseItemWithGUIDPK

@@ -7,7 +7,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace YoctoScheduler.Core
+namespace YoctoScheduler.Core.Database
 {
     public class Secret : DatabaseItemWithNVarCharPK
     {

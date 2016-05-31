@@ -33,8 +33,10 @@ CREATE TABLE [live].[Servers](
 GO
 
 CREATE TABLE [live].[Tasks](
-	[TaskID] INT IDENTITY(1,1) NOT NULL,
-	[ReenqueueOnDead] BIT NOT NULL
+	[TaskID]			INT IDENTITY(1,1) NOT NULL,
+	[ReenqueueOnDead]	BIT NOT NULL,
+	[Type]				NVARCHAR(255),
+	[Payload]			NVARCHAR(MAX)
  CONSTRAINT [PK_Tasks] PRIMARY KEY CLUSTERED 
 (
 	[TaskID] ASC
@@ -218,7 +220,7 @@ INSERT INTO [configuration].[General]([Item], [Value]) VALUES('SERVER_POLL_TASK_
 INSERT INTO [configuration].[General]([Item], [Value]) VALUES('SERVER_POLL_TASK_SCHEDULER_SLEEP_MS',		1 * 10 * 1000); -- 10 seconds
 INSERT INTO [configuration].[General]([Item], [Value]) VALUES('SERVER_POLL_COMMANDS_SLEEP_MS',				1 * 03 * 1000); -- 3 seconds
 
-INSERT INTO [configuration].[General]([Item], [Value]) VALUES('TASK_MAXIMUM_UPDATE_LAG_MS',					1 * 60 * 1000); -- one minute
+INSERT INTO [configuration].[General]([Item], [Value]) VALUES('TASK_MAXIMUM_UPDATE_LAG_MS',					1 * 10 * 1000); -- ten seconds
 INSERT INTO [configuration].[General]([Item], [Value]) VALUES('SERVER_MAXIMUM_UPDATE_LAG_MS',				5 * 60 * 1000); -- 5 minutes
 
 INSERT INTO [configuration].[General]([Item], [Value]) VALUES('WATCHDOG_SLEEP_MS',								2 * 1000);  -- 2 seconds

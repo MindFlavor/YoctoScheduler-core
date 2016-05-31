@@ -46,6 +46,10 @@
       <HintPath>..\packages\ncrontab.3.1.0\lib\net45\NCrontab.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="Newtonsoft.Json, Version=8.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.8.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.ComponentModel.DataAnnotations" />
     <Reference Include="System.Core" />
@@ -59,15 +63,16 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Commands\Command.cs" />
+    <Compile Include="ExecutionTasks\JsonBasedTask.cs" />
+    <Compile Include="ServerCommand.cs" />
     <Compile Include="Commands\KillExecutionTask.cs" />
     <Compile Include="Commands\RestartServer.cs" />
-    <Compile Include="Configuration.cs" />
-    <Compile Include="DatabaseItem.cs" />
-    <Compile Include="DatabaseItemWithGUIDPK.cs" />
-    <Compile Include="DatabaseItemWithIntPK.cs" />
-    <Compile Include="DatabaseItemWithNVarCharPK.cs" />
-    <Compile Include="DeadExecutionStatus.cs" />
+    <Compile Include="Database\Configuration.cs" />
+    <Compile Include="Database\DatabaseItem.cs" />
+    <Compile Include="Database\DatabaseItemWithGUIDPK.cs" />
+    <Compile Include="Database\DatabaseItemWithIntPK.cs" />
+    <Compile Include="Database\DatabaseItemWithNVarCharPK.cs" />
+    <Compile Include="Database\DeadExecutionStatus.cs" />
     <Compile Include="Exceptions\ConcurrencyException.cs" />
     <Compile Include="Exceptions\ConfigurationNotInitializedException.cs" />
     <Compile Include="Exceptions\ElementNotFoundException.cs" />
@@ -75,97 +80,99 @@
     <Compile Include="Exceptions\ServerNotFoundException.cs" />
     <Compile Include="Exceptions\TaskNotFoundException.cs" />
     <Compile Include="Exceptions\TSQLNotFoundException.cs" />
-    <Compile Include="ExecutionQueueItem.cs" />
-    <Compile Include="ExecutionTask\MockTask.cs" />
-    <Compile Include="Secret.cs" />
-    <Compile Include="ExecutionTask\Factory.cs" />
-    <Compile Include="ExecutionTask\ITask.cs" />
-    <Compile Include="LiveExecutionStatus.cs" />
+    <Compile Include="Exceptions\UnsupportedTaskException.cs" />
+    <Compile Include="Database\ExecutionQueueItem.cs" />
+    <Compile Include="ExecutionTasks\MockTask\Configuration.cs" />
+    <Compile Include="ExecutionTasks\MockTask\MockTask.cs" />
+    <Compile Include="Database\Secret.cs" />
+    <Compile Include="ExecutionTasks\Factory.cs" />
+    <Compile Include="ExecutionTasks\ITask.cs" />
+    <Compile Include="Database\LiveExecutionStatus.cs" />
     <Compile Include="Priority.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Schedule.cs" />
+    <Compile Include="Database\Schedule.cs" />
     <Compile Include="Server.cs" />
-    <Compile Include="Commands\GenericCommand.cs" />
-    <Compile Include="Status.cs" />
-    <Compile Include="Task.cs" />
-    <Compile Include="ExecutionTask\Task.cs" />
-    <Compile Include="tsql\Extractor.cs" />
+    <Compile Include="Database\GenericCommand.cs" />
+    <Compile Include="TaskStatus.cs" />
+    <Compile Include="Database\Task.cs" />
+    <Compile Include="ExecutionTasks\Watchdog.cs" />
+    <Compile Include="Database\tsql\Extractor.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="tsql\ExecutionQueueItem\New.sql" />
+    <EmbeddedResource Include="Database\tsql\ExecutionQueueItem\New.sql" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="tsql\Server\New.sql" />
+    <EmbeddedResource Include="Database\tsql\Server\New.sql" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="tsql\DeadExecutionStatus\New.sql" />
+    <EmbeddedResource Include="Database\tsql\DeadExecutionStatus\New.sql" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="tsql\ExecutionQueueItem\GetAndLockFirst.sql" />
+    <EmbeddedResource Include="Database\tsql\ExecutionQueueItem\GetAndLockFirst.sql" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="tsql\ExecutionQueueItem\Delete.sql" />
+    <EmbeddedResource Include="Database\tsql\ExecutionQueueItem\Delete.sql" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="tsql\LiveExecutionStatus\New.sql" />
+    <EmbeddedResource Include="Database\tsql\LiveExecutionStatus\New.sql" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="tsql\LiveExecutionStatus\GetAll.sql" />
+    <EmbeddedResource Include="Database\tsql\LiveExecutionStatus\GetAll.sql" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="tsql\Schedule\New.sql" />
+    <EmbeddedResource Include="Database\tsql\Schedule\New.sql" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="tsql\Schedule\PersistChanges.sql" />
+    <EmbeddedResource Include="Database\tsql\Schedule\PersistChanges.sql" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="tsql\Schedule\GetAll.sql" />
+    <EmbeddedResource Include="Database\tsql\Schedule\GetAll.sql" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="tsql\Schedule\GetAllEnabledOnly.sql" />
+    <EmbeddedResource Include="Database\tsql\Schedule\GetAllEnabledOnly.sql" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="tsql\Schedule\GetAndLockEnabledNotRunning.sql" />
+    <EmbeddedResource Include="Database\tsql\Schedule\GetAndLockEnabledNotRunning.sql" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="tsql\Server\PersistChanges.sql" />
+    <EmbeddedResource Include="Database\tsql\Server\PersistChanges.sql" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="tsql\Server\ClearOldServersThread.sql" />
+    <EmbeddedResource Include="Database\tsql\Server\ClearOldServersThread.sql" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="tsql\Task\New.sql" />
+    <EmbeddedResource Include="Database\tsql\Task\New.sql" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="tsql\Task\RetrieveByID.sql" />
+    <EmbeddedResource Include="Database\tsql\Task\RetrieveByID.sql" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="tsql\Secret\New.sql" />
+    <EmbeddedResource Include="Database\tsql\Secret\New.sql" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="tsql\Secret\RetrieveByID.sql" />
+    <EmbeddedResource Include="Database\tsql\Secret\RetrieveByID.sql" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="tsql\Configuration\GetAll.sql" />
+    <EmbeddedResource Include="Database\tsql\Configuration\GetAll.sql" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="tsql\LiveExecutionStatus\Delete.sql" />
+    <EmbeddedResource Include="Database\tsql\LiveExecutionStatus\Delete.sql" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="tsql\LiveExecutionStatus\UpdateKeepAlive.sql" />
+    <EmbeddedResource Include="Database\tsql\LiveExecutionStatus\UpdateKeepAlive.sql" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="tsql\LiveExecutionStatus\GetAndLockAll.sql" />
+    <EmbeddedResource Include="Database\tsql\LiveExecutionStatus\GetAndLockAll.sql" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="tsql\Commands\New.sql" />
+    <EmbeddedResource Include="Database\tsql\Commands\New.sql" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="tsql\Commands\DequeueByServerID.sql" />
+    <EmbeddedResource Include="Database\tsql\Commands\DequeueByServerID.sql" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

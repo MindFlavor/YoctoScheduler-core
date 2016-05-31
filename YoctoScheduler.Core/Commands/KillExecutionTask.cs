@@ -6,11 +6,11 @@ using System.Threading.Tasks;
 
 namespace YoctoScheduler.Core.Commands
 {
-    public class KillExecutionTask : GenericCommand
+    public class KillExecutionTask : Database.GenericCommand
     {
         public Guid LiveExecutionStatusGUID { get; set; }
 
-        public KillExecutionTask(int ServerID, string Payload) : base(ServerID, Command.KillTask, Payload)
+        public KillExecutionTask(int ServerID, string Payload) : base(ServerID, ServerCommand.KillTask, Payload)
         {
             try
             {

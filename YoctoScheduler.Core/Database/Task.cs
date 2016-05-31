@@ -7,31 +7,36 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace YoctoScheduler.Core
+namespace YoctoScheduler.Core.Database
 {
     public class Task : DatabaseItemWithIntPK
     {
         private static readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(Task));
 
         public bool ReenqueueOnDead { get; set; }
+        public string Type { get; set; }
+        public string Payload { get; set; }
 
-        public Task(bool ReenqueueOnDead) : base()
+        public Task(bool ReenqueueOnDead, string Type, string Payload) : base()
         {
             this.ReenqueueOnDead = ReenqueueOnDead;
+            this.Type = Type;
+            this.Payload = Payload;
         }
 
         public override string ToString()
         {
-            return string.Format("{0:S}[{1:S}, ReenqueueOnDead={2:S}]",
+            return string.Format("{0:S}[{1:S}, ReenqueueOnDead={2:S}, Type=\"{3:S}\", Payload=\"{4:S}\"]",
                 this.GetType().FullName,
                 base.ToString(),
-                ReenqueueOnDead.ToString());
+                ReenqueueOnDead.ToString(),
+                Type, Payload);
         }
 
-        public static Task New(SqlConnection conn,SqlTransaction trans,  bool ReenqueueOnDead )
+        public static Task New(SqlConnection conn, SqlTransaction trans, bool ReenqueueOnDead, string Type, string Payload)
         {
             #region Database entry
-            var task = new Task(ReenqueueOnDead);
+            var task = new Task(ReenqueueOnDead, Type, Payload);
 
             using (SqlCommand cmd = new SqlCommand(tsql.Extractor.Get("Task.New"), conn, trans))
             {
@@ -51,6 +56,24 @@ namespace YoctoScheduler.Core
             SqlParameter param = new SqlParameter("@ReenqueueOnDead", System.Data.SqlDbType.Bit);
             param.Value = ReenqueueOnDead;
             cmd.Parameters.Add(param);
+
+            param = new SqlParameter("@Type", System.Data.SqlDbType.NVarChar, 255);
+            param.Value = Type;
+            cmd.Parameters.Add(param);
+
+            param = new SqlParameter("@Payload", System.Data.SqlDbType.NVarChar, -1);
+            if (string.IsNullOrEmpty(Payload))
+                param.Value = DBNull.Value;
+            else
+                param.Value = Payload;
+            cmd.Parameters.Add(param);
+
+            if (HasValidID())
+            {
+                param = new SqlParameter("@TaskID", System.Data.SqlDbType.Int);
+                param.Value = ID;
+                cmd.Parameters.Add(param);
+            }
         }
 
         public override void PersistChanges(SqlConnection conn, SqlTransaction trans)
@@ -84,7 +107,11 @@ namespace YoctoScheduler.Core
 
         protected static Task ParseFromDataReader(SqlDataReader r)
         {
-            return new Task(r.GetBoolean(1))
+            string payload = null;
+            if (!r.IsDBNull(3))
+                payload = r.GetString(3);
+
+            return new Task(r.GetBoolean(1), r.GetString(2), payload)
             {
                 ID = r.GetInt32(0)
             };

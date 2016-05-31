@@ -3,16 +3,20 @@ using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Threading;
 using System.Threading.Tasks;
+using YoctoScheduler.Core.Database;
 
 namespace YoctoScheduler.Core
 {
     public class Server : DatabaseItemWithIntPK
     {
+        public const string TEMPLATE_START = "%%[";
+        public const string TEMPLATE_END = "]%%";
+
         private static readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(Server));
 
         public static Configuration Configuration { get; set; }
 
-        public Status Status { get; set; }
+        public TaskStatus Status { get; set; }
 
         public string Description { get; set; }
 
@@ -26,9 +30,9 @@ namespace YoctoScheduler.Core
 
         public List<string> IPs { get; set; }
 
-        public System.Collections.Concurrent.ConcurrentDictionary<Guid, YoctoScheduler.Core.ExecutionTask.Task> _liveTasks = new System.Collections.Concurrent.ConcurrentDictionary<Guid, YoctoScheduler.Core.ExecutionTask.Task>();
+        public System.Collections.Concurrent.ConcurrentDictionary<Guid, YoctoScheduler.Core.ExecutionTasks.Watchdog> _liveTasks = new System.Collections.Concurrent.ConcurrentDictionary<Guid, YoctoScheduler.Core.ExecutionTasks.Watchdog>();
 
-        public void RegisterTask(YoctoScheduler.Core.ExecutionTask.Task task)
+        public void RegisterTask(YoctoScheduler.Core.ExecutionTasks.Watchdog task)
         {
             log.DebugFormat("Server {0:S} registering task {1:S}", this.ToString(), task.ToString());
             if (!_liveTasks.TryAdd(task.LiveExecutionStatus.GUID, task))
@@ -38,9 +42,9 @@ namespace YoctoScheduler.Core
             }
         }
 
-        public void DeregisterTask(YoctoScheduler.Core.ExecutionTask.Task task)
+        public void DeregisterTask(YoctoScheduler.Core.ExecutionTasks.Watchdog task)
         {
-            YoctoScheduler.Core.ExecutionTask.Task t;
+            YoctoScheduler.Core.ExecutionTasks.Watchdog t;
 
             log.DebugFormat("Server {0:S} deregistering task {1:S}", this.ToString(), task.ToString());
             if (!_liveTasks.TryRemove(task.LiveExecutionStatus.GUID, out t))
@@ -88,10 +92,10 @@ namespace YoctoScheduler.Core
             {
                 Description = Description,
                 LastPing = DateTime.Parse("2000-01-01"),
-                Status = Status.Starting
+                Status = TaskStatus.Starting
             };
 
-            using (SqlCommand cmd = new SqlCommand(tsql.Extractor.Get("Server.New"), conn, trans))
+            using (SqlCommand cmd = new SqlCommand(Database.tsql.Extractor.Get("Server.New"), conn, trans))
             {
                 server.PopolateParameters(cmd);
 
@@ -148,7 +152,7 @@ namespace YoctoScheduler.Core
 
             #region Set server as running
             log.DebugFormat("{0:S} - Setting server as running", server.ToString());
-            server.Status = Status.Running;
+            server.Status = TaskStatus.Running;
 
             server.PersistChanges(conn, trans);
             log.InfoFormat("{0:S} - Server running", server.ToString());
@@ -159,7 +163,7 @@ namespace YoctoScheduler.Core
 
         public override void PersistChanges(SqlConnection conn, SqlTransaction trans)
         {
-            using (SqlCommand cmd = new SqlCommand(tsql.Extractor.Get("Server.PersistChanges"), conn, trans))
+            using (SqlCommand cmd = new SqlCommand(Database.tsql.Extractor.Get("Server.PersistChanges"), conn, trans))
             {
                 PopolateParameters(cmd);
 
@@ -210,6 +214,48 @@ namespace YoctoScheduler.Core
             }
         }
 
+        protected Secret TranslateSecret(string secretName)
+        {
+            log.DebugFormat("Retrieving secret {0:S}.", secretName);
+
+            Secret secret = null;
+
+            using (SqlConnection conn = new SqlConnection(ConnectionString))
+            {
+                conn.Open();
+                using (var trans = conn.BeginTransaction())
+                {
+                    secret = Secret.RetrieveByID(conn, trans, secretName);
+                    trans.Commit();
+                }
+            }
+            if (secret != null)
+                log.DebugFormat("Secret {0:S} retrieved (char count {1:N0}).", secretName, secret.PlainTextValue.Length);
+            else
+                log.WarnFormat("Secret {0:S} not found.", secretName, secret.PlainTextValue.Length);
+
+            return secret;
+        }
+
+        protected string DetemplatePayload(string payload)
+        {
+            while(true)
+            {
+                int iStart = payload.IndexOf(TEMPLATE_START);
+                if (iStart == -1)
+                    return payload;
+
+                int iEnd = payload.IndexOf(TEMPLATE_END, iStart);
+                if (iEnd == -1)
+                    return payload;
+
+                string sCypher = payload.Substring(iStart + TEMPLATE_START.Length, iEnd - (iStart + TEMPLATE_START.Length)).Trim();
+                Secret secret = TranslateSecret(sCypher);
+
+                payload = payload.Substring(0, iStart) + secret.PlainTextValue + payload.Substring(iEnd + TEMPLATE_END.Length);
+            }
+        }
+
         protected void PingThread()
         {
             while (true)
@@ -240,10 +286,10 @@ namespace YoctoScheduler.Core
                 using (var conn = new SqlConnection(ConnectionString))
                 {
                     conn.Open();
-                    SqlCommand cmd = new SqlCommand(tsql.Extractor.Get("Server.ClearOldServersThread"), conn);
+                    SqlCommand cmd = new SqlCommand(Database.tsql.Extractor.Get("Server.ClearOldServersThread"), conn);
 
                     SqlParameter param = new SqlParameter("@statusToSet", System.Data.SqlDbType.Int);
-                    param.Value = Status.Dead;
+                    param.Value = TaskStatus.Dead;
                     cmd.Parameters.Add(param);
 
                     param = new SqlParameter("@dt", System.Data.SqlDbType.DateTime);
@@ -251,7 +297,7 @@ namespace YoctoScheduler.Core
                     cmd.Parameters.Add(param);
 
                     param = new SqlParameter("@minStatus", System.Data.SqlDbType.Int);
-                    param.Value = Status.Unknown;
+                    param.Value = TaskStatus.Unknown;
                     cmd.Parameters.Add(param);
 
                     cmd.Prepare();
@@ -281,14 +327,14 @@ namespace YoctoScheduler.Core
                         foreach (var les in lExpired)
                         {
                             // insert into dead table 
-                            var des = DeadExecutionStatus.New(conn, trans, les, Status.Dead, null);
+                            var des = DeadExecutionStatus.New(conn, trans, les, TaskStatus.Dead, null);
 
                             log.WarnFormat("Setting LiveExecutionStatus {0:S} as dead", les.ToString());
                             // remove from live table
                             les.Delete(conn, trans);
 
                             // if required, reenqueue
-                            var task = Task.RetrieveByID(conn, trans, les.TaskID);
+                            var task = YoctoScheduler.Core.Database.Task.RetrieveByID(conn, trans, les.TaskID);
                             if (task.ReenqueueOnDead)
                             {
                                 log.InfoFormat("Reenqueuing {0:S} as requested", task.ToString());
@@ -308,32 +354,79 @@ namespace YoctoScheduler.Core
         {
             while (true)
             {
-                using (SqlConnection conn = new SqlConnection(ConnectionString))
+                try
                 {
-                    conn.Open();
-                    using (SqlTransaction trans = conn.BeginTransaction(System.Data.IsolationLevel.Serializable))
+                    LiveExecutionStatus les = null;
+                    Database.Task task = null;
+                    ExecutionQueueItem eqi = null;
+
+                    // Here we get the first task to start, and start it.
+                    // NewTask could raise an exception if the task constructon fails
+                    // to parse the payload. We should avoid letting this starve the queue and put it in failed state.
+                    // In order to do so, we commit the transaction before instantiating the Task's watchdog.
+
+                    using (SqlConnection conn = new SqlConnection(ConnectionString))
                     {
-                        var lToStart = ExecutionQueueItem.GetAndLockFirst(conn, trans);
-                        if (lToStart != null)
+                        conn.Open();
+                        using (SqlTransaction trans = conn.BeginTransaction(System.Data.IsolationLevel.Serializable))
                         {
-                            log.DebugFormat("Starting enqueued task {0:S}", lToStart.ToString());
+                            eqi = ExecutionQueueItem.GetAndLockFirst(conn, trans);
+                            if (eqi != null)
+                            {
+                                // add to live table
+                                les = LiveExecutionStatus.New(conn, trans, eqi.TaskID, this.ID, eqi.ScheduleID);
 
-                            // add to live table
-                            var les = LiveExecutionStatus.New(conn, trans, lToStart.TaskID, this.ID, lToStart.ScheduleID);
+                                // get the task for the configuration payload
+                                task = Database.Task.RetrieveByID(conn, trans, eqi.TaskID);
 
-                            // start the execution
-                            // TODO this is just a mockup
-                            var wd = ExecutionTask.Factory.NewTask(this, "type_to_read_from_db", "config_to_read_from_db", les);
-                            wd.Start();
-                            log.InfoFormat("Started live execution status {0:S}", les.ToString());
+                                // remove from pending execution queue
+                                eqi.Delete(conn, trans);
+                            }
 
-                            // remove from pending execution queue
-                            lToStart.Delete(conn, trans);
+                            trans.Commit();
                         }
+                    }
 
-                        trans.Commit();
+                    // start the execution. As this call might fail we handle the failue in place.
+                    // If failed the task is considered deququed succesfully. It's up to the
+                    // workflow manager to handle this kind of failures.
+                    try
+                    {
+                        if (eqi != null)
+                        {
+                            log.DebugFormat("Starting enqueued task {0:S}", eqi.ToString());
+
+                            string detemplatedPayload = DetemplatePayload(task.Payload);
+
+                            var wd = ExecutionTasks.Factory.NewTask(this, task.Type, detemplatedPayload, les);
+                            wd.Start();
+                            log.InfoFormat("Started task {0:S} as live execution status {1:S}", task.ToString(), les.ToString());
+                        }
+                    }
+                    catch (Exception exce)
+                    {
+                        log.WarnFormat("Task {0:S} failed at startup: {0:S}", eqi.ToString(), exce.ToString());
+
+                        #region Set as failed during startup
+                        using (SqlConnection conn = new SqlConnection(this.ConnectionString))
+                        {
+                            conn.Open();
+                            using (var trans = conn.BeginTransaction())
+                            {
+                                var d = DeadExecutionStatus.New(conn, trans, les, TaskStatus.ExceptionAtStartup, exce.ToString());
+                                les.Delete(conn, trans);
+
+                                trans.Commit();
+                            }
+                        }
+                        #endregion
                     }
                 }
+                catch (Exception exce) // we must catch unhandled exceptions to keep the thread alive
+                {
+                    log.ErrorFormat("Unhandled exception during DequeueTasksThread: {0:S}", exce.ToString());
+                }
+
                 Thread.Sleep(int.Parse(Configuration["SERVER_POLL_TASK_QUEUE_SLEEP_MS"]));
             }
         }
@@ -372,7 +465,7 @@ namespace YoctoScheduler.Core
                         {
                             if (sched.Cron.GetNextOccurrence(LastScheduleCheck) < DateTime.Now)
                             {
-                                var task = Task.RetrieveByID(conn, trans, sched.TaskID);
+                                var task = YoctoScheduler.Core.Database.Task.RetrieveByID(conn, trans, sched.TaskID);
                                 log.InfoFormat("Starting schedulation {0:S} due to cron {1:S}", task.ToString(), sched.ToString());
 
                                 var qi = ExecutionQueueItem.New(conn, trans, task.ID, Priority.Normal, sched.ID);
@@ -396,14 +489,14 @@ namespace YoctoScheduler.Core
             {
                 log.DebugFormat("{0:S} - Check for server commands", this.ToString());
 
-                List<Commands.GenericCommand> commands = null;
+                List<GenericCommand> commands = null;
 
                 using (SqlConnection conn = new SqlConnection(ConnectionString))
                 {
                     conn.Open();
                     using (SqlTransaction trans = conn.BeginTransaction(System.Data.IsolationLevel.ReadCommitted))
                     {
-                        commands = Commands.GenericCommand.DequeueByServerID(conn, trans, this.ID);
+                        commands = GenericCommand.DequeueByServerID(conn, trans, this.ID);
                         trans.Commit();
                     }
                 }
@@ -421,7 +514,7 @@ namespace YoctoScheduler.Core
 
                             // get the LiveExecutionStatus and request the kill. 
                             // Do not remove it from the list here as it will be done by the task once dead.
-                            YoctoScheduler.Core.ExecutionTask.Task t;
+                            YoctoScheduler.Core.ExecutionTasks.Watchdog t;
                             if (!_liveTasks.TryGetValue(kt.LiveExecutionStatusGUID, out t))
                             {
                                 log.WarnFormat("LiveExecutionStatusGUID == {0:S} not found. Maybe it's already dead?", kt.LiveExecutionStatusGUID.ToString());

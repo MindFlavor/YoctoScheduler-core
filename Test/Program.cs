@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using YoctoScheduler.Core;
 using System.Threading;
 using NCrontab;
+using YoctoScheduler.Core.Database;
 
 namespace Test
 {
@@ -53,14 +54,14 @@ namespace Test
                 try
                 {
                     switch (tokens[0])
-                    {
-                        case "new_task":
-                            if (tokens.Length < 2)
+                    {                       
+                        case "new_mock_task":
+                            if (tokens.Length < 4)
                             {
-                                Console.WriteLine("Syntax error, must specify if the task must be restarted in case determined dead");
+                                Console.WriteLine("Syntax error, must specify if the task must be restarted in case determined dead, the task sleep in seconds and encryption thumbprint");
                                 continue;
                             }
-                            CreateTask(bool.Parse(tokens[1]));
+                            CreateMockTask(bool.Parse(tokens[1]), int.Parse(tokens[2]), tokens[3]);
                             break;
                         case "new_execution":
                             if (tokens.Length < 2)
@@ -101,7 +102,7 @@ namespace Test
                                 conn.Open();
                                 using (var trans = conn.BeginTransaction())
                                 {
-                                    var secret = YoctoScheduler.Core.Secret.New(conn, trans, tokens[1], tokens[2], sToEnc);
+                                    var secret = Secret.New(conn, trans, tokens[1], tokens[2], sToEnc);
                                     trans.Commit();
 
                                     log.InfoFormat("Created secret {0:S}", secret.ToString());
@@ -120,7 +121,7 @@ namespace Test
                                 conn.Open();
                                 using (var trans = conn.BeginTransaction())
                                 {
-                                    var secret = YoctoScheduler.Core.Secret.RetrieveByID(conn, trans, tokens[1]);
+                                    var secret = Secret.RetrieveByID(conn, trans, tokens[1]);
                                     trans.Commit();
 
                                     log.InfoFormat("Retrieved secret {0:S}. Plain text is = \"{1:S}\".", secret.ToString(), secret.PlainTextValue);
@@ -133,7 +134,7 @@ namespace Test
                             break;
                         case "help":
                             Console.WriteLine("Available commands:");
-                            Console.WriteLine("\tnew_task");
+                            Console.WriteLine("\tnew_mock_task <sleep_seconds>");
                             Console.WriteLine("\tnew_execution <task_id>");
                             Console.WriteLine("\tnew_schedule <task_id> <cron expression>");
                             Console.WriteLine("\tnew_secret <thumbprint> <string to encrypt");
@@ -159,30 +160,47 @@ namespace Test
 
         static void CreateCommand(int serverID, int command, string payload)
         {
-            YoctoScheduler.Core.Commands.Command cmd = (YoctoScheduler.Core.Commands.Command)command;
-            YoctoScheduler.Core.Commands.GenericCommand gc;
+            YoctoScheduler.Core.ServerCommand cmd = (YoctoScheduler.Core.ServerCommand)command;
+            GenericCommand gc;
 
             using (System.Data.SqlClient.SqlConnection conn = new System.Data.SqlClient.SqlConnection(System.Configuration.ConfigurationManager.ConnectionStrings["YoctoScheduler"].ConnectionString))
             {
                 conn.Open();
                 using (var trans = conn.BeginTransaction())
                 {
-                    gc = YoctoScheduler.Core.Commands.GenericCommand.New(conn, trans, serverID, cmd, payload);
+                    gc = GenericCommand.New(conn, trans, serverID, cmd, payload);
                     trans.Commit();
                 }
             }
             log.InfoFormat("Created command {0:S}", gc.ToString());
         }
 
-        static void CreateTask(bool ReenqueueOnDead)
+        static void CreateMockTask(bool ReenqueueOnDead, int iSleepSeconds, string thumbprint)
         {
-            YoctoScheduler.Core.Task task;
+            YoctoScheduler.Core.ExecutionTasks.MockTask.MockTask mt = new YoctoScheduler.Core.ExecutionTasks.MockTask.MockTask();
+            mt.Configuration = new YoctoScheduler.Core.ExecutionTasks.MockTask.Configuration() { SleepSeconds = iSleepSeconds };
+            string payload = mt.SerializeConfiguration();
+
+            Guid gSecret = Guid.NewGuid();
+            string toreplace = iSleepSeconds.ToString();
             using (System.Data.SqlClient.SqlConnection conn = new System.Data.SqlClient.SqlConnection(System.Configuration.ConfigurationManager.ConnectionStrings["YoctoScheduler"].ConnectionString))
             {
                 conn.Open();
                 using (var trans = conn.BeginTransaction())
                 {
-                    task = YoctoScheduler.Core.Task.New(conn, trans, ReenqueueOnDead);
+                    Secret secret = Secret.New(conn, trans, gSecret.ToString(), thumbprint, toreplace);
+                    payload = payload.Replace(toreplace, Server.TEMPLATE_START + gSecret.ToString() + Server.TEMPLATE_END);
+                    trans.Commit();
+                }
+            }
+
+            YoctoScheduler.Core.Database.Task task;
+            using (System.Data.SqlClient.SqlConnection conn = new System.Data.SqlClient.SqlConnection(System.Configuration.ConfigurationManager.ConnectionStrings["YoctoScheduler"].ConnectionString))
+            {
+                conn.Open();
+                using (var trans = conn.BeginTransaction())
+                {
+                    task = YoctoScheduler.Core.Database.Task.New(conn, trans, ReenqueueOnDead, "Mock", payload);
                     trans.Commit();
                 }
             }
@@ -196,11 +214,11 @@ namespace Test
                 conn.Open();
                 using (var trans = conn.BeginTransaction())
                 {
-                    var task = YoctoScheduler.Core.Task.RetrieveByID(conn, trans, TaskId);
+                    var task = YoctoScheduler.Core.Database.Task.RetrieveByID(conn, trans, TaskId);
                     if (task == null)
                         throw new YoctoScheduler.Core.Exceptions.TaskNotFoundException(TaskId);
 
-                    var eqi = YoctoScheduler.Core.ExecutionQueueItem.New(conn, trans, TaskId, Priority.Normal, null);
+                    var eqi = ExecutionQueueItem.New(conn, trans, TaskId, Priority.Normal, null);
                     trans.Commit();
                     log.InfoFormat("Task enqueued for execution: {0:S}", eqi.ToString());
                 }

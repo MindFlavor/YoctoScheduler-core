@@ -5,20 +5,20 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace YoctoScheduler.Core
+namespace YoctoScheduler.Core.Database
 {
     public class DeadExecutionStatus : LiveExecutionStatus
     {
         private static readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(DeadExecutionStatus));
 
-        public Status Status { get; set; }
+        public TaskStatus Status { get; set; }
 
         public string ReturnCode { get; set; }
 
-        public DeadExecutionStatus(LiveExecutionStatus des, Status Status)
+        public DeadExecutionStatus(LiveExecutionStatus des, TaskStatus Status)
             : this(des, Status, null) { }
 
-        public DeadExecutionStatus(LiveExecutionStatus des, Status Status, string ReturnCode) : base(des.TaskID, des.ServerID, des.ScheduleID)
+        public DeadExecutionStatus(LiveExecutionStatus des, TaskStatus Status, string ReturnCode) : base(des.TaskID, des.ServerID, des.ScheduleID)
         {
             GUID = des.GUID;
             this.LastUpdate = des.LastUpdate;
@@ -36,7 +36,7 @@ namespace YoctoScheduler.Core
                 Status.ToString());
         }
 
-        public static DeadExecutionStatus New(SqlConnection conn, SqlTransaction trans, LiveExecutionStatus les, Status status, string ReturnCode)
+        public static DeadExecutionStatus New(SqlConnection conn, SqlTransaction trans, LiveExecutionStatus les, TaskStatus status, string ReturnCode)
         {
             DeadExecutionStatus des = new DeadExecutionStatus(les, status, ReturnCode);
 

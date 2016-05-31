@@ -4,11 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace YoctoScheduler.Core.Commands
+namespace YoctoScheduler.Core.ExecutionTasks.MockTask
 {
-    public enum Command
+    public struct Configuration
     {
-        RestartServer = -200,
-        KillTask = -666
+        public int SleepSeconds;
     }
 }

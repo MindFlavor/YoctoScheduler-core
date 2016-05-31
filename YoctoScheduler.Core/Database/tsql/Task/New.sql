@@ -1,7 +1,11 @@
 ﻿INSERT INTO [live].[Tasks] (
 	[ReenqueueOnDead]
+	,[Type]
+	,[Payload]
 	)
 OUTPUT [INSERTED].[TaskID]
 VALUES(
-        @ReenqueueOnDead
+        @ReenqueueOnDead,
+		@Type,
+		@Payload
     )
