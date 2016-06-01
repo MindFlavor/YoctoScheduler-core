@@ -41,7 +41,7 @@ Workflow | A collection of task to be orchestrated as a single entity.
 ## Installation
 As now the ```Test console``` project is just a demo server with a tiny command line parser useful to test the commands. To use it:
 
-1. Execute the [oop-tsql\00-create.sql](oop-tsql\00-create.sql) script. This will create the required database.
+1. Execute the [oop-tsql/00-create.sql](oop-tsql/00-create.sql) script. This will create the required database.
 2. Compile, configure (see next section) and run.
 
 ## Configuration
