@@ -23,6 +23,25 @@ namespace YoctoScheduler.WebAPI.Controllers
             }
         }
 
+        public IHttpActionResult Get(int id)
+        {
+            Task task = null;
+            using (SqlConnection conn = new SqlConnection(Startup.ConnectionString))
+            {
+                conn.Open();
+                using (var trans = conn.BeginTransaction())
+                {
+                    task = Task.GetByID(conn, trans, id);
+                    trans.Commit();
+                }
+            }
+
+            if (task != null)
+                return Ok(task);
+            else
+                return NotFound();
+        }
+
         public IHttpActionResult Post(Task value)
         {
             if (value == null)

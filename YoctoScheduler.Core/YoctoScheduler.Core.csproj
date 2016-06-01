@@ -66,6 +66,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Exceptions\CertificateNotFoundException.cs" />
     <Compile Include="ExecutionTasks\JsonBasedTask.cs" />
     <Compile Include="ExecutionTasks\TSQL\Configuration.cs" />
     <Compile Include="ExecutionTasks\TSQL\TSQLTask.cs" />
@@ -182,6 +183,8 @@
   <ItemGroup>
     <EmbeddedResource Include="Database\tsql\Server\GetAll.sql" />
     <EmbeddedResource Include="Database\tsql\Task\GetAll.sql" />
+    <EmbeddedResource Include="Database\tsql\Schedule\GetByID.sql" />
+    <EmbeddedResource Include="Database\tsql\Secret\GetAll.sql" />
     <Content Include="sched.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

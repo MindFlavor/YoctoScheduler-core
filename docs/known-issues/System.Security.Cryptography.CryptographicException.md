@@ -19,7 +19,7 @@ You can use OpenSSL to overcome this (see [http://stackoverflow.com/questions/10
 
 1. Generate certificate
 ```
-openssl req -x509 -newkey rsa:2048 -keyout key.pem -out cert.pem -days 365
+openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -days 365
 ```
 
 2. Convert to ```pfx``` format (to import in Windows):

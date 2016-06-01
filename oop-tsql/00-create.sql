@@ -34,6 +34,8 @@ GO
 
 CREATE TABLE [live].[Tasks](
 	[TaskID]			INT IDENTITY(1,1) NOT NULL,
+	[Name]				NVARCHAR(255),
+	[Description]		NVARCHAR(MAX),
 	[ReenqueueOnDead]	BIT NOT NULL,
 	[Type]				NVARCHAR(255),
 	[Payload]			NVARCHAR(MAX)
@@ -41,6 +43,9 @@ CREATE TABLE [live].[Tasks](
 (
 	[TaskID] ASC
 ));
+GO
+
+CREATE UNIQUE INDEX idx_Tasks_Name ON [live].[Tasks](Name);
 GO
 
 CREATE TABLE [live].[Schedules](

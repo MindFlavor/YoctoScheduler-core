@@ -113,9 +113,12 @@ There is a bug in PS generated certificates. See the [```System.Security.Cryptog
 
 ## Known issues
 
-* [```System.Security.Cryptography.CryptographicException: Invalid provider type specified```](docs/System.Security.Cryptography.CryptographicException.md).
+* [```System.Security.Cryptography.CryptographicException: Invalid provider type specified```](docs/known-issues/System.Security.Cryptography.CryptographicException.md).
 
-* [```Access denied``` during Owin initialization](docs\owin-access-denied.md).
+* [```Access denied``` during Owin initialization](docs/known-issues/owin-access-denied.md).
+
+* [```Bad Length``` during secret encryption](docs/known-issues/bad-length-encryption.md).
+
 
 ## Debug
 

@@ -1,6 +1,8 @@
 # REST API reference
 
-Entity | Page |
+Entity | Controller |
 ---- | ----
-Server | [server.md](server.md)
-Schedule | [schedule.md](schedule.md)
+Server | [ServersController](server.md)
+Schedule | [SchedulesController](schedule.md)
+Secret | [SecretItemsController](secret-item.md)
+Task | [TasksController](task.md)

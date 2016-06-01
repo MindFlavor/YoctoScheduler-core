@@ -130,7 +130,7 @@ namespace Test
                                 conn.Open();
                                 using (var trans = conn.BeginTransaction())
                                 {
-                                    var secret = Secret.RetrieveByID(conn, trans, tokens[1]);
+                                    var secret = Secret.GetByName(conn, trans, tokens[1]);
                                     trans.Commit();
 
                                     log.InfoFormat("Retrieved secret {0:S}. Plain text is = \"{1:S}\".", secret.ToString(), secret.PlainTextValue);
@@ -228,7 +228,7 @@ namespace Test
                 conn.Open();
                 using (var trans = conn.BeginTransaction())
                 {
-                    task = YoctoScheduler.Core.Database.Task.New(conn, trans, ReenqueueOnDead, "Mock", payload);
+                    task = YoctoScheduler.Core.Database.Task.New(conn, trans, "MyName", "Some desc", ReenqueueOnDead, "Mock", payload);
                     trans.Commit();
                 }
             }
@@ -242,7 +242,7 @@ namespace Test
                 conn.Open();
                 using (var trans = conn.BeginTransaction())
                 {
-                    var task = YoctoScheduler.Core.Database.Task.RetrieveByID(conn, trans, TaskId);
+                    var task = YoctoScheduler.Core.Database.Task.GetByID(conn, trans, TaskId);
                     if (task == null)
                         throw new YoctoScheduler.Core.Exceptions.TaskNotFoundException(TaskId);
 

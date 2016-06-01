@@ -10,6 +10,6 @@ namespace YoctoScheduler.Core.ExecutionTasks.TSQL
     {
         public string ConnectionString;
         public string Statement;
-        public int ConnectionTimeout;
+        public int CommandTimeout;
     }
 }

@@ -42,7 +42,7 @@ namespace YoctoScheduler.Core.Database
             #region Check for existing TaskID
             // ideally this should be in a transaction (repeatable read at least) but we don't care
             // since referential integrity would kick in anyway.
-            if (Task.RetrieveByID(conn, trans, TaskID) == null)
+            if (Task.GetByID(conn, trans, TaskID) == null)
                 throw new Exceptions.TaskNotFoundException(TaskID);
             #endregion
 
@@ -134,6 +134,27 @@ namespace YoctoScheduler.Core.Database
 
             return lItems;
         }
+
+        public static Schedule GetByID(SqlConnection conn, SqlTransaction trans, int id)
+        {
+            using (SqlCommand cmd = new SqlCommand(tsql.Extractor.Get("Schedule.GetByID"), conn, trans))
+            {
+                SqlParameter param = new SqlParameter("@ScheduleID", System.Data.SqlDbType.Int);
+                param.Value = id;
+                cmd.Parameters.Add(param);
+
+                cmd.Prepare();
+
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    if (reader.Read())
+                        return ParseFromDataReader(reader);
+                }
+            }
+
+            return null;
+        }
+
         public static List<Schedule> GetAndLockEnabledNotRunning(SqlConnection conn, SqlTransaction trans)
         {
             List<Schedule> lItems = new List<Schedule>();

@@ -107,6 +107,9 @@ namespace YoctoScheduler.Core.ExecutionTasks
                     conn.Open();
                     using (var trans = conn.BeginTransaction())
                     {
+                        // Update local LastUpdate so we can use it as "completed" time.
+                        LiveExecutionStatus.LastUpdate = DateTime.Now;
+
                         var d = DeadExecutionStatus.New(conn, trans, LiveExecutionStatus, TaskStatus.Completed, retVal);
                         LiveExecutionStatus.Delete(conn, trans);
 
@@ -127,6 +130,9 @@ namespace YoctoScheduler.Core.ExecutionTasks
                     conn.Open();
                     using (var trans = conn.BeginTransaction())
                     {
+                        // Update local LastUpdate so we can use it as "aborted" time.
+                        LiveExecutionStatus.LastUpdate = DateTime.Now;
+
                         var d = DeadExecutionStatus.New(conn, trans, LiveExecutionStatus, TaskStatus.Aborted, null);
                         LiveExecutionStatus.Delete(conn, trans);
 
@@ -146,6 +152,9 @@ namespace YoctoScheduler.Core.ExecutionTasks
                     conn.Open();
                     using (var trans = conn.BeginTransaction())
                     {
+                        // Update local LastUpdate so we can use it as "failed" time.
+                        LiveExecutionStatus.LastUpdate = DateTime.Now;
+
                         var d = DeadExecutionStatus.New(conn, trans, LiveExecutionStatus, TaskStatus.ExceptionDuringExecution, exce.ToString());
                         LiveExecutionStatus.Delete(conn, trans);
 

@@ -9,10 +9,12 @@ using System.Threading.Tasks;
 
 namespace YoctoScheduler.Core.Database
 {
+    [System.Runtime.Serialization.DataContract]
     public class Secret : DatabaseItemWithNVarCharPK
     {
         private static readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(Secret));
 
+        [System.Runtime.Serialization.DataMember]
         public byte[] EncryptedValue { get; set; }
 
         public string PlainTextValue
@@ -20,32 +22,40 @@ namespace YoctoScheduler.Core.Database
             get
             {
                 X509Certificate2 cert = GetCertificate();
+                if (cert == null)
+                    throw new Exceptions.CertificateNotFoundException(CertificateThumbprint);
+
                 var alg = cert.GetKeyAlgorithm();
 
                 RSACryptoServiceProvider rsa = cert.PrivateKey as RSACryptoServiceProvider;
                 var bBuf = rsa.Decrypt(EncryptedValue, true);
-                return System.Text.Encoding.Unicode.GetString(bBuf);
+                return System.Text.Encoding.UTF8.GetString(bBuf);
             }
             set
             {
                 var cert = GetCertificate();
+                if (cert == null)
+                    throw new Exceptions.CertificateNotFoundException(CertificateThumbprint);
 
                 RSACryptoServiceProvider rsa = cert.PublicKey.Key as RSACryptoServiceProvider;
-                var bBuf = rsa.Encrypt(System.Text.Encoding.Unicode.GetBytes(value), true);
+
+                var bytes = System.Text.Encoding.UTF8.GetBytes(value);
+                var bBuf = rsa.Encrypt(bytes, true);
                 EncryptedValue = bBuf;
             }
         }
-        public string Thumbprint { get; set; }
+        [System.Runtime.Serialization.DataMember]
+        public string CertificateThumbprint { get; set; }
 
-        public Secret(string name, string Thumbprint)
+        public Secret(string name, string CertificateThumbprint)
         {
             this.ID = name;
-            this.Thumbprint = Thumbprint;
+            this.CertificateThumbprint = CertificateThumbprint;
         }
 
-        public static Secret New(SqlConnection conn, SqlTransaction trans, string name, string thumbprint, string plainTextValue)
+        public static Secret New(SqlConnection conn, SqlTransaction trans, string name, string certificateThumbprint, string plainTextValue)
         {
-            Secret es = new Secret(name, thumbprint) { PlainTextValue = plainTextValue };
+            Secret es = new Secret(name, certificateThumbprint) { PlainTextValue = plainTextValue };
 
             #region Database entry
             using (SqlCommand cmd = new SqlCommand(tsql.Extractor.Get("Secret.New"), conn, trans))
@@ -69,7 +79,7 @@ namespace YoctoScheduler.Core.Database
             cmd.Parameters.Add(param);
 
             param = new SqlParameter("@Thumbprint", System.Data.SqlDbType.Char, 40);
-            param.Value = Thumbprint;
+            param.Value = CertificateThumbprint;
             cmd.Parameters.Add(param);
 
             param = new SqlParameter("@SecretName", System.Data.SqlDbType.NVarChar, 255);
@@ -77,7 +87,25 @@ namespace YoctoScheduler.Core.Database
             cmd.Parameters.Add(param);
         }
 
-        public static Secret RetrieveByID(SqlConnection conn, SqlTransaction trans, string SecretName)
+        public static List<Secret> GetAll(SqlConnection conn, SqlTransaction trans)
+        {
+            List<Secret> lSecrets = new List<Secret>();
+
+            using (SqlCommand cmd = new SqlCommand(tsql.Extractor.Get("Secret.GetAll"), conn, trans))
+            {
+                cmd.Prepare();
+
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                        lSecrets.Add(ParseFromDataReader(reader));
+                }
+
+                return lSecrets;
+            }
+        }
+
+        public static Secret GetByName(SqlConnection conn, SqlTransaction trans, string SecretName)
         {
             Secret secret;
 
@@ -115,7 +143,7 @@ namespace YoctoScheduler.Core.Database
             store.Open(OpenFlags.ReadOnly);
 
             foreach (var cert in store.Certificates)
-                if (cert.Thumbprint.Equals(Thumbprint, StringComparison.InvariantCultureIgnoreCase))
+                if (cert.Thumbprint.Equals(CertificateThumbprint, StringComparison.InvariantCultureIgnoreCase))
                     return cert;
 
             return null;
@@ -125,7 +153,7 @@ namespace YoctoScheduler.Core.Database
         {
             return string.Format("{0:S}[{1:S}, Thumbprint={2:S}, EncryptedValue={3:S}]",
                 this.GetType().FullName,
-                base.ToString(), Thumbprint, EncryptedValue);
+                base.ToString(), CertificateThumbprint, EncryptedValue);
         }
 
         public override void PersistChanges(SqlConnection conn, SqlTransaction trans)

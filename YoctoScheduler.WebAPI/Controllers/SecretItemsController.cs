@@ -1,52 +1,52 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
-using System.Net;
+using System.Linq;
+using System.Text;
 using System.Web.Http;
 using YoctoScheduler.Core.Database;
 
 namespace YoctoScheduler.WebAPI.Controllers
 {
-    public class SchedulesController : System.Web.Http.ApiController
+    public class SecretItemsController : System.Web.Http.ApiController
     {
-        private static readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(SchedulesController));
+        private static readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(SecretItemsController));
 
-        public IEnumerable<Schedule> Get()
+        public IEnumerable<Secret> Get()
         {
             using (SqlConnection conn = new SqlConnection(Startup.ConnectionString))
             {
                 conn.Open();
                 using (var trans = conn.BeginTransaction())
                 {
-                    var r = Schedule.GetAll(conn, trans, true);
-                    trans.Commit();
+                    var r = Secret.GetAll(conn, trans);
                     return r;
                 }
             }
         }
 
-        public IHttpActionResult Get(int id)
+        public IHttpActionResult Get(string id)
         {
-            Schedule sched = null;
+            Secret secret = null;
             using (SqlConnection conn = new SqlConnection(Startup.ConnectionString))
             {
                 conn.Open();
                 using (var trans = conn.BeginTransaction())
                 {
-                    sched = Schedule.GetByID(conn, trans, id);
+                    secret = Secret.GetByName(conn, trans, id);
                     trans.Commit();
                 }
             }
 
-            if (sched != null)
-                return Ok(sched);
+            if (secret != null)
+                return Ok(secret);
             else
                 return NotFound();
         }
 
-        public IHttpActionResult Post(Schedule value)
+        public IHttpActionResult Post(Proxies.Secret secret)
         {
-            if (value == null)
+            if (secret == null)
                 return BadRequest();
 
             try
@@ -56,21 +56,16 @@ namespace YoctoScheduler.WebAPI.Controllers
                     conn.Open();
                     using (var trans = conn.BeginTransaction())
                     {
-                        var ret = value.Clone(conn, trans);
+                        var ret = YoctoScheduler.Core.Database.Secret.New(conn, trans, secret.Name, secret.CertificateThumbprint, secret.PlainTextValue);
                         trans.Commit();
                         // TODO : return a valid URI
                         return Created("", ret);
                     }
                 }
             }
-            catch (YoctoScheduler.Core.Exceptions.TaskNotFoundException tfe)
+            catch (System.Exception exce)
             {
-                log.ErrorFormat("Error processing Schedule POST: {0:S}", tfe.ToString());
-                return BadRequest();
-            }
-            catch (Exception exce)
-            {
-                log.ErrorFormat("Error processing Schedule POST: {0:S}", exce.ToString());
+                log.ErrorFormat("Unhandled exception processing Secret POST: {0:S}", exce.ToString());
                 return InternalServerError();
             }
         }

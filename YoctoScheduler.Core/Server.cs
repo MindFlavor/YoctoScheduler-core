@@ -232,7 +232,7 @@ namespace YoctoScheduler.Core
                 conn.Open();
                 using (var trans = conn.BeginTransaction())
                 {
-                    secret = Secret.RetrieveByID(conn, trans, secretName);
+                    secret = Secret.GetByName(conn, trans, secretName);
                     trans.Commit();
                 }
             }
@@ -341,7 +341,7 @@ namespace YoctoScheduler.Core
                             les.Delete(conn, trans);
 
                             // if required, reenqueue
-                            var task = YoctoScheduler.Core.Database.Task.RetrieveByID(conn, trans, les.TaskID);
+                            var task = YoctoScheduler.Core.Database.Task.GetByID(conn, trans, les.TaskID);
                             if (task.ReenqueueOnDead)
                             {
                                 log.InfoFormat("Reenqueuing {0:S} as requested", task.ToString());
@@ -383,7 +383,7 @@ namespace YoctoScheduler.Core
                                 les = LiveExecutionStatus.New(conn, trans, eqi.TaskID, this.ID, eqi.ScheduleID);
 
                                 // get the task for the configuration payload
-                                task = Database.Task.RetrieveByID(conn, trans, eqi.TaskID);
+                                task = Database.Task.GetByID(conn, trans, eqi.TaskID);
 
                                 // remove from pending execution queue
                                 eqi.Delete(conn, trans);
@@ -472,7 +472,7 @@ namespace YoctoScheduler.Core
                             NCrontab.CrontabSchedule cs = NCrontab.CrontabSchedule.Parse(sched.Cron);
                             if (cs.GetNextOccurrence(LastScheduleCheck) < DateTime.Now)
                             {
-                                var task = YoctoScheduler.Core.Database.Task.RetrieveByID(conn, trans, sched.TaskID);
+                                var task = YoctoScheduler.Core.Database.Task.GetByID(conn, trans, sched.TaskID);
                                 log.InfoFormat("Starting schedulation {0:S} due to cron {1:S}", task.ToString(), sched.ToString());
 
                                 var qi = ExecutionQueueItem.New(conn, trans, task.ID, Priority.Normal, sched.ID);
