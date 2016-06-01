@@ -29,6 +29,9 @@ namespace YoctoScheduler.Core.Database
         [System.Runtime.Serialization.DataMember]
         public string Description { get; set; }
 
+        public Task() : base()
+        { }
+
         public Task(bool ReenqueueOnDead, string Name, string Description, string Type, string Payload) : base()
         {
             this.ReenqueueOnDead = ReenqueueOnDead;
@@ -73,7 +76,7 @@ namespace YoctoScheduler.Core.Database
             return task;
         }
 
-        protected internal void PopolateParameters(SqlCommand cmd)
+        public override void PopolateParameters(SqlCommand cmd)
         {
             SqlParameter param = new SqlParameter("@ReenqueueOnDead", System.Data.SqlDbType.Bit);
             param.Value = ReenqueueOnDead;
@@ -114,24 +117,6 @@ namespace YoctoScheduler.Core.Database
             throw new NotImplementedException();
         }
 
-        public static List<Task> GetAll(SqlConnection conn, SqlTransaction trans)
-        {
-            List<Task> lTasks = new List<Task>();
-
-            using (SqlCommand cmd = new SqlCommand(tsql.Extractor.Get("Task.GetAll"), conn, trans))
-            {
-                cmd.Prepare();
-
-                using (SqlDataReader reader = cmd.ExecuteReader())
-                {
-                    while (reader.Read())
-                        lTasks.Add(ParseFromDataReader(reader));
-                }
-
-                return lTasks;
-            }
-        }
-
         public static Task GetByID(SqlConnection conn, SqlTransaction trans, int ID)
         {
             Task task;
@@ -148,7 +133,8 @@ namespace YoctoScheduler.Core.Database
                 {
                     if (!reader.Read())
                         return null;
-                    task = ParseFromDataReader(reader);
+                    task = new Task();
+                    task.ParseFromDataReader(reader);
                 }
 
                 log.DebugFormat("{0:S} - Retrieved task ", task.ToString());
@@ -156,20 +142,21 @@ namespace YoctoScheduler.Core.Database
             }
         }
 
-        protected static Task ParseFromDataReader(SqlDataReader r)
+        public override void ParseFromDataReader(SqlDataReader r)
         {
-            string payload = null;
+            Payload = null;
             if (!r.IsDBNull(5))
-                payload = r.GetString(5);
+                Payload = r.GetString(5);
 
-            string description = null;
+            Description = null;
             if (!r.IsDBNull(3))
-                description = r.GetString(3);
+                Description = r.GetString(3);
 
-            return new Task(r.GetBoolean(1), r.GetString(2), description, r.GetString(4), payload)
-            {
-                ID = r.GetInt32(0)
-            };
+            ID = r.GetInt32(0);
+
+            ReenqueueOnDead = r.GetBoolean(1);
+            Name = r.GetString(2);
+            Type = r.GetString(4);            
         }
     }
 }

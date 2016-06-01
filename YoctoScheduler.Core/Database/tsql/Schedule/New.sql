@@ -1,10 +1,12 @@
 ﻿INSERT INTO [live].[Schedules]
     ([TaskID]
     ,[Cron]
-    ,[Enabled])
+    ,[Enabled]
+	,[LastFired])
 OUTPUT [INSERTED].[ScheduleID]    
 VALUES(
         @taskID,
 		@cron,
-		@enabled
+		@enabled,
+		@LastFired
     );

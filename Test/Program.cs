@@ -45,7 +45,7 @@ namespace Test
             }
 
             #region Startup Owin
-            string baseAddress = FindAvailablePort();
+            string baseAddress = "http://*:" + args[0] + "/";
 
             // Start OWIN host 
             YoctoScheduler.WebAPI.Startup.ConnectionString = srvInstance.ConnectionString;
@@ -63,23 +63,7 @@ namespace Test
                 try
                 {
                     switch (tokens[0])
-                    {                       
-                        case "new_mock_task":
-                            if (tokens.Length < 4)
-                            {
-                                Console.WriteLine("Syntax error, must specify if the task must be restarted in case determined dead, the task sleep in seconds and encryption thumbprint");
-                                continue;
-                            }
-                            CreateMockTask(bool.Parse(tokens[1]), int.Parse(tokens[2]), tokens[3]);
-                            break;                      
-                        case "new_execution":
-                            if (tokens.Length < 2)
-                            {
-                                Console.WriteLine("Syntax error, must specify a valid task id");
-                                continue;
-                            }
-                            CreateExecution(int.Parse(tokens[1]));
-                            break;
+                    {                                           
                         case "new_command":
                             if (tokens.Length < 4)
                             {
@@ -87,36 +71,6 @@ namespace Test
                                 continue;
                             }
                             CreateCommand(int.Parse(tokens[1]), int.Parse(tokens[2]), string.Join(" ", tokens.Skip(3)));
-                            break;
-
-                        case "new_schedule":
-                            if (tokens.Length < 4)
-                            {
-                                Console.WriteLine("Syntax error, must specify a valid task id, a bool for enabled and a valid crontab");
-                                continue;
-                            }
-                            CreateSchedule(int.Parse(tokens[1]), bool.Parse(tokens[2]), string.Join(" ", tokens.Skip(3)));
-
-                            break;
-                        case "new_secret":
-                            if (tokens.Length < 3)
-                            {
-                                Console.WriteLine("Syntax error, must specify a secret name, a valid certificate thumbprint and something to encrypt");
-                                continue;
-                            }
-
-                            string sToEnc = string.Join(" ", tokens.Skip(3));
-                            using (System.Data.SqlClient.SqlConnection conn = new System.Data.SqlClient.SqlConnection(System.Configuration.ConfigurationManager.ConnectionStrings["YoctoScheduler"].ConnectionString))
-                            {
-                                conn.Open();
-                                using (var trans = conn.BeginTransaction())
-                                {
-                                    var secret = Secret.New(conn, trans, tokens[1], tokens[2], sToEnc);
-                                    trans.Commit();
-
-                                    log.InfoFormat("Created secret {0:S}", secret.ToString());
-                                }
-                            }
                             break;
                         case "get_secret":
                             if (tokens.Length < 2)
@@ -167,24 +121,7 @@ namespace Test
             }
         }
 
-        static string FindAvailablePort()
-        {
-            int port = 9000; // preferred port
 
-            var ipGlobalProperties = System.Net.NetworkInformation.IPGlobalProperties.GetIPGlobalProperties();
-            var tcpConnInfoArray = ipGlobalProperties.GetActiveTcpConnections();
-
-            bool fFound = false;
-            while (!fFound)
-            {
-                var rPort = tcpConnInfoArray.FirstOrDefault(p => p.LocalEndPoint.Port == port);
-                fFound = rPort == null;
-                if (!fFound)
-                    port++;
-            }
-
-            return "http://*:" + port + "/";      
-        }
 
         static void CreateCommand(int serverID, int command, string payload)
         {
@@ -196,72 +133,12 @@ namespace Test
                 conn.Open();
                 using (var trans = conn.BeginTransaction())
                 {
-                    gc = GenericCommand.New(conn, trans, serverID, cmd, payload);
+                    gc = new GenericCommand(serverID, cmd, payload);
+                    GenericCommand.Insert(conn, trans, gc);
                     trans.Commit();
                 }
             }
             log.InfoFormat("Created command {0:S}", gc.ToString());
-        }
-
-        static void CreateMockTask(bool ReenqueueOnDead, int iSleepSeconds, string thumbprint)
-        {
-            YoctoScheduler.Core.ExecutionTasks.MockTask.MockTask mt = new YoctoScheduler.Core.ExecutionTasks.MockTask.MockTask();
-            mt.Configuration = new YoctoScheduler.Core.ExecutionTasks.MockTask.Configuration() { SleepSeconds = iSleepSeconds };
-            string payload = mt.SerializeConfiguration();
-
-            Guid gSecret = Guid.NewGuid();
-            string toreplace = iSleepSeconds.ToString();
-            using (System.Data.SqlClient.SqlConnection conn = new System.Data.SqlClient.SqlConnection(System.Configuration.ConfigurationManager.ConnectionStrings["YoctoScheduler"].ConnectionString))
-            {
-                conn.Open();
-                using (var trans = conn.BeginTransaction())
-                {
-                    Secret secret = Secret.New(conn, trans, gSecret.ToString(), thumbprint, toreplace);
-                    payload = payload.Replace(toreplace, Server.TEMPLATE_START + gSecret.ToString() + Server.TEMPLATE_END);
-                    trans.Commit();
-                }
-            }
-
-            YoctoScheduler.Core.Database.Task task;
-            using (System.Data.SqlClient.SqlConnection conn = new System.Data.SqlClient.SqlConnection(System.Configuration.ConfigurationManager.ConnectionStrings["YoctoScheduler"].ConnectionString))
-            {
-                conn.Open();
-                using (var trans = conn.BeginTransaction())
-                {
-                    task = YoctoScheduler.Core.Database.Task.New(conn, trans, "MyName", "Some desc", ReenqueueOnDead, "Mock", payload);
-                    trans.Commit();
-                }
-            }
-            log.InfoFormat("Created task {0:S}", task.ToString());
-        }
-
-        static void CreateExecution(int TaskId)
-        {
-            using (System.Data.SqlClient.SqlConnection conn = new System.Data.SqlClient.SqlConnection(System.Configuration.ConfigurationManager.ConnectionStrings["YoctoScheduler"].ConnectionString))
-            {
-                conn.Open();
-                using (var trans = conn.BeginTransaction())
-                {
-                    var task = YoctoScheduler.Core.Database.Task.GetByID(conn, trans, TaskId);
-                    if (task == null)
-                        throw new YoctoScheduler.Core.Exceptions.TaskNotFoundException(TaskId);
-
-                    var eqi = ExecutionQueueItem.New(conn, trans, TaskId, Priority.Normal, null);
-                    trans.Commit();
-                    log.InfoFormat("Task enqueued for execution: {0:S}", eqi.ToString());
-                }
-            }
-        }
-
-        static void CreateSchedule(int taskId, bool enabled, string cron)
-        {
-            Schedule sched;
-            using (System.Data.SqlClient.SqlConnection conn = new System.Data.SqlClient.SqlConnection(System.Configuration.ConfigurationManager.ConnectionStrings["YoctoScheduler"].ConnectionString))
-            {
-                conn.Open();
-                sched = Schedule.New(conn, null, taskId, cron, enabled);
-            }
-            log.InfoFormat("Created schedule {0:S}", sched.ToString());
-        }
-    }
+        } 
+   }
 }

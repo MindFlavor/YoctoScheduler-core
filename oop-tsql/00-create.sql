@@ -10,7 +10,7 @@ USE [YoctoScheduler];
 GO
 CREATE SCHEMA [live];
 GO
-CREATE SCHEMA [dead];
+CREATE SCHEMA [dead];	
 GO
 CREATE SCHEMA [lookup];
 GO
@@ -53,6 +53,7 @@ CREATE TABLE [live].[Schedules](
 	[Cron] NVARCHAR(255) NOT NULL,
 	[Enabled] BIT NOT NULL DEFAULT(0),
 	[TaskID] INT NOT NULL,
+	[LastFired] DATETIME NULL,
  CONSTRAINT [PK_Schedules] PRIMARY KEY CLUSTERED 
 (
 	[ScheduleID] ASC

@@ -2,7 +2,8 @@
     [ScheduleID]
     ,[Cron]
     ,[Enabled]
-    ,[TaskID]
+    ,[TaskID]	
+	,[LastFired]
 FROM[live].[Schedules]
 WHERE 
 	[Enabled] = 1;

@@ -7,14 +7,12 @@ using System.Threading.Tasks;
 namespace YoctoScheduler.Core.Database
 {
     [System.Runtime.Serialization.DataContract]
-    public abstract class DatabaseItemWithIntPK : DatabaseItem
+    public abstract class DatabaseItemWithIntPK : DatabaseItem<int>
     {
         public const int INVALID_ID = -1;
 
-        [System.Runtime.Serialization.DataMember]
-        public int ID { get; set; }
 
-        public bool HasValidID()
+        public override bool HasValidID()
         {
             return ID != INVALID_ID;
         }
@@ -22,11 +20,6 @@ namespace YoctoScheduler.Core.Database
         public DatabaseItemWithIntPK() : base()
         {
             ID = INVALID_ID;
-        }
-
-        public override string ToString()
-        {
-            return string.Format("ID={0:N0}", ID);
         }
     }
 }

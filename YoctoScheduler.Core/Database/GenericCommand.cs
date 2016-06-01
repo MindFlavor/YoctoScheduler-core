@@ -15,6 +15,8 @@ namespace YoctoScheduler.Core.Database
         protected ServerCommand Command { get; set; }
         protected string Payload { get; set; }
 
+        public GenericCommand() { }
+
         public GenericCommand(int ServerID, ServerCommand Command, string Payload)
         {
             this.ServerID = ServerID;
@@ -29,39 +31,12 @@ namespace YoctoScheduler.Core.Database
                 base.ToString(), ServerID, Command.ToString(), Payload);
         }
 
-        public static GenericCommand New(SqlConnection conn, SqlTransaction trans, int ServerID, ServerCommand Command, string Payload)
-        {
-            GenericCommand gsc = null;
-            switch (Command)
-            {
-                case ServerCommand.RestartServer:
-                    gsc = new Commands.RestartServer(ServerID, Payload);
-                    break;
-                case ServerCommand.KillTask:
-                    gsc = new Commands.KillExecutionTask(ServerID, Payload);
-                    break;
-                default:
-                    throw new NotSupportedException(string.Format("Command {0:S} is not supported at this time", Command.ToString()));
-            }
-
-            #region Database entry
-            using (SqlCommand cmd = new SqlCommand(tsql.Extractor.Get("Commands.New"), conn, trans))
-            {
-                gsc.PopolateParameters(cmd);
-                gsc.ID = (int)cmd.ExecuteScalar();
-            }
-            #endregion
-            log.DebugFormat("Created SGenericCommandecret {0:S}", gsc.ToString());
-
-            return gsc;
-        }
-
         public override void PersistChanges(SqlConnection conn, SqlTransaction trans)
         {
             throw new NotImplementedException();
         }
 
-        protected internal virtual void PopolateParameters(SqlCommand cmd)
+        public override void PopolateParameters(SqlCommand cmd)
         {
             SqlParameter param = new SqlParameter("@ServerID", System.Data.SqlDbType.Int);
             param.Value = ServerID;
@@ -99,7 +74,9 @@ namespace YoctoScheduler.Core.Database
                 {
                     while (reader.Read())
                     {
-                        lCommands.Add(ParseFromDataReader(reader));
+                        GenericCommand gc = new GenericCommand();
+                        gc.ParseFromDataReader(reader);
+                        lCommands.Add(gc);
                     }
                 }
             }
@@ -107,24 +84,24 @@ namespace YoctoScheduler.Core.Database
             return lCommands;
         }
 
-        protected static GenericCommand ParseFromDataReader(SqlDataReader r)
+        public override void ParseFromDataReader(SqlDataReader r)
         {
-            int id = r.GetInt32(0);
-            int serverID = r.GetInt32(1);
-            ServerCommand command = (ServerCommand)r.GetInt32(2);
-            string payload = null;
+            ID = r.GetInt32(0);
+            ServerID = r.GetInt32(1);
+            Command = (ServerCommand)r.GetInt32(2);
+            Payload = null;
             if (!r.IsDBNull(3))
-                payload = r.GetString(3);
+                Payload = r.GetString(3);
 
-            switch (command)
-            {
-                case ServerCommand.RestartServer:
-                    return new Commands.RestartServer(serverID, payload) { ID = id };
-                case ServerCommand.KillTask:
-                    return new Commands.KillExecutionTask(serverID, payload) { ID = id };
-            }
+            //switch (command)
+            //{
+            //    case ServerCommand.RestartServer:
+            //        return new Commands.RestartServer(serverID, payload) { ID = id };
+            //    case ServerCommand.KillTask:
+            //        return new Commands.KillExecutionTask(serverID, payload) { ID = id };
+            //}
 
-            throw new NotSupportedException(string.Format("Command {0:S} is not supported at this time", command));
+            //throw new NotSupportedException(string.Format("Command {0:S} is not supported at this time", command));
         }
     }
 }

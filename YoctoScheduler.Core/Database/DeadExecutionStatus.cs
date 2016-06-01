@@ -20,7 +20,7 @@ namespace YoctoScheduler.Core.Database
 
         public DeadExecutionStatus(LiveExecutionStatus des, TaskStatus Status, string ReturnCode) : base(des.TaskID, des.ServerID, des.ScheduleID)
         {
-            GUID = des.GUID;
+            ID = des.ID;
             this.LastUpdate = des.LastUpdate;
 
             this.Status = Status;
@@ -36,23 +36,7 @@ namespace YoctoScheduler.Core.Database
                 Status.ToString());
         }
 
-        public static DeadExecutionStatus New(SqlConnection conn, SqlTransaction trans, LiveExecutionStatus les, TaskStatus status, string ReturnCode)
-        {
-            DeadExecutionStatus des = new DeadExecutionStatus(les, status, ReturnCode);
-
-            #region Database entry
-            using (SqlCommand cmd = new SqlCommand(tsql.Extractor.Get("DeadExecutionStatus.New"), conn, trans))
-            {
-                des.PopolateParameters(cmd);
-                cmd.Prepare();
-                cmd.ExecuteNonQuery();
-            }
-            #endregion
-            log.DebugFormat("Created dead excecution {0:S}", des.ToString());
-            return des;
-        }
-
-        protected internal override void PopolateParameters(SqlCommand cmd)
+        public override void PopolateParameters(SqlCommand cmd)
         {
             base.PopolateParameters(cmd);
 

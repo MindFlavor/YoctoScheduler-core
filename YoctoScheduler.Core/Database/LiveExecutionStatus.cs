@@ -24,6 +24,9 @@ namespace YoctoScheduler.Core.Database
 
         public DateTime Inserted { get; set; }
 
+        public LiveExecutionStatus() : base()
+        { }
+
         public LiveExecutionStatus(int TaskID, int ServerID, int? ScheduleID) : base()
         {
             this.TaskID = TaskID;
@@ -45,22 +48,7 @@ namespace YoctoScheduler.Core.Database
                 LastUpdate.ToString());
         }
 
-        public static LiveExecutionStatus New(SqlConnection conn, SqlTransaction trans, int TaskID, int ServerID, int? ScheduleID)
-        {
-            LiveExecutionStatus es = new LiveExecutionStatus(TaskID, ServerID, ScheduleID);
-
-            #region Database entry
-            using (SqlCommand cmd = new SqlCommand(tsql.Extractor.Get("LiveExecutionStatus.New"), conn, trans))
-            {
-                es.PopolateParameters(cmd);
-                es.GUID = (Guid)cmd.ExecuteScalar();
-            }
-            #endregion
-            log.DebugFormat("Created excecution {0:S}", es.ToString());
-            return es;
-        }
-
-        protected internal virtual void PopolateParameters(SqlCommand cmd)
+        public override void PopolateParameters(SqlCommand cmd)
         {
             SqlParameter param = new SqlParameter("@ScheduleID", System.Data.SqlDbType.Int);
             if (ScheduleID.HasValue)
@@ -88,7 +76,7 @@ namespace YoctoScheduler.Core.Database
             if (HasValidID())
             {
                 param = new SqlParameter("@GUID", System.Data.SqlDbType.UniqueIdentifier);
-                param.Value = GUID;
+                param.Value = ID;
                 cmd.Parameters.Add(param);
             }
         }
@@ -98,25 +86,16 @@ namespace YoctoScheduler.Core.Database
             throw new NotImplementedException();
         }
 
-        protected static LiveExecutionStatus ParseFromDataReader(SqlDataReader r)
+        public override void ParseFromDataReader(SqlDataReader r)
         {
-            int? ScheduleID = null;
+            ScheduleID = null;
             if (!r.IsDBNull(1))
                 ScheduleID = r.GetInt32(1);
-
-            var les = new LiveExecutionStatus(r.GetInt32(2), r.GetInt32(3), ScheduleID)
-            {
-                GUID = r.GetGuid(0),
-                LastUpdate = r.GetDateTime(5),
-                Inserted = r.GetDateTime(4)
-            };
-
-            return les;
-        }
-
-        public static List<LiveExecutionStatus> GetAll(SqlConnection conn, SqlTransaction trans)
-        {
-            return GetAll(conn, trans, DateTime.Parse("1990-01-01"));
+            ID = r.GetGuid(0);
+            TaskID = r.GetInt32(2);
+            ServerID = r.GetInt32(3);
+            LastUpdate = r.GetDateTime(5);
+            Inserted = r.GetDateTime(4);
         }
 
         public static List<LiveExecutionStatus> GetAndLockAll(SqlConnection conn, SqlTransaction trans, DateTime minLastUpdate)
@@ -135,44 +114,22 @@ namespace YoctoScheduler.Core.Database
                 {
                     while (reader.Read())
                     {
-                        lItems.Add(ParseFromDataReader(reader));
+                        LiveExecutionStatus les = new LiveExecutionStatus();
+                        les.ParseFromDataReader(reader);
+                        lItems.Add(les);
                     }
                 }
             }
 
             return lItems;
         }
-
-        public static List<LiveExecutionStatus> GetAll(SqlConnection conn, SqlTransaction trans, DateTime minLastUpdate)
-        {
-            List<LiveExecutionStatus> lItems = new List<LiveExecutionStatus>();
-
-            using (SqlCommand cmd = new SqlCommand(tsql.Extractor.Get("LiveExecutionStatus.GetAll"), conn, trans))
-            {
-                var param = new SqlParameter("@lastUpdate", System.Data.SqlDbType.DateTime);
-                param.Value = minLastUpdate;
-                cmd.Parameters.Add(param);
-
-                cmd.Prepare();
-
-                using (SqlDataReader reader = cmd.ExecuteReader())
-                {
-                    while (reader.Read())
-                    {
-                        lItems.Add(ParseFromDataReader(reader));
-                    }
-                }
-            }
-
-            return lItems;
-        }
-
+       
         public void UpdateKeepAlive(SqlConnection conn, SqlTransaction trans)
         {
             using (SqlCommand cmd = new SqlCommand(tsql.Extractor.Get("LiveExecutionStatus.UpdateKeepAlive"), conn, trans))
             {
                 SqlParameter param = new SqlParameter("@GUID", System.Data.SqlDbType.UniqueIdentifier);
-                param.Value = GUID;
+                param.Value = ID;
                 cmd.Parameters.Add(param);
 
                 param = new SqlParameter("@lastUpdate", System.Data.SqlDbType.DateTime);
@@ -183,25 +140,7 @@ namespace YoctoScheduler.Core.Database
                 if (cmd.ExecuteNonQuery() != 1)
                 {
                     throw new Exceptions.ConcurrencyException(
-                        string.Format("Update from [live].[ExecutionStatus] failed because no entry with GUID {0:S} was found", GUID.ToString(),
-                        null));
-                }
-            }
-        }
-
-        public void Delete(SqlConnection conn, SqlTransaction trans)
-        {
-            using (SqlCommand cmd = new SqlCommand(tsql.Extractor.Get("LiveExecutionStatus.Delete"), conn, trans))
-            {
-                SqlParameter param = new SqlParameter("@GUID", System.Data.SqlDbType.UniqueIdentifier);
-                param.Value = GUID;
-                cmd.Parameters.Add(param);
-
-                cmd.Prepare();
-                if (cmd.ExecuteNonQuery() != 1)
-                {
-                    throw new Exceptions.ConcurrencyException(
-                        string.Format("Delete from [live].[ExecutionStatus] failed because no entry with GUID {0:S} was found", GUID.ToString(),
+                        string.Format("Update from [live].[ExecutionStatus] failed because no entry with GUID {0:S} was found", ID.ToString(),
                         null));
                 }
             }

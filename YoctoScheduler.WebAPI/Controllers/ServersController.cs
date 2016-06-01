@@ -15,7 +15,7 @@ namespace YoctoScheduler.WebAPI.Controllers
                 conn.Open();
                 using (var trans = conn.BeginTransaction())
                 {
-                    var r = Server.GetAll(conn, trans);
+                    var r = Server.GetAll<Server>(conn, trans);
                     return r;
                 }
             }

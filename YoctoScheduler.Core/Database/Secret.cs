@@ -47,32 +47,16 @@ namespace YoctoScheduler.Core.Database
         [System.Runtime.Serialization.DataMember]
         public string CertificateThumbprint { get; set; }
 
+        public Secret()
+        { }
+
         public Secret(string name, string CertificateThumbprint)
         {
             this.ID = name;
             this.CertificateThumbprint = CertificateThumbprint;
         }
 
-        public static Secret New(SqlConnection conn, SqlTransaction trans, string name, string certificateThumbprint, string plainTextValue)
-        {
-            Secret es = new Secret(name, certificateThumbprint) { PlainTextValue = plainTextValue };
-
-            #region Database entry
-            using (SqlCommand cmd = new SqlCommand(tsql.Extractor.Get("Secret.New"), conn, trans))
-            {
-                es.PopolateParameters(cmd);
-                int iRet = cmd.ExecuteNonQuery();
-                if (iRet != 1)
-                {
-                    throw new Exception(string.Format("Failed to create a new Secret. Modified rows are {0:N0}.", iRet));
-                }
-            }
-            #endregion
-            log.DebugFormat("Created Secret {0:S}", es.ToString());
-            return es;
-        }
-
-        protected internal virtual void PopolateParameters(SqlCommand cmd)
+        public override void PopolateParameters(SqlCommand cmd)
         {
             SqlParameter param = new SqlParameter("@Blob", System.Data.SqlDbType.VarBinary, -1);
             param.Value = EncryptedValue;
@@ -85,24 +69,6 @@ namespace YoctoScheduler.Core.Database
             param = new SqlParameter("@SecretName", System.Data.SqlDbType.NVarChar, 255);
             param.Value = ID;
             cmd.Parameters.Add(param);
-        }
-
-        public static List<Secret> GetAll(SqlConnection conn, SqlTransaction trans)
-        {
-            List<Secret> lSecrets = new List<Secret>();
-
-            using (SqlCommand cmd = new SqlCommand(tsql.Extractor.Get("Secret.GetAll"), conn, trans))
-            {
-                cmd.Prepare();
-
-                using (SqlDataReader reader = cmd.ExecuteReader())
-                {
-                    while (reader.Read())
-                        lSecrets.Add(ParseFromDataReader(reader));
-                }
-
-                return lSecrets;
-            }
         }
 
         public static Secret GetByName(SqlConnection conn, SqlTransaction trans, string SecretName)
@@ -121,7 +87,9 @@ namespace YoctoScheduler.Core.Database
                 {
                     if (!reader.Read())
                         throw new Exceptions.SecretNotFoundException(SecretName);
-                    secret = ParseFromDataReader(reader);
+
+                    secret = new Secret();
+                    secret.ParseFromDataReader(reader);
                 }
 
                 log.DebugFormat("{0:S} - Retrieved secret ", secret.ToString());
@@ -129,12 +97,11 @@ namespace YoctoScheduler.Core.Database
             }
         }
 
-        protected static Secret ParseFromDataReader(SqlDataReader r)
+        public override void ParseFromDataReader(SqlDataReader r)
         {
-            return new Secret(r.GetString(0), r.GetString(2))
-            {
-                EncryptedValue = (byte[])r.GetValue(1)
-            };
+            ID = r.GetString(0);
+            CertificateThumbprint = r.GetString(2);
+            EncryptedValue = (byte[])r.GetValue(1);
         }
 
         protected X509Certificate2 GetCertificate()

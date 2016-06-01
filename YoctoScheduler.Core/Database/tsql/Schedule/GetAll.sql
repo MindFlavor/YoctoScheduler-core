@@ -3,4 +3,5 @@
     ,[Cron]
     ,[Enabled]
     ,[TaskID]
+	,[LastFired]
 FROM[live].[Schedules];

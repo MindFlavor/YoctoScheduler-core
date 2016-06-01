@@ -42,10 +42,10 @@ namespace YoctoScheduler.Core
         public void RegisterTask(YoctoScheduler.Core.ExecutionTasks.Watchdog task)
         {
             log.DebugFormat("Server {0:S} registering task {1:S}", this.ToString(), task.ToString());
-            if (!_liveTasks.TryAdd(task.LiveExecutionStatus.GUID, task))
+            if (!_liveTasks.TryAdd(task.LiveExecutionStatus.ID, task))
             {
                 log.WarnFormat("Registration failed for server {0:S}, task {1:S}", this.ToString(), task.ToString());
-                throw new Exceptions.ConcurrencyException(string.Format("LiveExecutionStatus with GUID {0:S} already found in _liveTasks", task.LiveExecutionStatus.GUID.ToString()));
+                throw new Exceptions.ConcurrencyException(string.Format("LiveExecutionStatus with GUID {0:S} already found in _liveTasks", task.LiveExecutionStatus.ID.ToString()));
             }
         }
 
@@ -54,12 +54,14 @@ namespace YoctoScheduler.Core
             YoctoScheduler.Core.ExecutionTasks.Watchdog t;
 
             log.DebugFormat("Server {0:S} deregistering task {1:S}", this.ToString(), task.ToString());
-            if (!_liveTasks.TryRemove(task.LiveExecutionStatus.GUID, out t))
+            if (!_liveTasks.TryRemove(task.LiveExecutionStatus.ID, out t))
             {
                 log.WarnFormat("Deregistration failed for server {0:S}, task {1:S}", this.ToString(), task.ToString());
-                throw new Exceptions.ConcurrencyException(string.Format("LiveExecutionStatus with GUID {0:S} not found in _liveTasks", task.LiveExecutionStatus.GUID.ToString()));
+                throw new Exceptions.ConcurrencyException(string.Format("LiveExecutionStatus with GUID {0:S} not found in _liveTasks", task.LiveExecutionStatus.ID.ToString()));
             }
         }
+
+        public Server() { }
 
         public Server(string ConnectionString) : base()
         {
@@ -179,7 +181,7 @@ namespace YoctoScheduler.Core
             }
         }
 
-        protected internal void PopolateParameters(SqlCommand cmd)
+        public override void PopolateParameters(SqlCommand cmd)
         {
             SqlParameter param = new SqlParameter("@status", System.Data.SqlDbType.Int);
             param.Value = Status;
@@ -334,18 +336,25 @@ namespace YoctoScheduler.Core
                         foreach (var les in lExpired)
                         {
                             // insert into dead table 
-                            var des = DeadExecutionStatus.New(conn, trans, les, TaskStatus.Dead, null);
+                            DeadExecutionStatus des = new DeadExecutionStatus(les, TaskStatus.Dead, null);
+                            DeadExecutionStatus.Insert(conn, trans, des);
 
                             log.WarnFormat("Setting LiveExecutionStatus {0:S} as dead", les.ToString());
                             // remove from live table
-                            les.Delete(conn, trans);
+                            LiveExecutionStatus.Delete(conn, trans, les);
 
                             // if required, reenqueue
                             var task = YoctoScheduler.Core.Database.Task.GetByID(conn, trans, les.TaskID);
                             if (task.ReenqueueOnDead)
                             {
                                 log.InfoFormat("Reenqueuing {0:S} as requested", task.ToString());
-                                ExecutionQueueItem.New(conn, trans, task.ID, Priority.Normal, les.ScheduleID);
+                                ExecutionQueueItem eqi = new ExecutionQueueItem()
+                                {
+                                    TaskID = task.ID,
+                                    Priority = Priority.Normal,
+                                    ScheduleID = les.ScheduleID
+                                };
+                                ExecutionQueueItem.Insert(conn, trans, eqi);
                             }
                         }
 
@@ -380,13 +389,14 @@ namespace YoctoScheduler.Core
                             if (eqi != null)
                             {
                                 // add to live table
-                                les = LiveExecutionStatus.New(conn, trans, eqi.TaskID, this.ID, eqi.ScheduleID);
+                                les = new LiveExecutionStatus(eqi.TaskID, this.ID, eqi.ScheduleID);
+                                LiveExecutionStatus.Insert(conn, trans, les);
 
                                 // get the task for the configuration payload
                                 task = Database.Task.GetByID(conn, trans, eqi.TaskID);
 
                                 // remove from pending execution queue
-                                eqi.Delete(conn, trans);
+                                ExecutionQueueItem.Delete(conn, trans, eqi);
                             }
 
                             trans.Commit();
@@ -419,8 +429,9 @@ namespace YoctoScheduler.Core
                             conn.Open();
                             using (var trans = conn.BeginTransaction())
                             {
-                                var d = DeadExecutionStatus.New(conn, trans, les, TaskStatus.ExceptionAtStartup, exce.ToString());
-                                les.Delete(conn, trans);
+                                DeadExecutionStatus des = new DeadExecutionStatus(les, TaskStatus.ExceptionAtStartup, exce.ToString());
+                                DeadExecutionStatus.Insert(conn, trans, des);
+                                LiveExecutionStatus.Delete(conn, trans, les);
 
                                 trans.Commit();
                             }
@@ -470,13 +481,24 @@ namespace YoctoScheduler.Core
                         lSchedules.ForEach(sched =>
                         {
                             NCrontab.CrontabSchedule cs = NCrontab.CrontabSchedule.Parse(sched.Cron);
-                            if (cs.GetNextOccurrence(LastScheduleCheck) < DateTime.Now)
+                            if (cs.GetNextOccurrence(LastScheduleCheck) < DateTime.Now && (sched.LastFired < cs.GetNextOccurrence(LastScheduleCheck)))
                             {
                                 var task = YoctoScheduler.Core.Database.Task.GetByID(conn, trans, sched.TaskID);
                                 log.InfoFormat("Starting schedulation {0:S} due to cron {1:S}", task.ToString(), sched.ToString());
 
-                                var qi = ExecutionQueueItem.New(conn, trans, task.ID, Priority.Normal, sched.ID);
-                                log.InfoFormat("Execution enqueued {0:S}", qi.ToString());
+                                // save schedule fire time
+                                sched.LastFired = DateTime.Now;
+                                sched.PersistChanges(conn, trans);
+
+                                ExecutionQueueItem eqi = new ExecutionQueueItem()
+                                {
+                                    TaskID = task.ID,
+                                    Priority = Priority.Normal,
+                                    ScheduleID = sched.ID,
+                                    InsertDate = DateTime.Now
+                                };
+                                ExecutionQueueItem.Insert(conn, trans, eqi);
+                                log.InfoFormat("Execution enqueued {0:S}", eqi.ToString());
                             }
                         });
 
@@ -543,27 +565,8 @@ namespace YoctoScheduler.Core
         }
 
         #region Database
-        public static List<Server> GetAll(SqlConnection conn, SqlTransaction trans)
-        {
-            List<Server> lServers = new List<Server>();
 
-            using (SqlCommand cmd = new SqlCommand(Database.tsql.Extractor.Get("Server.GetAll"), conn, trans))
-            {
-                cmd.Prepare();
-
-                using (SqlDataReader reader = cmd.ExecuteReader())
-                {
-                    while (reader.Read())
-                    {
-                        lServers.Add(ParseFromDataReader(reader));
-                    }
-                }
-            }
-
-            return lServers;
-        }
-
-        protected static Server ParseFromDataReader(SqlDataReader r)
+        public override void ParseFromDataReader(SqlDataReader r)
         {
             List<string> lIPs = new List<string>();
             string xmlStr = r.GetString(5);
@@ -574,15 +577,12 @@ namespace YoctoScheduler.Core
                 lIPs.Add(node.InnerText);
             }
 
-            return new Server(null)
-            {
-                ID = r.GetInt32(0),
-                Status = (TaskStatus)r.GetInt32(1),
-                Description = r.GetString(2),
-                LastPing = r.GetDateTime(3),
-                HostName = r.GetString(4),
-                IPs = lIPs
-            };
+            ID = r.GetInt32(0);
+            Status = (TaskStatus)r.GetInt32(1);
+            Description = r.GetString(2);
+            LastPing = r.GetDateTime(3);
+            HostName = r.GetString(4);
+            IPs = lIPs;
         }
         #endregion
     }

@@ -7,6 +7,7 @@
     ,[LastUpdate]
     ,[Status]
 	,[ReturnCode])
+OUTPUT [INSERTED].[GUID]
 VALUES
     (
     @GUID

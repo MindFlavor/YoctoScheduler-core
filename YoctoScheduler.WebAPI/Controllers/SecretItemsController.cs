@@ -19,7 +19,7 @@ namespace YoctoScheduler.WebAPI.Controllers
                 conn.Open();
                 using (var trans = conn.BeginTransaction())
                 {
-                    var r = Secret.GetAll(conn, trans);
+                    var r = Secret.GetAll<Secret>(conn, trans);
                     return r;
                 }
             }
@@ -56,10 +56,17 @@ namespace YoctoScheduler.WebAPI.Controllers
                     conn.Open();
                     using (var trans = conn.BeginTransaction())
                     {
-                        var ret = YoctoScheduler.Core.Database.Secret.New(conn, trans, secret.Name, secret.CertificateThumbprint, secret.PlainTextValue);
+                        Secret sec = new Secret()
+                        {
+                            ID = secret.Name,
+                            CertificateThumbprint = secret.CertificateThumbprint,
+                            PlainTextValue = secret.PlainTextValue
+                        };
+
+                        YoctoScheduler.Core.Database.Secret.Insert(conn, trans, sec);
                         trans.Commit();
                         // TODO : return a valid URI
-                        return Created("", ret);
+                        return Created("", sec);
                     }
                 }
             }

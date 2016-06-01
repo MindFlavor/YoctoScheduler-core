@@ -5,6 +5,4 @@
     ,[ServerID]
 	,[Inserted]
     ,[LastUpdate]
-FROM [live].[ExecutionStatus]
-WHERE 
-    [LastUpdate] >= @lastUpdate;
+FROM [live].[ExecutionStatus];

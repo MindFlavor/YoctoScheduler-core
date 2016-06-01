@@ -16,6 +16,10 @@ namespace YoctoScheduler.Core.Database
         public int? ScheduleID { get; set; }
         public DateTime InsertDate { get; set; }
 
+        public ExecutionQueueItem() : base()
+        {
+        }
+
         public ExecutionQueueItem(int TaskID, Priority Priority) : base()
         {
             this.TaskID = TaskID;
@@ -33,26 +37,7 @@ namespace YoctoScheduler.Core.Database
                 InsertDate.ToString(LOG_TIME_FORMAT));
         }
 
-        public static ExecutionQueueItem New(SqlConnection conn, SqlTransaction trans, int TaskID, Priority priority, int? ScheduleID)
-        {
-            ExecutionQueueItem es = new ExecutionQueueItem(TaskID, priority)
-            {
-                ScheduleID = ScheduleID,
-                InsertDate = DateTime.Now
-            };
-
-            #region Database entry
-            using (SqlCommand cmd = new SqlCommand(tsql.Extractor.Get("ExecutionQueueItem.New"), conn, trans))
-            {
-                es.PopolateParameters(cmd);
-                es.GUID = (Guid)cmd.ExecuteScalar();
-            }
-            #endregion
-            log.DebugFormat("Created {0:S}", es.ToString());
-            return es;
-        }
-
-        protected internal virtual void PopolateParameters(SqlCommand cmd)
+        public override void PopolateParameters(SqlCommand cmd)
         {
             SqlParameter param = new SqlParameter("@ScheduleID", System.Data.SqlDbType.Int);
             if (ScheduleID.HasValue)
@@ -76,7 +61,7 @@ namespace YoctoScheduler.Core.Database
             if (HasValidID())
             {
                 param = new SqlParameter("@GUID", System.Data.SqlDbType.UniqueIdentifier);
-                param.Value = GUID;
+                param.Value = ID;
                 cmd.Parameters.Add(param);
             }
         }
@@ -90,45 +75,27 @@ namespace YoctoScheduler.Core.Database
                 using (SqlDataReader reader = cmd.ExecuteReader())
                 {
                     if (reader.Read())
-                        return ParseFromDataReader(reader);
+                    {
+                        ExecutionQueueItem eqi = new ExecutionQueueItem();
+                        eqi.ParseFromDataReader(reader);
+                        return eqi;
+                    }
                     else
                         return null;
                 }
             }
         }
 
-        protected static ExecutionQueueItem ParseFromDataReader(SqlDataReader r)
+        public override void ParseFromDataReader(SqlDataReader r)
         {
-            var les = new ExecutionQueueItem(r.GetInt32(1), (Priority)r.GetInt32(2))
-            {
-                GUID = r.GetGuid(0),
-                InsertDate = r.GetDateTime(4)
-            };
-
+            TaskID = r.GetInt32(1);
+            Priority = (Priority)r.GetInt32(2);
+            ID = r.GetGuid(0);
+            InsertDate = r.GetDateTime(4);
             if (!r.IsDBNull(3))
-            {
-                les.ScheduleID = r.GetInt32(3);
-            }
-
-            return les;
-        }
-
-        public void Delete(SqlConnection conn, SqlTransaction trans)
-        {
-            using (SqlCommand cmd = new SqlCommand(tsql.Extractor.Get("ExecutionQueueItem.Delete"), conn, trans))
-            {
-                SqlParameter param = new SqlParameter("@GUID", System.Data.SqlDbType.UniqueIdentifier);
-                param.Value = GUID;
-                cmd.Parameters.Add(param);
-
-                cmd.Prepare();
-                if (cmd.ExecuteNonQuery() != 1)
-                {
-                    throw new Exceptions.ConcurrencyException(
-                        string.Format("Delete from [live].[ExecutionQueue] failed because no entry with GUID {0:S} was found", GUID.ToString(),
-                        null));
-                }
-            }
+                ScheduleID = r.GetInt32(3);
+            else
+                ScheduleID = null;
         }
 
         public override void PersistChanges(SqlConnection conn, SqlTransaction trans)

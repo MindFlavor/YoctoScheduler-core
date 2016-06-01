@@ -7,25 +7,18 @@ using System.Threading.Tasks;
 namespace YoctoScheduler.Core.Database
 {
     [System.Runtime.Serialization.DataContract]
-    public abstract class DatabaseItemWithGUIDPK : DatabaseItem
+    public abstract class DatabaseItemWithGUIDPK : DatabaseItem<Guid>
     {
-
-        [System.Runtime.Serialization.DataMember]
-        public Guid GUID { get; set; }
-
-        public bool HasValidID()
+        public DatabaseItemWithGUIDPK()
         {
-            return GUID != Guid.Empty;
+            this.ID = Guid.Empty;
         }
 
-        public DatabaseItemWithGUIDPK() : base()
+        public override bool HasValidID()
         {
-            GUID = Guid.Empty;
+            return ID != Guid.Empty;
         }
 
-        public override string ToString()
-        {
-            return string.Format("ID={0:N0}", GUID.ToString());
-        }
+
     }
 }
