@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "YoctoScheduler.Core", "Yoct
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "YoctoScheduler.WebAPI", "YoctoScheduler.WebAPI\YoctoScheduler.WebAPI.csproj", "{2BCE1CC6-06B6-414E-97A8-64577661A315}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "YoctoScheduler.ServiceHost", "YoctoScheduler.ServiceHost\YoctoScheduler.ServiceHost.csproj", "{D39CCB0A-A701-44E6-BF9D-4A6A66D489AA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{2BCE1CC6-06B6-414E-97A8-64577661A315}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2BCE1CC6-06B6-414E-97A8-64577661A315}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2BCE1CC6-06B6-414E-97A8-64577661A315}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D39CCB0A-A701-44E6-BF9D-4A6A66D489AA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D39CCB0A-A701-44E6-BF9D-4A6A66D489AA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D39CCB0A-A701-44E6-BF9D-4A6A66D489AA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D39CCB0A-A701-44E6-BF9D-4A6A66D489AA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
