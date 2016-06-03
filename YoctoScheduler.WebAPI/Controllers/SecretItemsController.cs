@@ -33,7 +33,7 @@ namespace YoctoScheduler.WebAPI.Controllers
                 conn.Open();
                 using (var trans = conn.BeginTransaction())
                 {
-                    secret = Secret.GetByName(conn, trans, id);
+                    secret = Secret.GetByID<Secret>(conn, trans, id);
                     trans.Commit();
                 }
             }

@@ -10,23 +10,29 @@ using System.Threading.Tasks;
 namespace YoctoScheduler.Core.Database
 {
     [System.Runtime.Serialization.DataContract]
+    [DatabaseKey(DatabaseName = "TaskID", Size = 4)]
     public class Task : DatabaseItemWithIntPK
     {
         private static readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(Task));
 
         [System.Runtime.Serialization.DataMember]
+        [DatabaseProperty(Size = 255)]
         public string Name { get; set; }
 
         [System.Runtime.Serialization.DataMember]
+        [DatabaseProperty(Size = 255)]
         public string Type { get; set; }
 
         [System.Runtime.Serialization.DataMember]
+        [DatabaseProperty(Size = 1)]
         public bool ReenqueueOnDead { get; set; }
 
         [System.Runtime.Serialization.DataMember]
+        [DatabaseProperty(Size = -1)]
         public string Payload { get; set; }
 
         [System.Runtime.Serialization.DataMember]
+        [DatabaseProperty(Size = -1)]
         public string Description { get; set; }
 
         public Task() : base()
@@ -76,72 +82,6 @@ namespace YoctoScheduler.Core.Database
             return task;
         }
 
-        public override void PopolateParameters(SqlCommand cmd)
-        {
-            SqlParameter param = new SqlParameter("@ReenqueueOnDead", System.Data.SqlDbType.Bit);
-            param.Value = ReenqueueOnDead;
-            cmd.Parameters.Add(param);
-
-            param = new SqlParameter("@Name", System.Data.SqlDbType.NVarChar, 255);
-            param.Value = Name;
-            cmd.Parameters.Add(param);
-
-            param = new SqlParameter("@Description", System.Data.SqlDbType.NVarChar, -1);
-            if (string.IsNullOrEmpty(Description))
-                param.Value = DBNull.Value;
-            else
-                param.Value = Description;
-            cmd.Parameters.Add(param);
-
-            param = new SqlParameter("@Type", System.Data.SqlDbType.NVarChar, 255);
-            param.Value = Type;
-            cmd.Parameters.Add(param);
-
-            param = new SqlParameter("@Payload", System.Data.SqlDbType.NVarChar, -1);
-            if (string.IsNullOrEmpty(Payload))
-                param.Value = DBNull.Value;
-            else
-                param.Value = Payload;
-            cmd.Parameters.Add(param);
-
-            if (HasValidID())
-            {
-                param = new SqlParameter("@TaskID", System.Data.SqlDbType.Int);
-                param.Value = ID;
-                cmd.Parameters.Add(param);
-            }
-        }
-
-        public override void PersistChanges(SqlConnection conn, SqlTransaction trans)
-        {
-            throw new NotImplementedException();
-        }
-
-        public static Task GetByID(SqlConnection conn, SqlTransaction trans, int ID)
-        {
-            Task task;
-
-            using (SqlCommand cmd = new SqlCommand(tsql.Extractor.Get("Task.RetrieveByID"), conn, trans))
-            {
-                SqlParameter param = new SqlParameter("@id", System.Data.SqlDbType.Int);
-                param.Value = ID;
-                cmd.Parameters.Add(param);
-
-                cmd.Prepare();
-
-                using (SqlDataReader reader = cmd.ExecuteReader())
-                {
-                    if (!reader.Read())
-                        return null;
-                    task = new Task();
-                    task.ParseFromDataReader(reader);
-                }
-
-                log.DebugFormat("{0:S} - Retrieved task ", task.ToString());
-                return task;
-            }
-        }
-
         public override void ParseFromDataReader(SqlDataReader r)
         {
             Payload = null;
@@ -156,7 +96,7 @@ namespace YoctoScheduler.Core.Database
 
             ReenqueueOnDead = r.GetBoolean(1);
             Name = r.GetString(2);
-            Type = r.GetString(4);            
+            Type = r.GetString(4);
         }
     }
 }

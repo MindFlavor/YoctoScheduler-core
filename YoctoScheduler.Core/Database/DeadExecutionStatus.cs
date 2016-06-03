@@ -7,21 +7,28 @@ using System.Threading.Tasks;
 
 namespace YoctoScheduler.Core.Database
 {
+    [DatabaseKey(DatabaseName = "GUID", Size = 16)]
     public class DeadExecutionStatus : LiveExecutionStatus
     {
         private static readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(DeadExecutionStatus));
 
+        [DatabaseProperty(Size = 4)]
         public TaskStatus Status { get; set; }
 
+        [DatabaseProperty(Size = -1)]
         public string ReturnCode { get; set; }
+
+        public DeadExecutionStatus()
+        { }
 
         public DeadExecutionStatus(LiveExecutionStatus des, TaskStatus Status)
             : this(des, Status, null) { }
 
-        public DeadExecutionStatus(LiveExecutionStatus des, TaskStatus Status, string ReturnCode) : base(des.TaskID, des.ServerID, des.ScheduleID)
+        public DeadExecutionStatus(LiveExecutionStatus les, TaskStatus Status, string ReturnCode) : base(les.TaskID, les.ServerID, les.ScheduleID)
         {
-            ID = des.ID;
-            this.LastUpdate = des.LastUpdate;
+            ID = les.ID;
+            this.LastUpdate = les.LastUpdate;
+            this.Inserted = les.Inserted;
 
             this.Status = Status;
             this.ReturnCode = ReturnCode;
@@ -34,23 +41,6 @@ namespace YoctoScheduler.Core.Database
                 this.GetType().FullName,
                 base.ToString(),
                 Status.ToString());
-        }
-
-        public override void PopolateParameters(SqlCommand cmd)
-        {
-            base.PopolateParameters(cmd);
-
-            SqlParameter param = new SqlParameter("@Status", System.Data.SqlDbType.Int);
-            param.Value = Status;
-            cmd.Parameters.Add(param);
-
-
-            param = new SqlParameter("@ReturnCode", System.Data.SqlDbType.NVarChar, -1);
-            if (string.IsNullOrEmpty(ReturnCode))
-                param.Value = DBNull.Value;
-            else
-                param.Value = ReturnCode;
-            cmd.Parameters.Add(param);
         }
     }
 }

@@ -6,20 +6,18 @@ using System.Threading.Tasks;
 
 namespace YoctoScheduler.Core.ExecutionTasks
 {
-    public abstract class JsonBasedTask<T> : ITask
+    public abstract class JsonBasedTask<T> : GenericTask
     {
         public T Configuration { get; set; }
 
-        public string SerializeConfiguration()
+        public override string SerializeConfiguration()
         {
             return Newtonsoft.Json.JsonConvert.SerializeObject(Configuration);
         }
 
-        public void ParseConfiguration(string Payload)
+        public override void ParseConfiguration(string Payload)
         {
             Configuration = Newtonsoft.Json.JsonConvert.DeserializeObject<T>(Payload);
         }
-
-        public abstract string Do();
     }
 }

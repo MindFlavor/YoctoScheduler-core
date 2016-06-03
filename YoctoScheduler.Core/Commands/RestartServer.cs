@@ -8,7 +8,7 @@ namespace YoctoScheduler.Core.Commands
 {
     public class RestartServer : Database.GenericCommand
     {
-        public RestartServer(int ServerID, string Payload) : base(ServerID, ServerCommand.RestartServer, Payload)
+        public RestartServer(int ServerID) : base(ServerID, ServerCommand.RestartServer, null)
         {     }
     }
 }

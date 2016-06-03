@@ -84,7 +84,7 @@ namespace Test
                                 conn.Open();
                                 using (var trans = conn.BeginTransaction())
                                 {
-                                    var secret = Secret.GetByName(conn, trans, tokens[1]);
+                                    var secret = Secret.GetByID<Secret>(conn, trans, tokens[1]);
                                     trans.Commit();
 
                                     log.InfoFormat("Retrieved secret {0:S}. Plain text is = \"{1:S}\".", secret.ToString(), secret.PlainTextValue);

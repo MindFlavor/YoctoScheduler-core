@@ -5,8 +5,8 @@
 	,[LastFired])
 OUTPUT [INSERTED].[ScheduleID]    
 VALUES(
-        @taskID,
-		@cron,
-		@enabled,
+        @TaskID,
+		@Cron,
+		@Enabled,
 		@LastFired
     );
