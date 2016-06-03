@@ -1,5 +1,5 @@
 ﻿UPDATE [live].[ExecutionStatus]
    SET 
-	[LastUpdate] = @lastUpdate
+	[LastUpdate] = @LastUpdate
  WHERE
 	[GUID] = @GUID;

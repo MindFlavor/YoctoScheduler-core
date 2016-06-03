@@ -31,7 +31,7 @@ namespace YoctoScheduler.WebAPI.Controllers
                 conn.Open();
                 using (var trans = conn.BeginTransaction())
                 {
-                    task = Task.GetByID(conn, trans, id);
+                    task = Task.GetByID<Task>(conn, trans, id);
                     trans.Commit();
                 }
             }

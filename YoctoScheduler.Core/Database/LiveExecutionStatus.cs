@@ -10,18 +10,24 @@ using System.Threading.Tasks;
 namespace YoctoScheduler.Core.Database
 {
 
+    [DatabaseKey(DatabaseName = "GUID", Size = 16)]
     public class LiveExecutionStatus : DatabaseItemWithGUIDPK
     {
         private static readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(LiveExecutionStatus));
 
+        [DatabaseProperty(Size = 4)]
         public int TaskID { get; set; }
 
+        [DatabaseProperty(Size = 4)]
         public int ServerID { get; set; }
 
+        [DatabaseProperty(Size = 4)]
         public int? ScheduleID { get; set; }
 
+        [DatabaseProperty(Size = 8)]
         public DateTime LastUpdate { get; set; }
 
+        [DatabaseProperty(Size = 8)]
         public DateTime Inserted { get; set; }
 
         public LiveExecutionStatus() : base()
@@ -46,44 +52,6 @@ namespace YoctoScheduler.Core.Database
                 ScheduleID.HasValue ? ScheduleID.Value.ToString() : "<null>",
                 Inserted.ToString(),
                 LastUpdate.ToString());
-        }
-
-        public override void PopolateParameters(SqlCommand cmd)
-        {
-            SqlParameter param = new SqlParameter("@ScheduleID", System.Data.SqlDbType.Int);
-            if (ScheduleID.HasValue)
-                param.Value = ScheduleID.Value;
-            else
-                param.Value = DBNull.Value;
-            cmd.Parameters.Add(param);
-
-            param = new SqlParameter("@TaskID", System.Data.SqlDbType.Int);
-            param.Value = TaskID;
-            cmd.Parameters.Add(param);
-
-            param = new SqlParameter("@ServerID", System.Data.SqlDbType.Int);
-            param.Value = ServerID;
-            cmd.Parameters.Add(param);
-
-            param = new SqlParameter("@LastUpdate", System.Data.SqlDbType.DateTime);
-            param.Value = LastUpdate;
-            cmd.Parameters.Add(param);
-
-            param = new SqlParameter("@Inserted", System.Data.SqlDbType.DateTime);
-            param.Value = Inserted;
-            cmd.Parameters.Add(param);
-
-            if (HasValidID())
-            {
-                param = new SqlParameter("@GUID", System.Data.SqlDbType.UniqueIdentifier);
-                param.Value = ID;
-                cmd.Parameters.Add(param);
-            }
-        }
-
-        public override void PersistChanges(SqlConnection conn, SqlTransaction trans)
-        {
-            throw new NotImplementedException();
         }
 
         public override void ParseFromDataReader(SqlDataReader r)
@@ -126,24 +94,8 @@ namespace YoctoScheduler.Core.Database
        
         public void UpdateKeepAlive(SqlConnection conn, SqlTransaction trans)
         {
-            using (SqlCommand cmd = new SqlCommand(tsql.Extractor.Get("LiveExecutionStatus.UpdateKeepAlive"), conn, trans))
-            {
-                SqlParameter param = new SqlParameter("@GUID", System.Data.SqlDbType.UniqueIdentifier);
-                param.Value = ID;
-                cmd.Parameters.Add(param);
-
-                param = new SqlParameter("@lastUpdate", System.Data.SqlDbType.DateTime);
-                param.Value = DateTime.Now;
-                cmd.Parameters.Add(param);
-
-                cmd.Prepare();
-                if (cmd.ExecuteNonQuery() != 1)
-                {
-                    throw new Exceptions.ConcurrencyException(
-                        string.Format("Update from [live].[ExecutionStatus] failed because no entry with GUID {0:S} was found", ID.ToString(),
-                        null));
-                }
-            }
+            this.LastUpdate = DateTime.Now;
+            LiveExecutionStatus.Update(conn, trans, this);
         }
     }
 }

@@ -163,22 +163,11 @@ namespace YoctoScheduler.Core
             log.DebugFormat("{0:S} - Setting server as running", server.ToString());
             server.Status = TaskStatus.Running;
 
-            server.PersistChanges(conn, trans);
+            Server.Update(conn, trans, server);
             log.InfoFormat("{0:S} - Server running", server.ToString());
             #endregion
 
             return server;
-        }
-
-        public override void PersistChanges(SqlConnection conn, SqlTransaction trans)
-        {
-            using (SqlCommand cmd = new SqlCommand(Database.tsql.Extractor.Get("Server.PersistChanges"), conn, trans))
-            {
-                PopolateParameters(cmd);
-
-                cmd.Prepare();
-                cmd.ExecuteNonQuery();
-            }
         }
 
         public override void PopolateParameters(SqlCommand cmd)
@@ -223,7 +212,7 @@ namespace YoctoScheduler.Core
             }
         }
 
-        protected Secret TranslateSecret(string secretName)
+        public Secret TranslateSecret(string secretName)
         {
             log.DebugFormat("Retrieving secret {0:S}.", secretName);
 
@@ -234,14 +223,17 @@ namespace YoctoScheduler.Core
                 conn.Open();
                 using (var trans = conn.BeginTransaction())
                 {
-                    secret = Secret.GetByName(conn, trans, secretName);
+                    secret = Secret.GetByID<Secret>(conn, trans, secretName);
                     trans.Commit();
                 }
             }
             if (secret != null)
                 log.DebugFormat("Secret {0:S} retrieved (char count {1:N0}).", secretName, secret.PlainTextValue.Length);
             else
-                log.WarnFormat("Secret {0:S} not found.", secretName, secret.PlainTextValue.Length);
+            {
+                log.WarnFormat("Secret {0:S} not found.", secretName);
+                throw new Exceptions.SecretNotFoundException(secretName);
+            }
 
             return secret;
         }
@@ -276,7 +268,7 @@ namespace YoctoScheduler.Core
                     conn.Open();
                     using (SqlTransaction trans = conn.BeginTransaction())
                     {
-                        PersistChanges(conn, trans);
+                        Server.Update(conn, trans, this);
                         trans.Commit();
                     }
                 }
@@ -335,7 +327,7 @@ namespace YoctoScheduler.Core
 
                         foreach (var les in lExpired)
                         {
-                            // insert into dead table 
+                            // insert into dead table
                             DeadExecutionStatus des = new DeadExecutionStatus(les, TaskStatus.Dead, null);
                             DeadExecutionStatus.Insert(conn, trans, des);
 
@@ -344,7 +336,7 @@ namespace YoctoScheduler.Core
                             LiveExecutionStatus.Delete(conn, trans, les);
 
                             // if required, reenqueue
-                            var task = YoctoScheduler.Core.Database.Task.GetByID(conn, trans, les.TaskID);
+                            var task = YoctoScheduler.Core.Database.Task.GetByID<Task>(conn, trans, les.TaskID);
                             if (task.ReenqueueOnDead)
                             {
                                 log.InfoFormat("Reenqueuing {0:S} as requested", task.ToString());
@@ -352,7 +344,8 @@ namespace YoctoScheduler.Core
                                 {
                                     TaskID = task.ID,
                                     Priority = Priority.Normal,
-                                    ScheduleID = les.ScheduleID
+                                    ScheduleID = les.ScheduleID,
+                                    InsertDate = DateTime.Now
                                 };
                                 ExecutionQueueItem.Insert(conn, trans, eqi);
                             }
@@ -393,7 +386,7 @@ namespace YoctoScheduler.Core
                                 LiveExecutionStatus.Insert(conn, trans, les);
 
                                 // get the task for the configuration payload
-                                task = Database.Task.GetByID(conn, trans, eqi.TaskID);
+                                task = Database.Task.GetByID<Task>(conn, trans, eqi.TaskID);
 
                                 // remove from pending execution queue
                                 ExecutionQueueItem.Delete(conn, trans, eqi);
@@ -450,18 +443,18 @@ namespace YoctoScheduler.Core
 
         protected void TasksScheduledThread()
         {
-            // modificare il processo perchè includa la coda di esecuzione ( [live].[Schedules]). 
+            // modificare il processo perchè includa la coda di esecuzione ( [live].[Schedules]).
             // la query da utilizzare e'
             /*
              * SELECT * FROM [live].[Schedules] S WITH(XLOCK)
                 LEFT OUTER JOIN [live].[ExecutionQueue]  Q ON S.[ScheduleID] = Q.[ScheduleID]
                 LEFT OUTER JOIN [live].[ExecutionStatus] E ON S.[ScheduleID] = E.[ScheduleID]
                 WHERE
-		                Q.[ScheduleID] IS NULL 
+		                Q.[ScheduleID] IS NULL
 	                AND
-		                E.[ScheduleID] IS NULL  
-             * 
-             * questa query locka la schedules e serializza il suo accesso. mostra solo le 
+		                E.[ScheduleID] IS NULL
+             *
+             * questa query locka la schedules e serializza il suo accesso. mostra solo le
              * schedulazioni che non sono ne' in coda ne' in esecuzione
              */
 
@@ -483,12 +476,12 @@ namespace YoctoScheduler.Core
                             NCrontab.CrontabSchedule cs = NCrontab.CrontabSchedule.Parse(sched.Cron);
                             if (cs.GetNextOccurrence(LastScheduleCheck) < DateTime.Now && (sched.LastFired < cs.GetNextOccurrence(LastScheduleCheck)))
                             {
-                                var task = YoctoScheduler.Core.Database.Task.GetByID(conn, trans, sched.TaskID);
+                                var task = YoctoScheduler.Core.Database.Task.GetByID<Task>(conn, trans, sched.TaskID);
                                 log.InfoFormat("Starting schedulation {0:S} due to cron {1:S}", task.ToString(), sched.ToString());
 
                                 // save schedule fire time
                                 sched.LastFired = DateTime.Now;
-                                sched.PersistChanges(conn, trans);
+                                Schedule.Update(conn, trans, sched);
 
                                 ExecutionQueueItem eqi = new ExecutionQueueItem()
                                 {
@@ -541,7 +534,7 @@ namespace YoctoScheduler.Core
                             Commands.KillExecutionTask kt = (Commands.KillExecutionTask)cmd;
                             log.InfoFormat("Kill task requested (LiveExecutionStatusGUID = {0:S}", kt.LiveExecutionStatusGUID.ToString());
 
-                            // get the LiveExecutionStatus and request the kill. 
+                            // get the LiveExecutionStatus and request the kill.
                             // Do not remove it from the list here as it will be done by the task once dead.
                             YoctoScheduler.Core.ExecutionTasks.Watchdog t;
                             if (!_liveTasks.TryGetValue(kt.LiveExecutionStatusGUID, out t))

@@ -66,8 +66,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Database\DatabaseField.cs" />
     <Compile Include="Exceptions\CertificateNotFoundException.cs" />
+    <Compile Include="ExecutionTasks\ITask.cs" />
     <Compile Include="ExecutionTasks\JsonBasedTask.cs" />
+    <Compile Include="ExecutionTasks\Passthrough\PassthroughTask.cs" />
+    <Compile Include="ExecutionTasks\StringBasedTask.cs" />
     <Compile Include="ExecutionTasks\TSQL\Configuration.cs" />
     <Compile Include="ExecutionTasks\TSQL\TSQLTask.cs" />
     <Compile Include="ServerCommand.cs" />
@@ -88,11 +92,11 @@
     <Compile Include="Exceptions\TSQLNotFoundException.cs" />
     <Compile Include="Exceptions\UnsupportedTaskException.cs" />
     <Compile Include="Database\ExecutionQueueItem.cs" />
-    <Compile Include="ExecutionTasks\MockTask\Configuration.cs" />
-    <Compile Include="ExecutionTasks\MockTask\MockTask.cs" />
+    <Compile Include="ExecutionTasks\WaitTask\Configuration.cs" />
+    <Compile Include="ExecutionTasks\WaitTask\WaitTask.cs" />
     <Compile Include="Database\Secret.cs" />
     <Compile Include="ExecutionTasks\Factory.cs" />
-    <Compile Include="ExecutionTasks\ITask.cs" />
+    <Compile Include="ExecutionTasks\GenericTask.cs" />
     <Compile Include="Database\LiveExecutionStatus.cs" />
     <Compile Include="Priority.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -133,7 +137,7 @@
     <EmbeddedResource Include="Database\tsql\Schedule\New.sql" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Database\tsql\Schedule\PersistChanges.sql" />
+    <EmbeddedResource Include="Database\tsql\Schedule\Update.sql" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Database\tsql\Schedule\GetAll.sql" />
@@ -145,7 +149,7 @@
     <EmbeddedResource Include="Database\tsql\Schedule\GetAndLockEnabledNotRunning.sql" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Database\tsql\Server\PersistChanges.sql" />
+    <EmbeddedResource Include="Database\tsql\Server\Update.sql" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Database\tsql\Server\ClearOldServersThread.sql" />
@@ -154,13 +158,13 @@
     <EmbeddedResource Include="Database\tsql\Task\New.sql" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Database\tsql\Task\RetrieveByID.sql" />
+    <EmbeddedResource Include="Database\tsql\Task\GetByID.sql" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Database\tsql\Secret\New.sql" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Database\tsql\Secret\RetrieveByID.sql" />
+    <EmbeddedResource Include="Database\tsql\Secret\GetByID.sql" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Database\tsql\Configuration\GetAll.sql" />
@@ -175,18 +179,20 @@
     <EmbeddedResource Include="Database\tsql\LiveExecutionStatus\GetAndLockAll.sql" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Database\tsql\Commands\New.sql" />
+    <EmbeddedResource Include="Database\tsql\GenericCommand\New.sql" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Database\tsql\Commands\DequeueByServerID.sql" />
+    <EmbeddedResource Include="Database\tsql\GenericCommand\DequeueByServerID.sql" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Database\tsql\Server\GetAll.sql" />
     <EmbeddedResource Include="Database\tsql\Task\GetAll.sql" />
     <EmbeddedResource Include="Database\tsql\Schedule\GetByID.sql" />
     <EmbeddedResource Include="Database\tsql\Secret\GetAll.sql" />
+    <EmbeddedResource Include="Database\tsql\LiveExecutionStatus\Update.sql" />
     <Content Include="sched.ico" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

@@ -50,7 +50,7 @@ namespace YoctoScheduler.Core.ExecutionTasks
             if(typeToCreate == null)
                 throw new Exceptions.UnsupportedTaskException(taskType);
 
-            ITask task = (ITask) Activator.CreateInstance(typeToCreate);
+            GenericTask task = (GenericTask) Activator.CreateInstance(typeToCreate);
             task.ParseConfiguration(configPayload);
             return new Watchdog(server, task, les);
 

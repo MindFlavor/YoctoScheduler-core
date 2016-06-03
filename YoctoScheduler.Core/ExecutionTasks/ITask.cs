@@ -9,7 +9,7 @@ namespace YoctoScheduler.Core.ExecutionTasks
     public interface ITask
     {
         string Do();
-    
+
         // This should throw an exception in case of problems
         // ie. NumberFormatException if a number cannot be parsed from a string with 
         // message like "Cannot convert the parameter to a number".
@@ -17,5 +17,9 @@ namespace YoctoScheduler.Core.ExecutionTasks
         void ParseConfiguration(string Payload);
 
         string SerializeConfiguration();
+
+        string TaskName { get; }
+
+        YoctoScheduler.Core.Database.Task GenerateDatabaseTask();
     }
 }

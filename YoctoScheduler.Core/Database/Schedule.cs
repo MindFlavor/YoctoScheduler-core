@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 namespace YoctoScheduler.Core.Database
 {
     [System.Runtime.Serialization.DataContract]
+    [DatabaseKey(DatabaseName = "ScheduleID", Size = 4)]
     public class Schedule : DatabaseItemWithIntPK
     {
         private static readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(Schedule));
@@ -15,15 +16,19 @@ namespace YoctoScheduler.Core.Database
         private static DateTime DT_NEVER = DateTime.Parse("1900-01-01");
 
         [System.Runtime.Serialization.DataMember]
+        [DatabaseProperty(Size = 255)]
         public string Cron { get; set; }
 
         [System.Runtime.Serialization.DataMember]
+        [DatabaseProperty(Size = 1)]
         public bool Enabled { get; set; }
 
         [System.Runtime.Serialization.DataMember]
+        [DatabaseProperty(Size = 4)]
         public int TaskID { get; set; }
 
         [System.Runtime.Serialization.DataMember]
+        [DatabaseProperty(Size = 8)]
         public DateTime LastFired { get; set; }
 
         public Schedule()
@@ -53,69 +58,6 @@ namespace YoctoScheduler.Core.Database
 
             Schedule.Insert(conn, trans, s);
             return s;
-        }
-
-        public override void PersistChanges(SqlConnection conn, SqlTransaction trans)
-        {
-            using (
-                SqlCommand cmd = new SqlCommand(tsql.Extractor.Get("Schedule.PersistChanges"), conn, trans))
-            {
-                PopolateParameters(cmd);
-
-                cmd.Prepare();
-                cmd.ExecuteNonQuery();
-            }
-        }
-
-        public override void PopolateParameters(SqlCommand cmd)
-        {
-            SqlParameter param = new SqlParameter("@taskID", System.Data.SqlDbType.Int);
-            param.Value = TaskID;
-            cmd.Parameters.Add(param);
-
-            param = new SqlParameter("@cron", System.Data.SqlDbType.NVarChar, 255);
-            param.Value = Cron.ToString();
-            cmd.Parameters.Add(param);
-
-            param = new SqlParameter("@enabled", System.Data.SqlDbType.Bit);
-            param.Value = Enabled;
-            cmd.Parameters.Add(param);
-
-            param = new SqlParameter("@LastFired", System.Data.SqlDbType.DateTime);
-            param.Value = LastFired;
-            cmd.Parameters.Add(param);
-
-            if (HasValidID())
-            {
-                param = new SqlParameter("@scheduleID", System.Data.SqlDbType.Int);
-                param.Value = ID;
-                cmd.Parameters.Add(param);
-            }
-        }
-
-        public static Schedule GetByID(SqlConnection conn, SqlTransaction trans, int id)
-        {
-            using (SqlCommand cmd = new SqlCommand(tsql.Extractor.Get("Schedule.GetByID"), conn, trans))
-            {
-                SqlParameter param = new SqlParameter("@ScheduleID", System.Data.SqlDbType.Int);
-                param.Value = id;
-                cmd.Parameters.Add(param);
-
-                cmd.Prepare();
-
-                using (SqlDataReader reader = cmd.ExecuteReader())
-                {
-                    if (reader.Read())
-                    {
-                        Schedule s = new Schedule();
-                        s.ParseFromDataReader(reader);
-                        return s;
-
-                    }
-                }
-            }
-
-            return null;
         }
 
         public override void ParseFromDataReader(SqlDataReader r)

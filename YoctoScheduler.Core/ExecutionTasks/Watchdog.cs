@@ -20,11 +20,11 @@ namespace YoctoScheduler.Core.ExecutionTasks
 
         protected bool fRunning;
 
-        public ITask Task { get; protected set; }
+        public GenericTask Task { get; protected set; }
 
         public LiveExecutionStatus LiveExecutionStatus { get; protected set; }
 
-        public Watchdog(Server Server, ITask task, LiveExecutionStatus LiveExecutionStatus)
+        public Watchdog(Server Server, GenericTask task, LiveExecutionStatus LiveExecutionStatus)
         {
             this.Server = Server;
             this.Task = task;

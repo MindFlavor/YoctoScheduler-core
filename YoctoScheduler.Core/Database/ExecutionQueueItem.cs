@@ -7,13 +7,21 @@ using System.Threading.Tasks;
 
 namespace YoctoScheduler.Core.Database
 {
+    [DatabaseKey(DatabaseName = "GUID", Size = 16)]
     public class ExecutionQueueItem : DatabaseItemWithGUIDPK
     {
         private static readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(ExecutionQueueItem));
 
+        [DatabaseProperty(Size = 4)]
         public int TaskID { get; set; }
+
+        [DatabaseProperty(Size = 4)]
         public Priority Priority { get; set; }
+
+        [DatabaseProperty(Size = 4)]
         public int? ScheduleID { get; set; }
+
+        [DatabaseProperty(Size = 8)]
         public DateTime InsertDate { get; set; }
 
         public ExecutionQueueItem() : base()
@@ -35,35 +43,6 @@ namespace YoctoScheduler.Core.Database
                 ScheduleID.HasValue ? ScheduleID.Value.ToString() : "<null>",
                 Priority.ToString(),
                 InsertDate.ToString(LOG_TIME_FORMAT));
-        }
-
-        public override void PopolateParameters(SqlCommand cmd)
-        {
-            SqlParameter param = new SqlParameter("@ScheduleID", System.Data.SqlDbType.Int);
-            if (ScheduleID.HasValue)
-                param.Value = ScheduleID.Value;
-            else
-                param.Value = DBNull.Value;
-            cmd.Parameters.Add(param);
-
-            param = new SqlParameter("@TaskID", System.Data.SqlDbType.Int);
-            param.Value = TaskID;
-            cmd.Parameters.Add(param);
-
-            param = new SqlParameter("@Priority", System.Data.SqlDbType.Int);
-            param.Value = Priority;
-            cmd.Parameters.Add(param);
-
-            param = new SqlParameter("@InsertDate", System.Data.SqlDbType.DateTime);
-            param.Value = InsertDate;
-            cmd.Parameters.Add(param);
-
-            if (HasValidID())
-            {
-                param = new SqlParameter("@GUID", System.Data.SqlDbType.UniqueIdentifier);
-                param.Value = ID;
-                cmd.Parameters.Add(param);
-            }
         }
 
         public static ExecutionQueueItem GetAndLockFirst(SqlConnection conn, SqlTransaction trans)
@@ -96,11 +75,6 @@ namespace YoctoScheduler.Core.Database
                 ScheduleID = r.GetInt32(3);
             else
                 ScheduleID = null;
-        }
-
-        public override void PersistChanges(SqlConnection conn, SqlTransaction trans)
-        {
-            throw new NotImplementedException();
         }
     }
 }

@@ -7,13 +7,19 @@ using System.Threading.Tasks;
 
 namespace YoctoScheduler.Core.Database
 {
+    [DatabaseKey(DatabaseName = "ID", Size = 4)]
     public class GenericCommand : DatabaseItemWithIntPK
     {
         private static readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(GenericCommand));
 
+        [DatabaseProperty(Size = 4)]
         public int ServerID { get; set; }
-        protected ServerCommand Command { get; set; }
-        protected string Payload { get; set; }
+
+        [DatabaseProperty(Size = 4)]
+        public ServerCommand Command { get; set; }
+
+        [DatabaseProperty(Size = -1)]
+        public string Payload { get; set; }
 
         public GenericCommand() { }
 
@@ -31,38 +37,11 @@ namespace YoctoScheduler.Core.Database
                 base.ToString(), ServerID, Command.ToString(), Payload);
         }
 
-        public override void PersistChanges(SqlConnection conn, SqlTransaction trans)
-        {
-            throw new NotImplementedException();
-        }
-
-        public override void PopolateParameters(SqlCommand cmd)
-        {
-            SqlParameter param = new SqlParameter("@ServerID", System.Data.SqlDbType.Int);
-            param.Value = ServerID;
-            cmd.Parameters.Add(param);
-
-            param = new SqlParameter("@Command", System.Data.SqlDbType.Int);
-            param.Value = Command;
-            cmd.Parameters.Add(param);
-
-            param = new SqlParameter("@Payload", System.Data.SqlDbType.NVarChar, -1);
-            param.Value = Payload;
-            cmd.Parameters.Add(param);
-
-            if (HasValidID())
-            {
-                param = new SqlParameter("@ID", System.Data.SqlDbType.Int);
-                param.Value = ID;
-                cmd.Parameters.Add(param);
-            }
-        }
-
         public static List<GenericCommand> DequeueByServerID(SqlConnection conn, SqlTransaction trans, int ServerID)
         {
             List<GenericCommand> lCommands = new List<GenericCommand>();
 
-            using (SqlCommand cmd = new SqlCommand(tsql.Extractor.Get("Commands.DequeueByServerID"), conn, trans))
+            using (SqlCommand cmd = new SqlCommand(tsql.Extractor.Get("GenericCommand.DequeueByServerID"), conn, trans))
             {
                 SqlParameter param = new SqlParameter("@ServerID", System.Data.SqlDbType.Int);
                 param.Value = ServerID;

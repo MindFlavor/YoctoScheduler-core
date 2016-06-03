@@ -10,11 +10,13 @@ using System.Threading.Tasks;
 namespace YoctoScheduler.Core.Database
 {
     [System.Runtime.Serialization.DataContract]
+    [DatabaseKey(DatabaseName = "SecretName", Size = 255)]
     public class Secret : DatabaseItemWithNVarCharPK
     {
         private static readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(Secret));
 
         [System.Runtime.Serialization.DataMember]
+        [DatabaseProperty(DatabaseName = "Blob", Size = -1)]
         public byte[] EncryptedValue { get; set; }
 
         public string PlainTextValue
@@ -44,6 +46,8 @@ namespace YoctoScheduler.Core.Database
                 EncryptedValue = bBuf;
             }
         }
+
+        [DatabaseProperty(DatabaseName = "Thumbprint", Size = 40)]
         [System.Runtime.Serialization.DataMember]
         public string CertificateThumbprint { get; set; }
 
@@ -54,47 +58,6 @@ namespace YoctoScheduler.Core.Database
         {
             this.ID = name;
             this.CertificateThumbprint = CertificateThumbprint;
-        }
-
-        public override void PopolateParameters(SqlCommand cmd)
-        {
-            SqlParameter param = new SqlParameter("@Blob", System.Data.SqlDbType.VarBinary, -1);
-            param.Value = EncryptedValue;
-            cmd.Parameters.Add(param);
-
-            param = new SqlParameter("@Thumbprint", System.Data.SqlDbType.Char, 40);
-            param.Value = CertificateThumbprint;
-            cmd.Parameters.Add(param);
-
-            param = new SqlParameter("@SecretName", System.Data.SqlDbType.NVarChar, 255);
-            param.Value = ID;
-            cmd.Parameters.Add(param);
-        }
-
-        public static Secret GetByName(SqlConnection conn, SqlTransaction trans, string SecretName)
-        {
-            Secret secret;
-
-            using (SqlCommand cmd = new SqlCommand(tsql.Extractor.Get("Secret.RetrieveByID"), conn, trans))
-            {
-                SqlParameter param = new SqlParameter("@SecretName", System.Data.SqlDbType.NVarChar, 255);
-                param.Value = SecretName;
-                cmd.Parameters.Add(param);
-
-                cmd.Prepare();
-
-                using (SqlDataReader reader = cmd.ExecuteReader())
-                {
-                    if (!reader.Read())
-                        throw new Exceptions.SecretNotFoundException(SecretName);
-
-                    secret = new Secret();
-                    secret.ParseFromDataReader(reader);
-                }
-
-                log.DebugFormat("{0:S} - Retrieved secret ", secret.ToString());
-                return secret;
-            }
         }
 
         public override void ParseFromDataReader(SqlDataReader r)
@@ -121,11 +84,6 @@ namespace YoctoScheduler.Core.Database
             return string.Format("{0:S}[{1:S}, Thumbprint={2:S}, EncryptedValue={3:S}]",
                 this.GetType().FullName,
                 base.ToString(), CertificateThumbprint, EncryptedValue);
-        }
-
-        public override void PersistChanges(SqlConnection conn, SqlTransaction trans)
-        {
-            throw new NotImplementedException();
         }
     }
 }

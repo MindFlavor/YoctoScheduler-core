@@ -5,11 +5,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace YoctoScheduler.Core.ExecutionTasks.MockTask
+namespace YoctoScheduler.Core.ExecutionTasks.WaitTask
 {
-    public class MockTask : JsonBasedTask<Configuration>
+    public class WaitTask : JsonBasedTask<Configuration>
     {
-        private static readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(MockTask));
+        private static readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(WaitTask));
 
         public override string Do()
         {
