@@ -15,20 +15,20 @@ namespace YoctoScheduler.Core.Database
 
         private static DateTime DT_NEVER = DateTime.Parse("1900-01-01");
 
-        [System.Runtime.Serialization.DataMember]
         [DatabaseProperty(Size = 255)]
+        [System.Runtime.Serialization.DataMember]
         public string Cron { get; set; }
 
-        [System.Runtime.Serialization.DataMember]
         [DatabaseProperty(Size = 1)]
+        [System.Runtime.Serialization.DataMember]
         public bool Enabled { get; set; }
 
-        [System.Runtime.Serialization.DataMember]
         [DatabaseProperty(Size = 4)]
+        [System.Runtime.Serialization.DataMember]
         public int TaskID { get; set; }
 
-        [System.Runtime.Serialization.DataMember]
         [DatabaseProperty(Size = 8)]
+        [System.Runtime.Serialization.DataMember]
         public DateTime LastFired { get; set; }
 
         public Schedule()
@@ -44,20 +44,6 @@ namespace YoctoScheduler.Core.Database
         public override string ToString()
         {
             return string.Format("{0:S}[{1:S}, TaskID={2:N0}, Cron={3:S}, Enabled={4:S}, LastFired={5:S}]", this.GetType().FullName, base.ToString(), TaskID, Cron.ToString(), Enabled.ToString(), LastFired.ToString());
-        }
-
-        public Schedule Clone(SqlConnection conn, SqlTransaction trans)
-        {
-            Schedule s = new Schedule()
-            {
-                TaskID = this.TaskID,
-                Cron = this.Cron,
-                Enabled = this.Enabled,
-                LastFired = this.LastFired == DateTime.MinValue ? DT_NEVER : this.LastFired
-            };
-
-            Schedule.Insert(conn, trans, s);
-            return s;
         }
 
         public override void ParseFromDataReader(SqlDataReader r)

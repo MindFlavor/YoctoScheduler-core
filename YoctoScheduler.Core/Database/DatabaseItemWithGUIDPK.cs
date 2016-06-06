@@ -19,6 +19,10 @@ namespace YoctoScheduler.Core.Database
             return ID != Guid.Empty;
         }
 
-
+        public override void InvalidateID()
+        {
+            this.ID = Guid.Empty;
+        }
     }
+
 }

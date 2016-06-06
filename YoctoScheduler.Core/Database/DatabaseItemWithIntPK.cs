@@ -21,5 +21,10 @@ namespace YoctoScheduler.Core.Database
         {
             ID = INVALID_ID;
         }
+
+        public override void InvalidateID()
+        {
+            this.ID = INVALID_ID;
+        }
     }
 }

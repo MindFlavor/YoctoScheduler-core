@@ -81,6 +81,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ControllerBase.cs" />
+    <Compile Include="ControllerBasePost.cs" />
+    <Compile Include="Controllers\CommandsController.cs" />
+    <Compile Include="Controllers\DeadExecutionsController.cs" />
+    <Compile Include="Controllers\LiveExecutionsController.cs" />
+    <Compile Include="Controllers\QueueItemsController.cs" />
     <Compile Include="Controllers\SchedulesController.cs" />
     <Compile Include="Controllers\SecretItemsController.cs" />
     <Compile Include="Controllers\ServersController.cs" />

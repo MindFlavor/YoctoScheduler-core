@@ -190,6 +190,8 @@
     <EmbeddedResource Include="Database\tsql\Schedule\GetByID.sql" />
     <EmbeddedResource Include="Database\tsql\Secret\GetAll.sql" />
     <EmbeddedResource Include="Database\tsql\LiveExecutionStatus\Update.sql" />
+    <EmbeddedResource Include="Database\tsql\ExecutionQueueItem\GetAll.sql" />
+    <EmbeddedResource Include="Database\tsql\DeadExecutionStatus\GetAll.sql" />
     <Content Include="sched.ico" />
   </ItemGroup>
   <ItemGroup />

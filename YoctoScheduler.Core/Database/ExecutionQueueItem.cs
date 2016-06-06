@@ -7,21 +7,26 @@ using System.Threading.Tasks;
 
 namespace YoctoScheduler.Core.Database
 {
+    [System.Runtime.Serialization.DataContract]
     [DatabaseKey(DatabaseName = "GUID", Size = 16)]
     public class ExecutionQueueItem : DatabaseItemWithGUIDPK
     {
         private static readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(ExecutionQueueItem));
 
         [DatabaseProperty(Size = 4)]
+        [System.Runtime.Serialization.DataMember]
         public int TaskID { get; set; }
 
         [DatabaseProperty(Size = 4)]
+        [System.Runtime.Serialization.DataMember]
         public Priority Priority { get; set; }
 
         [DatabaseProperty(Size = 4)]
+        [System.Runtime.Serialization.DataMember]
         public int? ScheduleID { get; set; }
 
         [DatabaseProperty(Size = 8)]
+        [System.Runtime.Serialization.DataMember]
         public DateTime InsertDate { get; set; }
 
         public ExecutionQueueItem() : base()
@@ -33,6 +38,17 @@ namespace YoctoScheduler.Core.Database
             this.TaskID = TaskID;
             this.Priority = Priority;
         }
+
+        public override T Clone<T>(SqlConnection conn, SqlTransaction trans)
+        {
+            // this check will take care of the SQL DateTime limits
+            // (DateTime.MinValue would throw a SQLException due being too far away in the past)
+            if (InsertDate == DateTime.MinValue)
+                InsertDate = DateTime.Now;
+
+            return base.Clone<T>(conn, trans);
+        }
+
 
         public override string ToString()
         {

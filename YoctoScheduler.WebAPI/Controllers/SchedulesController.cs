@@ -7,72 +7,8 @@ using YoctoScheduler.Core.Database;
 
 namespace YoctoScheduler.WebAPI.Controllers
 {
-    public class SchedulesController : System.Web.Http.ApiController
+    public class SchedulesController : ControllerBasePost<Schedule,int>
     {
         private static readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(SchedulesController));
-
-        public IEnumerable<Schedule> Get()
-        {
-            using (SqlConnection conn = new SqlConnection(Startup.ConnectionString))
-            {
-                conn.Open();
-                using (var trans = conn.BeginTransaction())
-                {
-                    var r = Schedule.GetAll<Schedule>(conn, trans);
-                    trans.Commit();
-                    return r;
-                }
-            }
-        }
-
-        public IHttpActionResult Get(int id)
-        {
-            Schedule sched = null;
-            using (SqlConnection conn = new SqlConnection(Startup.ConnectionString))
-            {
-                conn.Open();
-                using (var trans = conn.BeginTransaction())
-                {
-                    sched = Schedule.GetByID<Schedule>(conn, trans, id);
-                    trans.Commit();
-                }
-            }
-
-            if (sched != null)
-                return Ok(sched);
-            else
-                return NotFound();
-        }
-
-        public IHttpActionResult Post(Schedule value)
-        {
-            if (value == null)
-                return BadRequest();
-
-            try
-            {
-                using (SqlConnection conn = new SqlConnection(Startup.ConnectionString))
-                {
-                    conn.Open();
-                    using (var trans = conn.BeginTransaction())
-                    {
-                        var ret = value.Clone(conn, trans);
-                        trans.Commit();
-                        // TODO : return a valid URI
-                        return Created("", ret);
-                    }
-                }
-            }
-            catch (YoctoScheduler.Core.Exceptions.TaskNotFoundException tfe)
-            {
-                log.ErrorFormat("Error processing Schedule POST: {0:S}", tfe.ToString());
-                return BadRequest();
-            }
-            catch (Exception exce)
-            {
-                log.ErrorFormat("Error processing Schedule POST: {0:S}", exce.ToString());
-                return InternalServerError();
-            }
-        }
     }
 }

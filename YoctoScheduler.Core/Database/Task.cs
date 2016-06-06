@@ -58,11 +58,6 @@ namespace YoctoScheduler.Core.Database
                 Type, Payload);
         }
 
-        public virtual Task Clone(SqlConnection conn, SqlTransaction trans)
-        {
-            return New(conn, trans, this.Name, this.Description, this.ReenqueueOnDead, this.Type, this.Payload);
-        }
-
         public static Task New(SqlConnection conn, SqlTransaction trans, string Name, string Description, bool ReenqueueOnDead, string Type, string Payload)
         {
             #region Database entry

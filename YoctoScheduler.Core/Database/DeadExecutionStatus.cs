@@ -7,15 +7,18 @@ using System.Threading.Tasks;
 
 namespace YoctoScheduler.Core.Database
 {
+    [System.Runtime.Serialization.DataContract]
     [DatabaseKey(DatabaseName = "GUID", Size = 16)]
     public class DeadExecutionStatus : LiveExecutionStatus
     {
         private static readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(DeadExecutionStatus));
 
         [DatabaseProperty(Size = 4)]
+        [System.Runtime.Serialization.DataMember]
         public TaskStatus Status { get; set; }
 
         [DatabaseProperty(Size = -1)]
+        [System.Runtime.Serialization.DataMember]
         public string ReturnCode { get; set; }
 
         public DeadExecutionStatus()
@@ -41,6 +44,20 @@ namespace YoctoScheduler.Core.Database
                 this.GetType().FullName,
                 base.ToString(),
                 Status.ToString());
+        }
+
+        public override void ParseFromDataReader(SqlDataReader r)
+        {
+            ScheduleID = null;
+            if (!r.IsDBNull(1))
+                ScheduleID = r.GetInt32(1);
+            ID = r.GetGuid(0);
+            TaskID = r.GetInt32(2);
+            Status = (TaskStatus)r.GetInt32(3);
+            ReturnCode = r.GetString(4);
+            ServerID = r.GetInt32(5);
+            Inserted = r.GetDateTime(6);
+            LastUpdate = r.GetDateTime(7);
         }
     }
 }

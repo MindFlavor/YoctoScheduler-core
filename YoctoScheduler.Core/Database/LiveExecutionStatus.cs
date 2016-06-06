@@ -10,23 +10,29 @@ using System.Threading.Tasks;
 namespace YoctoScheduler.Core.Database
 {
 
+    [System.Runtime.Serialization.DataContract]
     [DatabaseKey(DatabaseName = "GUID", Size = 16)]
     public class LiveExecutionStatus : DatabaseItemWithGUIDPK
     {
         private static readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(LiveExecutionStatus));
 
+        [System.Runtime.Serialization.DataMember]
         [DatabaseProperty(Size = 4)]
         public int TaskID { get; set; }
 
+        [System.Runtime.Serialization.DataMember]
         [DatabaseProperty(Size = 4)]
         public int ServerID { get; set; }
 
+        [System.Runtime.Serialization.DataMember]
         [DatabaseProperty(Size = 4)]
         public int? ScheduleID { get; set; }
 
+        [System.Runtime.Serialization.DataMember]
         [DatabaseProperty(Size = 8)]
         public DateTime LastUpdate { get; set; }
 
+        [System.Runtime.Serialization.DataMember]
         [DatabaseProperty(Size = 8)]
         public DateTime Inserted { get; set; }
 

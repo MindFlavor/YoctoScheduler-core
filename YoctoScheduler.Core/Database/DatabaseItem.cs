@@ -21,6 +21,17 @@ namespace YoctoScheduler.Core.Database
         public DatabaseItem()
         { }
 
+        public abstract void InvalidateID();
+
+        public virtual T Clone<T>(SqlConnection conn, SqlTransaction trans) where T : DatabaseItem<K>
+        {
+            T clone = (T)this.MemberwiseClone();
+            clone.InvalidateID();
+            Insert<T>(conn, trans, clone);
+
+            return (T)clone;
+        }
+
         protected static SqlConnection OpenConnection(string ConnectionString)
         {
             SqlConnection conn = new SqlConnection(ConnectionString);
@@ -30,7 +41,7 @@ namespace YoctoScheduler.Core.Database
         }
 
         public virtual void PopolateParameters(SqlCommand cmd)
-        {                        
+        {
             // reflect and get all the DatabaseField properties
             var properties = this.GetType().GetProperties().Where(prop => prop.GetCustomAttributes(typeof(DatabaseProperty), true).Count() > 0);
 
@@ -47,7 +58,7 @@ namespace YoctoScheduler.Core.Database
 
                 SqlParameter param = new SqlParameter(name, SqlDbTypeFromType(prop.PropertyType), att.Size);
 
-                
+
                 if (prop.GetValue(this) == null)
                     param.Value = DBNull.Value;
                 else
@@ -85,7 +96,7 @@ namespace YoctoScheduler.Core.Database
                 return System.Data.SqlDbType.UniqueIdentifier;
             else if (t == typeof(Nullable<int>))
                 return System.Data.SqlDbType.Int;
-            else if(t.IsEnum)
+            else if (t.IsEnum)
                 return System.Data.SqlDbType.Int;
 
             else
