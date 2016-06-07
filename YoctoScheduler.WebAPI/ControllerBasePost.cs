@@ -32,7 +32,11 @@ namespace YoctoScheduler.WebAPI
                     }
                 }
             }
-            catch (YoctoScheduler.Core.Exceptions.TaskNotFoundException tfe)
+            catch (Core.Exceptions.TSQLNotFoundException)
+            {
+                return BadRequest(string.Format("POST not supported by {0:S}", typeof(T).FullName));
+            }
+            catch (Core.Exceptions.TaskNotFoundException tfe)
             {
                 log.ErrorFormat("TaskNotFoundException processing {0:S} POST: {1:S}", typeof(T).Name, tfe.ToString());
                 return BadRequest();

@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "YoctoScheduler.ServiceHost"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "YoctoScheduler.UnitTest", "YoctoScheduler.UnitTest\YoctoScheduler.UnitTest.csproj", "{C115E495-767A-4659-AFCC-4F5B390BBA29}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "YoctoScheduler.Web", "YoctoScheduler.Web\YoctoScheduler.Web.csproj", "{905702FA-F3E7-464E-9E4E-64D6D4B1886E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,6 +41,10 @@ Global
 		{C115E495-767A-4659-AFCC-4F5B390BBA29}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C115E495-767A-4659-AFCC-4F5B390BBA29}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C115E495-767A-4659-AFCC-4F5B390BBA29}.Release|Any CPU.Build.0 = Release|Any CPU
+		{905702FA-F3E7-464E-9E4E-64D6D4B1886E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{905702FA-F3E7-464E-9E4E-64D6D4B1886E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{905702FA-F3E7-464E-9E4E-64D6D4B1886E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{905702FA-F3E7-464E-9E4E-64D6D4B1886E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

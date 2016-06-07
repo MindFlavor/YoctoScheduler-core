@@ -120,6 +120,10 @@
       <Project>{2bce1cc6-06b6-414e-97a8-64577661a315}</Project>
       <Name>YoctoScheduler.WebAPI</Name>
     </ProjectReference>
+    <ProjectReference Include="..\YoctoScheduler.Web\YoctoScheduler.Web.csproj">
+      <Project>{905702fa-f3e7-464e-9e4e-64d6d4b1886e}</Project>
+      <Name>YoctoScheduler.Web</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="log4net.xml" />

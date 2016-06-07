@@ -44,13 +44,23 @@ namespace Test
                 }
             }
 
-            #region Startup Owin
+            #region Startup Owin WebAPI
             string baseAddress = "http://*:" + args[0] + "/";
 
             // Start OWIN host 
             YoctoScheduler.WebAPI.Startup.ConnectionString = srvInstance.ConnectionString;
             var owin = Microsoft.Owin.Hosting.WebApp.Start<YoctoScheduler.WebAPI.Startup>(url: baseAddress);
             log.InfoFormat("WebAPI initilized at {0:S}", baseAddress);
+            #endregion
+
+            #region Startup Owin http
+            baseAddress = "http://*:" + args[1] + "/";
+
+            // Start OWIN host 
+            // TODO: Ask Matteo to expose this config parameter
+            YoctoScheduler.Web.Startup.wwwRoot = @"D:\GIT\www\YoctoScheduler\app";
+            owin = Microsoft.Owin.Hosting.WebApp.Start<YoctoScheduler.Web.Startup>(url: baseAddress);
+            log.InfoFormat("WebAPP initilized at {0:S}", baseAddress);
             #endregion
 
             Console.WriteLine("Program running, please input a command!");
