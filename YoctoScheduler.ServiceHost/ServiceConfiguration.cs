@@ -49,6 +49,10 @@ namespace YoctoScheduler.ServiceHost
 
         public string RestEndpoint { get; set; }
 
+        public string HttpEndpoint { get; set; }
+
+        public string WwwRoot { get; set; }
+
         public string ConnectionString { get; set; }
     }
 }
