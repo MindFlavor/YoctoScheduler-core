@@ -90,7 +90,7 @@
   <ItemGroup>
     <Compile Include="CommandLineOptions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Service.cs">
+    <Compile Include="ServiceHost.cs">
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="ServiceConfiguration.cs" />
