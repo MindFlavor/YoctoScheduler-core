@@ -56,6 +56,10 @@
     <Reference Include="System" />
     <Reference Include="System.ComponentModel.DataAnnotations" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Management.Automation, Version=1.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Management.Automation.6.1.7601.17515\lib\net45\System.Management.Automation.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.Security" />
     <Reference Include="System.Xml.Linq" />
@@ -66,20 +70,25 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Commands\CommandBase.cs" />
+    <Compile Include="Commands\KillExecution\Configuration.cs" />
+    <Compile Include="Commands\RestartServer\Configuration.cs" />
     <Compile Include="Database\DatabaseField.cs" />
     <Compile Include="Database\LockType.cs" />
     <Compile Include="Exceptions\CertificateNotFoundException.cs" />
     <Compile Include="ExecutionTasks\ITask.cs" />
     <Compile Include="ExecutionTasks\JsonBasedTask.cs" />
     <Compile Include="ExecutionTasks\Passthrough\PassthroughTask.cs" />
-    <Compile Include="ExecutionTasks\SSIS\Configuration.cs" />
+    <Compile Include="ExecutionTasks\PowerShell\Configuration.cs" />
+    <Compile Include="ExecutionTasks\PowerShell\PowerShellTask.cs" />
     <Compile Include="ExecutionTasks\SSIS\SSISTask.cs" />
+    <Compile Include="ExecutionTasks\SSIS\Configuration.cs" />
     <Compile Include="ExecutionTasks\StringBasedTask.cs" />
     <Compile Include="ExecutionTasks\TSQL\Configuration.cs" />
     <Compile Include="ExecutionTasks\TSQL\TSQLTask.cs" />
     <Compile Include="ServerCommand.cs" />
-    <Compile Include="Commands\KillExecutionTask.cs" />
-    <Compile Include="Commands\RestartServer.cs" />
+    <Compile Include="Commands\KillExecution\KillExecution.cs" />
+    <Compile Include="Commands\RestartServer\RestartServer.cs" />
     <Compile Include="Database\Configuration.cs" />
     <Compile Include="Database\DatabaseItem.cs" />
     <Compile Include="Database\DatabaseItemWithGUIDPK.cs" />
@@ -197,11 +206,12 @@
     <EmbeddedResource Include="Database\tsql\DeadExecutionStatus\GetAll.sql" />
     <EmbeddedResource Include="Database\tsql\LiveExecutionStatus\GetAllNoLock.sql" />
     <EmbeddedResource Include="Database\tsql\ExecutionQueueItem\GetAllTableLockX.sql" />
+    <EmbeddedResource Include="Database\tsql\GenericCommand\GetAll.sql" />
     <Content Include="sched.ico" />
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it.
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">
   </Target>

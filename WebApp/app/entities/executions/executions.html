@@ -1,0 +1,122 @@
+<h3>Execution queue</h3>
+<table class="table table-hover">
+    <tr>
+        <th>ID</th>
+        <th>Priority</th>
+        <th>Inserted</th>
+        <th>Task</th>
+        <th>Sched</th>
+    </tr>
+    <tr ng-repeat="ex in executionQueue | orderBy: '-LastUpdate'">
+        <td>
+            <span class="label label-info">
+                {{ex.ID}}
+            </span>
+        </td>
+        <td>
+            <span class="label label-info">
+                {{ex.Priority}}
+            </span>
+        </td>
+        <td>
+            <span class="label label-info">
+                {{ex.InsertDate | date:'medium'}}
+            </span>
+        </td>
+        <td><a href="#!/task/?id={{ex.TaskID}}"><img src="imgs/task_30.png"/></a></td>
+        <td>
+            <img src="imgs/overcome.png" ng-show="ex.ScheduleID == undefined" title="Direct" />
+            {{ex.ScheduleID}}</td>
+    </tr>
+</table>
+
+
+<h3>Running tasks</h3>
+<table class="table table-hover">
+    <tr>
+        <th>ID</th>
+        <th>Inserted</th>
+        <th>Elapsed</th>
+        <th>Task</th>
+        <th>Last update</th>
+        <th>Sched</th>
+        <th>ServerID</th>
+        <th>Kill</th>
+    </tr>
+    <tr ng-repeat="ex in liveexecutions | orderBy: '-LastUpdate'">
+        <td>
+            <span class="label label-info">
+                {{ex.ID}}
+            </span>
+        </td>
+        <td>
+            <span class="label label-info">
+                {{ex.Inserted | date:'medium'}}
+            </span>
+        </td>
+
+        <td>
+            <span class="label label-info">
+                {{nowTime | amDifference : ex.Inserted : 'minutes' }} minutes
+            </span>
+        </td>
+        <td><a href="#!/task/?id={{ex.TaskID}}"><img src="imgs/task_30.png"/></a></td>
+
+        <td>
+            <span class="label label-info">
+                <span am-time-ago="ex.LastUpdate"></span>
+            </span>
+        </td>
+        <td>
+            <img src="imgs/overcome.png" ng-show="ex.ScheduleID == undefined" title="Direct" />
+            {{ex.ScheduleID}}</td>
+        <td>{{ex.ServerID}}</td>
+        <td><button type="button" class="btn btn-danger" ng-click="abort(ex.ID, ex.ServerID)">Abort</button></td>
+    </tr>
+</table>
+
+<h3>Completed tasks</h3>
+<table class="table table-hover">
+    <tr>
+        <th></th>
+        <th>ID</th>
+        <th>Inserted</th>
+        <th>Terminated</th>
+        <th>Elapsed</th>
+        <th>ReturnCode</th>
+        <th>Task</th>
+        <th>Sched</th>
+        <th>ServerID</th>
+    </tr>
+    <tr ng-repeat="ex in deadexecutions | orderBy: '-LastUpdate'">
+        <td>
+            <img ng-src="{{imgStatus(ex.Status)}}" title="{{textStatus(ex.Status)}}" />
+        </td>
+        <td>
+            <span ng-class="(ex.Status > 0) ? 'label label-success' : 'label label-danger'">
+                {{ex.ID}}
+            </span>
+        </td>
+        <td>
+            <span ng-class="(ex.Status > 0) ? 'label label-success' : 'label label-danger'">
+                {{ex.Inserted | date:'medium'}}
+            </span>
+        </td>
+        <td>
+            <span ng-class="(ex.Status > 0) ? 'label label-success' : 'label label-danger'">
+                <span am-time-ago="ex.LastUpdate"></span>
+            </span>
+        </td>
+        <td>
+            <span ng-class="(ex.Status > 0) ? 'label label-success' : 'label label-danger'">
+                {{ex.LastUpdate | amDifference : ex.Inserted : 'seconds' }} seconds
+            </span>
+        </td>
+        <td>{{ex.ReturnCode}}</td>
+        <td><a href="#!/task/?id={{ex.TaskID}}"><img src="imgs/task_30.png"/></a></td>
+        <td>
+            <img src="imgs/overcome.png" ng-show="ex.ScheduleID == undefined" title="Direct" />
+            {{ex.ScheduleID}}</td>
+        <td>{{ex.ServerID}}</td>
+    </tr>
+</table>

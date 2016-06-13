@@ -100,12 +100,14 @@ In a nutshell the task is defined by:
 * Server failure resiliency (whether it should be executed again if the hosting server dies before its completion)* Concurrency limits (both global and local, use 0 for unconstrained)
 * Payload (task-dependent)
 
+#### Wait task
 For example this is how to create a ```WaitTask``` (useful ony for debugging purposes):
 
 ```
 curl -X POST -H "Content-Type: application/json" cantun.mindflavor.it:9000/api/tasks -d '{"Name":"MyWaitTask", "ConcurrencyLimitGlobal":0, "ConcurrencyLimitSameInstance":1, "Description":"This task will stall the thread for 35 seconds. This task will task will not be requeued in case the server owning it dies", "ReenqueueOnDead":false,"Type":"WaitTask","Payload":"{\"SleepSeconds\":35}"'
 ```
 
+#### T-SQL task
 Here is how you create a ```TSQLTask```:
 
 ```
@@ -131,6 +133,93 @@ Notice how you can embed the ```Secret``` surrounding it with ```[%%``` and ```%
 You can retrieve the task list calling the ```REST API``` or using the YoctoScheduler web app:
 
 ![](docs/imgs/02.png)
+
+#### PowerShell task
+
+PowerShell tasks accept only one parameter: Script. The output entries will be JSON serialized row by row (calling ```ToString()``` on them first). Here is an example that enumerates local drives along with used and free space:
+
+```
+curl -X POST -H "Content-Type: application/json" cantun.mindflavor.it:9000/api/tasks -d '{"Name":"My_PS_Drives", "ConcurrencyLimitGlobal":0, "ConcurrencyLimitSameInstance":1, "Description":"This task will enumerate local drives", "ReenqueueOnDead":true,"Type":"PowerShellTask","Payload":"{\"Script\":\"Get-PSDrive | foreach { $_.Name, $_.Root, $_.Used, $_.Free | Out-String }\"}"'
+```
+
+For reference, here is the configuration JSON:
+
+```json
+{
+  "Name": "My_PS_Drives",
+  "ConcurrencyLimitGlobal": 0,
+  "ConcurrencyLimitSameInstance": 1,
+  "Description": "This task will enumerate local drives",
+  "ReenqueueOnDead": true,
+  "Type": "PowerShellTask",
+  "Payload": "{\"Script\":\"Get-PSDrive | foreach { $_.Name, $_.Root, $_.Used, $_.Free | Out-String }\"}"
+}
+```
+
+The output, as stated above, is serialized to a JSON. In my case this is the output:
+
+```json
+[
+  {
+    "Row": "Alias\r\n\r\n"
+  },
+  {
+    "Row": "C\r\nC:\\\r\n590391623680\r\n304360370176\r\n"
+  },
+  {
+    "Row": "Cert\r\n\\\r\n"
+  },
+  {
+    "Row": "E\r\nE:\\\r\n165277347840\r\n334827339776\r\n"
+  },
+  {
+    "Row": "Env\r\n\r\n"
+  },
+  {
+    "Row": "F\r\nF:\\\r\n0\r\n"
+  },
+  {
+    "Row": "Function\r\n\r\n"
+  },
+  {
+    "Row": "G\r\nG:\\\r\n0\r\n"
+  },
+  {
+    "Row": "H\r\nH:\\\r\n164171661312\r\n836029329408\r\n"
+  },
+  {
+    "Row": "HKCU\r\nHKEY_CURRENT_USER\r\n"
+  },
+  {
+    "Row": "HKLM\r\nHKEY_LOCAL_MACHINE\r\n"
+  },
+  {
+    "Row": "Variable\r\n\r\n"
+  },
+  {
+    "Row": "W\r\nW:\\\r\n97070129152\r\n142726615040\r\n"
+  },
+  {
+    "Row": "WSMan\r\n\r\n"
+  }
+]
+```
+
+You can pivot it in a table using SQL Server 2016 JSON features like this:
+
+```sql
+DECLARE @var NVARCHAR(MAX);
+SELECT @var = ReturnCode FROM [YoctoScheduler].[dead].[ExecutionStatus] S INNER JOIN [YoctoScheduler].[live].[Tasks] T ON S.TaskID = T.TaskID
+WHERE T.[Type] = 'PowerShellTask' AND GUID = '3B3B80D2-30A7-4D84-9486-16FB890603DC'
+
+SELECT *
+ FROM OPENJSON (@var, '$')
+ WITH (
+        Row NVARCHAR(MAX)
+ ) AS OrdersArray
+```
+
+![](docs/imgs/05.png)
 
 ### Schedule
 

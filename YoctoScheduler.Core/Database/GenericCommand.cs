@@ -7,17 +7,21 @@ using System.Threading.Tasks;
 
 namespace YoctoScheduler.Core.Database
 {
+    [System.Runtime.Serialization.DataContract]
     [DatabaseKey(DatabaseName = "ID", Size = 4)]
     public class GenericCommand : DatabaseItemWithIntPK
     {
         private static readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(GenericCommand));
 
+        [System.Runtime.Serialization.DataMember]
         [DatabaseProperty(Size = 4)]
         public int ServerID { get; set; }
 
+        [System.Runtime.Serialization.DataMember]
         [DatabaseProperty(Size = 4)]
         public ServerCommand Command { get; set; }
 
+        [System.Runtime.Serialization.DataMember]
         [DatabaseProperty(Size = -1)]
         public string Payload { get; set; }
 

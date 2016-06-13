@@ -1,0 +1,29 @@
+
+<div class="container">
+    <div class="starter-template">
+    <h1>
+        <img src="imgs/task.png" />
+        <span class="label label-primary">Task #{{task.ID}}</span>
+        <img ng-show="task.ReenqueueOnDead" src="imgs/restart.png" alt="Task will be requeued if it fails to signal its keep alive state"/>
+        <img ng-show="!task.ReenqueueOnDead" src="imgs/restart_off.png"/>
+    </h1>
+        <h3>
+            <span class="label label-info">{{task.Type}} [{{formatTaskConcurrency(task.ConcurrencyLimitGlobal)}} / {{formatTaskConcurrency(task.ConcurrencyLimitSameInstance)}}]</span>
+        </h3>
+        <h3>
+            <span class="label label-default">{{task.Description}}</span>
+        </h3>
+        <div class="row">
+            <div>
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h3 class="panel-title">Payload</h3>
+                    </div>
+                    <div class="panel-body">
+                        {{task.Payload}}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

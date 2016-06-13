@@ -11,15 +11,14 @@ namespace YoctoScheduler.UnitTest.Daatabase
         [TestMethod]
         public void GenericCommand_Insert()
         {
-            GenericCommand cmd = new YoctoScheduler.Core.Commands.RestartServer(1)
-            { };
+            GenericCommand gc = new GenericCommand(1, Core.ServerCommand.RestartServer, "200");
 
             using (SqlConnection conn = new SqlConnection(Config.CONNECTION_STRING))
             {
                 conn.Open();
                 using (var trans = conn.BeginTransaction())
                 {
-                    GenericCommand.Insert(conn, trans, cmd);
+                    GenericCommand.Insert(conn, trans, gc);
                     trans.Commit();
                 }
             }

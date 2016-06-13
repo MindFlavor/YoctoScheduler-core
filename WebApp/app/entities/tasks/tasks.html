@@ -1,0 +1,23 @@
+<table class="table">
+    <tr>
+        <th>ID</th>
+        <th>Name</th>
+        <th>Parallelism</th>
+        <th>Type</th>
+        <th>RoKT</th>
+        <th>Description</th>
+    </tr>
+    <tr ng-repeat="task in tasks">
+        <td style="text-align: center;">
+            <a href="#!/task/?id={{task.ID}}">
+                <img src="imgs/task_30.png" />
+                {{task.ID}}
+            </a>
+        </td>
+        <td><span class="label label-primary">{{task.Name}}</span></td>
+        <td><span class="label label-primary">{{formatTaskConcurrency(task.ConcurrencyLimitGlobal)}} / {{formatTaskConcurrency(task.ConcurrencyLimitSameInstance)}}</span></td>
+        <td><span class="label label-default">{{task.Type}}</span></td>
+        <td><img ng-show="task.ReenqueueOnDead" src="imgs/restart_30.png"/> <img ng-show="!task.ReenqueueOnDead" src="imgs/restart_off_30.png"/></td>
+        <td>{{task.Description}}</td>
+    </tr>
+</table>

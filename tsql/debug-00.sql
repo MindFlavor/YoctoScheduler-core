@@ -14,8 +14,20 @@ SELECT 'queue', * FROM [YoctoScheduler].[live].[ExecutionQueue] S INNER JOIN [Yo
 SELECT 'live', * FROM [YoctoScheduler].[live].[ExecutionStatus] S INNER JOIN [YoctoScheduler].[live].[Tasks] T ON S.TaskID = T.TaskID;
 SELECT 'dead' ,* FROM [YoctoScheduler].[dead].[ExecutionStatus] S INNER JOIN [YoctoScheduler].[live].[Tasks] T ON S.TaskID = T.TaskID;
 
-
 SELECT * FROM [YoctoScheduler].[commands].[Server];
+
+SELECT JSON_VALUE(ReturnCode, '$[0]') FROM [YoctoScheduler].[dead].[ExecutionStatus]
+
+-- Extract result from PowerShell (first)
+DECLARE @var NVARCHAR(MAX);
+SELECT TOP 1 @var = ReturnCode FROM [YoctoScheduler].[dead].[ExecutionStatus] S INNER JOIN [YoctoScheduler].[live].[Tasks] T ON S.TaskID = T.TaskID
+WHERE T.[Type] = 'PowerShellTask'
+
+SELECT *
+ FROM OPENJSON (@var, '$')
+ WITH (
+        Row NVARCHAR(MAX)
+ ) AS OrdersArray
 
 --DELETE FROM [YoctoScheduler].[live].[ExecutionQueue];
 --DELETE FROM [YoctoScheduler].[live].[ExecutionStatus];

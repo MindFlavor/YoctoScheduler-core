@@ -261,19 +261,25 @@ namespace YoctoScheduler.Core
         {
             while (true)
             {
-                LastPing = DateTime.Now;
-                log.DebugFormat("{0:S} - Ping", this.ToString());
-                using (SqlConnection conn = new SqlConnection(ConnectionString))
+                try
                 {
-                    conn.Open();
-                    using (SqlTransaction trans = conn.BeginTransaction())
+                    LastPing = DateTime.Now;
+                    log.DebugFormat("{0:S} - Ping", this.ToString());
+                    using (SqlConnection conn = new SqlConnection(ConnectionString))
                     {
-                        Server.Update(conn, trans, this);
-                        trans.Commit();
+                        conn.Open();
+                        using (SqlTransaction trans = conn.BeginTransaction())
+                        {
+                            Server.Update(conn, trans, this);
+                            trans.Commit();
+                        }
                     }
+                    Thread.Sleep(int.Parse(Configuration["SERVER_KEEPALIVE_SLEEP_MS"]));
                 }
-
-                Thread.Sleep(int.Parse(Configuration["SERVER_KEEPALIVE_SLEEP_MS"]));
+                catch (Exception exce) // catch all to keep the thread alive
+                {
+                    log.ErrorFormat("Unhandled exception during PingThread: {0:S}", exce.ToString());
+                }
             }
         }
 
@@ -281,31 +287,38 @@ namespace YoctoScheduler.Core
         {
             while (true)
             {
-                // a server is dead if there is no update in the last xxx msseconds
-                DateTime dtDead = DateTime.Now.Subtract(TimeSpan.FromMilliseconds(int.Parse(Configuration["SERVER_MAXIMUM_UPDATE_LAG_MS"])));
-
-                using (var conn = new SqlConnection(ConnectionString))
+                try
                 {
-                    conn.Open();
-                    SqlCommand cmd = new SqlCommand(Database.tsql.Extractor.Get("Server.ClearOldServersThread"), conn);
+                    // a server is dead if there is no update in the last xxx msseconds
+                    DateTime dtDead = DateTime.Now.Subtract(TimeSpan.FromMilliseconds(int.Parse(Configuration["SERVER_MAXIMUM_UPDATE_LAG_MS"])));
 
-                    SqlParameter param = new SqlParameter("@statusToSet", System.Data.SqlDbType.Int);
-                    param.Value = TaskStatus.Dead;
-                    cmd.Parameters.Add(param);
+                    using (var conn = new SqlConnection(ConnectionString))
+                    {
+                        conn.Open();
+                        SqlCommand cmd = new SqlCommand(Database.tsql.Extractor.Get("Server.ClearOldServersThread"), conn);
 
-                    param = new SqlParameter("@dt", System.Data.SqlDbType.DateTime);
-                    param.Value = dtDead;
-                    cmd.Parameters.Add(param);
+                        SqlParameter param = new SqlParameter("@statusToSet", System.Data.SqlDbType.Int);
+                        param.Value = TaskStatus.Dead;
+                        cmd.Parameters.Add(param);
 
-                    param = new SqlParameter("@minStatus", System.Data.SqlDbType.Int);
-                    param.Value = TaskStatus.Unknown;
-                    cmd.Parameters.Add(param);
+                        param = new SqlParameter("@dt", System.Data.SqlDbType.DateTime);
+                        param.Value = dtDead;
+                        cmd.Parameters.Add(param);
 
-                    cmd.Prepare();
-                    cmd.ExecuteNonQuery();
+                        param = new SqlParameter("@minStatus", System.Data.SqlDbType.Int);
+                        param.Value = TaskStatus.Unknown;
+                        cmd.Parameters.Add(param);
+
+                        cmd.Prepare();
+                        cmd.ExecuteNonQuery();
+                    }
+
+                    Thread.Sleep(int.Parse(Configuration["SERVER_POLL_DISABLE_DEAD_SERVERS_SLEEP_MS"]));
                 }
-
-                Thread.Sleep(int.Parse(Configuration["SERVER_POLL_DISABLE_DEAD_SERVERS_SLEEP_MS"]));
+                catch(Exception exce) // catch all to keep the thread alive
+                {
+                    log.ErrorFormat("Unhandled exception during ClearOldServersThread: {0:S}", exce.ToString());
+                }
             }
         }
 
@@ -313,49 +326,58 @@ namespace YoctoScheduler.Core
         {
             while (true)
             {
-                //log.DebugFormat("{0:S} - Check for dead tasks", this.ToString());
-
-                // a task is dead if there is no update in the xxx milliseconds (1 minute default)
-                DateTime dtExpired = DateTime.Now.Subtract(TimeSpan.FromMilliseconds(int.Parse(Configuration["TASK_MAXIMUM_UPDATE_LAG_MS"])));
-
-                using (SqlConnection conn = new SqlConnection(ConnectionString))
+                try
                 {
-                    conn.Open();
-                    using (SqlTransaction trans = conn.BeginTransaction(System.Data.IsolationLevel.ReadCommitted))
+                    //log.DebugFormat("{0:S} - Check for dead tasks", this.ToString());
+
+                    // a task is dead if there is no update in the xxx milliseconds (1 minute default)
+                    DateTime dtExpired = DateTime.Now.Subtract(TimeSpan.FromMilliseconds(int.Parse(Configuration["TASK_MAXIMUM_UPDATE_LAG_MS"])));
+
+                    using (SqlConnection conn = new SqlConnection(ConnectionString))
                     {
-                        var lExpired = LiveExecutionStatus.GetAndLockAll(conn, trans, dtExpired);
-
-                        foreach (var les in lExpired)
+                        conn.Open();
+                        using (SqlTransaction trans = conn.BeginTransaction(System.Data.IsolationLevel.ReadCommitted))
                         {
-                            // insert into dead table
-                            DeadExecutionStatus des = new DeadExecutionStatus(les, TaskStatus.Dead, null);
-                            DeadExecutionStatus.Insert(conn, trans, des);
+                            var lExpired = LiveExecutionStatus.GetAndLockAll(conn, trans, dtExpired);
 
-                            log.WarnFormat("Setting LiveExecutionStatus {0:S} as dead", les.ToString());
-                            // remove from live table
-                            LiveExecutionStatus.Delete(conn, trans, les);
-
-                            // if required, reenqueue
-                            var task = YoctoScheduler.Core.Database.Task.GetByID<Task>(conn, trans, les.TaskID);
-                            if (task.ReenqueueOnDead)
+                            foreach (var les in lExpired)
                             {
-                                log.InfoFormat("Reenqueuing {0:S} as requested", task.ToString());
-                                ExecutionQueueItem eqi = new ExecutionQueueItem()
+                                #region Mark execution as expired
+                                // insert into dead table
+                                DeadExecutionStatus des = new DeadExecutionStatus(les, TaskStatus.Dead, null);
+                                DeadExecutionStatus.Insert(conn, trans, des);
+
+                                log.WarnFormat("Setting LiveExecutionStatus {0:S} as dead", les.ToString());
+                                // remove from live table
+                                LiveExecutionStatus.Delete(conn, trans, les);
+
+                                // if required, reenqueue
+                                var task = YoctoScheduler.Core.Database.Task.GetByID<Task>(conn, trans, les.TaskID);
+                                if (task.ReenqueueOnDead)
                                 {
-                                    TaskID = task.ID,
-                                    Priority = Priority.Normal,
-                                    ScheduleID = les.ScheduleID,
-                                    InsertDate = DateTime.Now
-                                };
-                                ExecutionQueueItem.Insert(conn, trans, eqi);
+                                    log.InfoFormat("Reenqueuing {0:S} as requested", task.ToString());
+                                    ExecutionQueueItem eqi = new ExecutionQueueItem()
+                                    {
+                                        TaskID = task.ID,
+                                        Priority = Priority.Normal,
+                                        ScheduleID = les.ScheduleID,
+                                        InsertDate = DateTime.Now
+                                    };
+                                    ExecutionQueueItem.Insert(conn, trans, eqi);
+                                }
+                                #endregion
                             }
+
+                            trans.Commit();
                         }
-
-                        trans.Commit();
                     }
-                }
 
-                Thread.Sleep(int.Parse(Configuration["SERVER_POLL_DISABLE_DEAD_TASKS_SLEEP_MS"]));
+                    Thread.Sleep(int.Parse(Configuration["SERVER_POLL_DISABLE_DEAD_TASKS_SLEEP_MS"]));
+                }
+                catch (Exception exce) // catch all to keep the thread alive
+                {
+                    log.ErrorFormat("Unhandled exception during DeadTasksThread: {0:S}", exce.ToString());
+                }
             }
         }
 
@@ -385,8 +407,9 @@ namespace YoctoScheduler.Core
                             List<ExecutionQueueItem> lEqis = ExecutionQueueItem.GetAll<ExecutionQueueItem>(conn, trans, LockType.TableLockX);
 
                             // now for each task in the queue find if it can be started and the start it.
-                            foreach(var eqi in lEqis)
+                            foreach (var eqi in lEqis)
                             {
+                                #region Task to start detection with concurrency limits
                                 var task = Database.Task.GetByID<Task>(conn, trans, eqi.TaskID);
 
                                 var lGlobalExecutions = lLess.FindAll(x => x.TaskID == eqi.TaskID);
@@ -417,8 +440,9 @@ namespace YoctoScheduler.Core
                                 }
                                 else
                                 {
-                                    log.DebugFormat("Task not started: current situation ({0:N0} / {1:N0}), task {2:S}", iGlobalExecutionsCount, iLocalExecutionsCount, task.ToString());
+                                    log.DebugFormat("Task not started: current situation ({0:N0} / {1:N0}), task {2:S}", iGlobalExecutionsCount, iLocalExecutionsCount + iJustStartedExecutions, task.ToString());
                                 }
+                                #endregion
                             }
                             trans.Commit();
                         }
@@ -432,6 +456,7 @@ namespace YoctoScheduler.Core
                         Task task;
                         try
                         {
+                            #region Task thread execution start
                             using (SqlConnection conn = new SqlConnection(ConnectionString))
                             {
                                 conn.Open();
@@ -446,6 +471,7 @@ namespace YoctoScheduler.Core
                             var wd = ExecutionTasks.Factory.NewTask(this, task.Type, detemplatedPayload, les);
                             wd.Start();
                             log.InfoFormat("Started task {0:S} as live execution status {1:S}", task.ToString(), les.ToString());
+                            #endregion
                         }
                         catch (Exception exce)
                         {
@@ -497,47 +523,54 @@ namespace YoctoScheduler.Core
             while (true)
             {
                 //log.DebugFormat("{0:S} - Check for tasks to start - Starting", this.ToString());
-
-                using (SqlConnection conn = new SqlConnection(ConnectionString))
+                try
                 {
-                    conn.Open();
-                    using (SqlTransaction trans = conn.BeginTransaction(System.Data.IsolationLevel.Serializable))
+                    using (SqlConnection conn = new SqlConnection(ConnectionString))
                     {
-                        // Get enabled schedules
-                        var lSchedules = Schedule.GetAndLockEnabledNotRunning(conn, trans);
-
-                        // look for schedules to fire
-                        lSchedules.ForEach(sched =>
+                        conn.Open();
+                        using (SqlTransaction trans = conn.BeginTransaction(System.Data.IsolationLevel.Serializable))
                         {
-                            NCrontab.CrontabSchedule cs = NCrontab.CrontabSchedule.Parse(sched.Cron);
-                            if (cs.GetNextOccurrence(LastScheduleCheck) < DateTime.Now && (sched.LastFired < cs.GetNextOccurrence(LastScheduleCheck)))
+                            // Get enabled schedules
+                            var lSchedules = Schedule.GetAndLockEnabledNotRunning(conn, trans);
+
+                            #region look for schedules to fire
+                            lSchedules.ForEach(sched =>
                             {
-                                var task = YoctoScheduler.Core.Database.Task.GetByID<Task>(conn, trans, sched.TaskID);
-                                log.InfoFormat("Starting schedulation {0:S} due to cron {1:S}", task.ToString(), sched.ToString());
+                                NCrontab.CrontabSchedule cs = NCrontab.CrontabSchedule.Parse(sched.Cron);
+                                if (cs.GetNextOccurrence(LastScheduleCheck) < DateTime.Now && (sched.LastFired < cs.GetNextOccurrence(LastScheduleCheck)))
+                                {
+                                    var task = YoctoScheduler.Core.Database.Task.GetByID<Task>(conn, trans, sched.TaskID);
+                                    log.InfoFormat("Starting schedulation {0:S} due to cron {1:S}", task.ToString(), sched.ToString());
 
                                 // save schedule fire time
                                 sched.LastFired = DateTime.Now;
-                                Schedule.Update(conn, trans, sched);
+                                    Schedule.Update(conn, trans, sched);
 
-                                ExecutionQueueItem eqi = new ExecutionQueueItem()
-                                {
-                                    TaskID = task.ID,
-                                    Priority = Priority.Normal,
-                                    ScheduleID = sched.ID,
-                                    InsertDate = DateTime.Now
-                                };
-                                ExecutionQueueItem.Insert(conn, trans, eqi);
-                                log.InfoFormat("Execution enqueued {0:S}", eqi.ToString());
-                            }
-                        });
+                                    ExecutionQueueItem eqi = new ExecutionQueueItem()
+                                    {
+                                        TaskID = task.ID,
+                                        Priority = Priority.Normal,
+                                        ScheduleID = sched.ID,
+                                        InsertDate = DateTime.Now
+                                    };
+                                    ExecutionQueueItem.Insert(conn, trans, eqi);
+                                    log.InfoFormat("Execution enqueued {0:S}", eqi.ToString());
+                                }
+                            });
+                            #endregion
 
-                        trans.Commit();
+                            trans.Commit();
+                        }
                     }
+
+                    LastScheduleCheck = DateTime.Now;
+
+                    Thread.Sleep(int.Parse(Configuration["SERVER_POLL_TASK_SCHEDULER_SLEEP_MS"]));
                 }
-
-                LastScheduleCheck = DateTime.Now;
-
-                Thread.Sleep(int.Parse(Configuration["SERVER_POLL_TASK_SCHEDULER_SLEEP_MS"]));
+                catch (Exception exce) // catch all to keep the thread alive
+                {
+                    log.ErrorFormat("Unhandled exception during TasksScheduledThread: {0:S}", exce.ToString());
+                }
             }
         }
 
@@ -545,51 +578,66 @@ namespace YoctoScheduler.Core
         {
             while (true)
             {
-                //log.DebugFormat("{0:S} - Check for server commands", this.ToString());
-
-                List<GenericCommand> commands = null;
-
-                using (SqlConnection conn = new SqlConnection(ConnectionString))
+                try
                 {
-                    conn.Open();
-                    using (SqlTransaction trans = conn.BeginTransaction(System.Data.IsolationLevel.ReadCommitted))
-                    {
-                        commands = GenericCommand.DequeueByServerID(conn, trans, this.ID);
-                        trans.Commit();
-                    }
-                }
+                    //log.DebugFormat("{0:S} - Check for server commands", this.ToString());
 
-                if (commands.Count > 0)
-                {
-                    // process commands
-                    log.InfoFormat("Retrieved {0:N0} commands", commands.Count);
-                    foreach (var cmd in commands)
-                    {
-                        if (cmd is Commands.KillExecutionTask)
-                        {
-                            Commands.KillExecutionTask kt = (Commands.KillExecutionTask)cmd;
-                            log.InfoFormat("Kill task requested (LiveExecutionStatusGUID = {0:S}", kt.LiveExecutionStatusGUID.ToString());
+                    List<GenericCommand> commands = null;
 
-                            // get the LiveExecutionStatus and request the kill.
-                            // Do not remove it from the list here as it will be done by the task once dead.
-                            YoctoScheduler.Core.ExecutionTasks.Watchdog t;
-                            if (!_liveTasks.TryGetValue(kt.LiveExecutionStatusGUID, out t))
-                            {
-                                log.WarnFormat("LiveExecutionStatusGUID == {0:S} not found. Maybe it's already dead?", kt.LiveExecutionStatusGUID.ToString());
-                            }
-                            else
-                            {
-                                t.Abort();
-                            }
-                        }
-                        else if (cmd is Commands.RestartServer)
+                    #region Retrieve commands
+                    using (SqlConnection conn = new SqlConnection(ConnectionString))
+                    {
+                        conn.Open();
+                        using (SqlTransaction trans = conn.BeginTransaction(System.Data.IsolationLevel.ReadCommitted))
                         {
-                            log.WarnFormat("Restart server requested");
+                            commands = GenericCommand.DequeueByServerID(conn, trans, this.ID);
+                            trans.Commit();
                         }
                     }
-                }
+                    #endregion
 
-                Thread.Sleep(int.Parse(Configuration["SERVER_POLL_COMMANDS_SLEEP_MS"]));
+                    if (commands.Count > 0)
+                    {
+                        #region Process commands
+                        log.InfoFormat("Retrieved {0:N0} commands", commands.Count);
+                        foreach (var cmd in commands)
+                        {
+                            switch (cmd.Command)
+                            {
+                                case ServerCommand.KillTask:
+                                    Commands.KillExecution.KillExecution kt = new Commands.KillExecution.KillExecution(cmd);
+                                    log.InfoFormat("Kill task requested (LiveExecutionStatusGUID = {0:S}", kt.Configuration.TaskID.ToString());
+
+                                    // get the LiveExecutionStatus and request the kill.
+                                    // Do not remove it from the list here as it will be done by the task once dead.
+                                    YoctoScheduler.Core.ExecutionTasks.Watchdog t;
+                                    if (!_liveTasks.TryGetValue(kt.Configuration.TaskID, out t))
+                                    {
+                                        log.WarnFormat("LiveExecutionStatusGUID == {0:S} not found. Maybe it's already dead?", kt.Configuration.TaskID.ToString());
+                                    }
+                                    else
+                                    {
+                                        t.Abort();
+                                    }
+                                    break;
+                                case ServerCommand.RestartServer:
+                                    // TODO
+                                    log.WarnFormat("Restart server requested");
+                                    break;
+                                default:
+                                    log.WarnFormat("Unsupported command received: {0:S}", cmd.Command);
+                                    break;
+                            }
+                        }
+                        #endregion
+                    }
+
+                    Thread.Sleep(int.Parse(Configuration["SERVER_POLL_COMMANDS_SLEEP_MS"]));
+                }
+                catch (Exception exce) // catch all to keep the thread alive
+                {
+                    log.ErrorFormat("Unhandled exception during CommandsThread: {0:S}", exce.ToString());
+                }
             }
         }
 
