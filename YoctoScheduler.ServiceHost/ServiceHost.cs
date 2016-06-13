@@ -170,94 +170,10 @@ namespace YoctoScheduler.ServiceHost
 
         private void ConsoleThreadRoutine()
         {
-            Console.WriteLine("Program running, please input a command!");
-
-            bool fDone = false;
-            while (!fDone)
-            {
-                var cmd = Console.ReadLine();
-                var tokens = cmd.Split(' ');
-                try
-                {
-                    switch (tokens[0])
-                    {
-                        case "new_command":
-                            if (tokens.Length < 4)
-                            {
-                                Console.WriteLine("Syntax error, must specify a valid server id, a command id and a payload");
-                                continue;
-                            }
-                            CreateCommand(int.Parse(tokens[1]), int.Parse(tokens[2]), string.Join(" ", tokens.Skip(3)));
-
-
-                            break;
-                        case "get_secret":
-                            if (tokens.Length < 2)
-                            {
-                                Console.WriteLine("Syntax error, must specify a valid secret name");
-                                continue;
-                            }
-
-                            using (SqlConnection conn = new SqlConnection(config.ConnectionString))
-                            {
-                                conn.Open();
-                                using (var trans = conn.BeginTransaction())
-                                {
-                                    var secret = Secret.GetByID<Secret>(conn, trans, tokens[1]);
-                                    trans.Commit();
-
-                                    log.InfoFormat("Retrieved secret {0:S}. Plain text is = \"{1:S}\".", secret.ToString(), secret.PlainTextValue);
-                                }
-                            }
-                            break;
-
-                        case "quit":
-                            fDone = true;
-                            break;
-                        case "help":
-                            Console.WriteLine("Available commands:");
-                            Console.WriteLine("\tnew_mock_task <sleep_seconds>");
-                            Console.WriteLine("\tnew_execution <task_id>");
-                            Console.WriteLine("\tnew_schedule <task_id> <cron expression>");
-                            Console.WriteLine("\tnew_secret <thumbprint> <string to encrypt");
-                            Console.WriteLine("\tget_secret <secret_id>");
-                            Console.WriteLine("\tnew_command <server_id> <command> <payload>");
-
-                            Console.WriteLine("\tquit");
-                            Console.WriteLine("\thelp");
-                            break;
-                        case "":
-                            break;
-                        default:
-                            log.WarnFormat("Syntax error, unknown command \"{0:S}\". Type help for help, quit to quit.", tokens[0]);
-                            break;
-                    }
-                }
-                catch (Exception e)
-                {
-                    log.ErrorFormat("Exception: " + e.ToString());
-                }
-            }
+            Console.WriteLine("Program running, prss <enter> to terminate the program.");
+            Console.ReadLine();
 
             this.Terminated.Set();
-        }
-
-        void CreateCommand(int serverID, int command, string payload)
-        {
-            YoctoScheduler.Core.ServerCommand cmd = (ServerCommand)command;
-            GenericCommand gc;
-
-            using (SqlConnection conn = new SqlConnection(config.ConnectionString))
-            {
-                conn.Open();
-                using (var trans = conn.BeginTransaction())
-                {
-                    gc = new GenericCommand(serverID, cmd, payload);
-                    GenericCommand.Insert(conn, trans, gc);
-                    trans.Commit();
-                }
-            }
-            log.InfoFormat("Created command {0:S}", gc.ToString());
         }
 
         protected override void OnStop()

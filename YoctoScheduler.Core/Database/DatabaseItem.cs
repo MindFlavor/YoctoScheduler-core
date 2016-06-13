@@ -180,12 +180,12 @@ namespace YoctoScheduler.Core.Database
             }
         }
 
-        public static List<T> GetAll<T>(SqlConnection conn, SqlTransaction trans)
+        protected static List<T> GetAll<T>(SqlConnection conn, SqlTransaction trans, string customScript)
             where T : DatabaseItem<K>
         {
             List<T> lItems = new List<T>();
 
-            string stmt = tsql.Extractor.Get(typeof(T).Name + ".GetAll");
+            string stmt = tsql.Extractor.Get(typeof(T).Name + "." + customScript);
 
             using (SqlCommand cmd = new SqlCommand(stmt, conn, trans))
             {
@@ -203,6 +203,27 @@ namespace YoctoScheduler.Core.Database
             }
 
             return lItems;
+        }
+
+        public static List<T> GetAll<T>(SqlConnection conn, SqlTransaction trans, LockType lockType)
+            where T : DatabaseItem<K>
+        {
+            switch (lockType)
+            {
+                case LockType.Default: return GetAll<T>(conn, trans, "GetAll");
+                case LockType.NoLock: return GetAll<T>(conn, trans, "GetAllNoLock");
+                case LockType.TableLock: return GetAll<T>(conn, trans, "GetAllTableLock");
+                case LockType.TableLockX: return GetAll<T>(conn, trans, "GetAllTableLockX");
+                case LockType.XLock: return GetAll<T>(conn, trans, "GetAllXLock");
+            }
+
+            throw new Exception("this should not happen... did we add all LockTypes?");
+        }
+
+        public static List<T> GetAll<T>(SqlConnection conn, SqlTransaction trans)
+            where T : DatabaseItem<K>
+        {
+            return GetAll<T>(conn, trans, LockType.Default);
         }
 
         public override string ToString()

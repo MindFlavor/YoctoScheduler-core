@@ -54,7 +54,10 @@ namespace YoctoScheduler.Core.Database
             ID = r.GetGuid(0);
             TaskID = r.GetInt32(2);
             Status = (TaskStatus)r.GetInt32(3);
-            ReturnCode = r.GetString(4);
+
+            if (!r.IsDBNull(4))
+                ReturnCode = r.GetString(4);
+
             ServerID = r.GetInt32(5);
             Inserted = r.GetDateTime(6);
             LastUpdate = r.GetDateTime(7);

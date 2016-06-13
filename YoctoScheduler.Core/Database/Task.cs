@@ -35,33 +35,45 @@ namespace YoctoScheduler.Core.Database
         [DatabaseProperty(Size = -1)]
         public string Description { get; set; }
 
+        [System.Runtime.Serialization.DataMember]
+        [DatabaseProperty(Size = 4)]
+        public int ConcurrencyLimitGlobal { get; set; }
+
+        [System.Runtime.Serialization.DataMember]
+        [DatabaseProperty(Size = 4)]
+        public int ConcurrencyLimitSameInstance { get; set; }
+
         public Task() : base()
         { }
 
-        public Task(bool ReenqueueOnDead, string Name, string Description, string Type, string Payload) : base()
+        public Task(bool ReenqueueOnDead, string Name, string Description, string Type, string Payload, int ConcurrencyLimitGlobal, int ConcurrencyLimitSameInstance): base()
         {
             this.ReenqueueOnDead = ReenqueueOnDead;
             this.Type = Type;
             this.Payload = Payload;
             this.Name = Name;
             this.Description = Description;
+            this.ConcurrencyLimitGlobal = ConcurrencyLimitGlobal;
+            this.ConcurrencyLimitSameInstance = ConcurrencyLimitSameInstance;
         }
 
         public override string ToString()
         {
-            return string.Format("{0:S}[{1:S}, Name={2:S}, Description=\"{3:S}\", ReenqueueOnDead={4:S}, Type=\"{5:S}\", Payload=\"{6:S}\"]",
+            return string.Format("{0:S}[{1:S}, Name={2:S}, Description=\"{3:S}\", ConcurrencyLimitGlobal={4:N0}, ConcurrencyLimitSameInstance={5:N0}, ReenqueueOnDead={6:S}, Type=\"{7:S}\", Payload=\"{8:S}\"]",
                 this.GetType().FullName,
                 base.ToString(),
                 Name,
                 Description,
+                ConcurrencyLimitGlobal, 
+                ConcurrencyLimitSameInstance,
                 ReenqueueOnDead.ToString(),
                 Type, Payload);
         }
 
-        public static Task New(SqlConnection conn, SqlTransaction trans, string Name, string Description, bool ReenqueueOnDead, string Type, string Payload)
+        public static Task New(SqlConnection conn, SqlTransaction trans, string Name, string Description, bool ReenqueueOnDead, string Type, string Payload, int ConcurrencyLimitGlobal, int ConcurrencyLimitSameInstance)
         {
             #region Database entry
-            var task = new Task(ReenqueueOnDead, Name, Description, Type, Payload);
+            var task = new Task(ReenqueueOnDead, Name, Description, Type, Payload, ConcurrencyLimitGlobal, ConcurrencyLimitSameInstance);
 
             using (SqlCommand cmd = new SqlCommand(tsql.Extractor.Get("Task.New"), conn, trans))
             {
@@ -92,6 +104,9 @@ namespace YoctoScheduler.Core.Database
             ReenqueueOnDead = r.GetBoolean(1);
             Name = r.GetString(2);
             Type = r.GetString(4);
+
+            ConcurrencyLimitGlobal = r.GetInt32(6);
+            ConcurrencyLimitSameInstance = r.GetInt32(7);
         }
     }
 }

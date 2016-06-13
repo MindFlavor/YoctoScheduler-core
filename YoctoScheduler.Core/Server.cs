@@ -313,7 +313,7 @@ namespace YoctoScheduler.Core
         {
             while (true)
             {
-                log.DebugFormat("{0:S} - Check for dead tasks", this.ToString());
+                //log.DebugFormat("{0:S} - Check for dead tasks", this.ToString());
 
                 // a task is dead if there is no update in the xxx milliseconds (1 minute default)
                 DateTime dtExpired = DateTime.Now.Subtract(TimeSpan.FromMilliseconds(int.Parse(Configuration["TASK_MAXIMUM_UPDATE_LAG_MS"])));
@@ -365,9 +365,7 @@ namespace YoctoScheduler.Core
             {
                 try
                 {
-                    LiveExecutionStatus les = null;
-                    Database.Task task = null;
-                    ExecutionQueueItem eqi = null;
+                    List<LiveExecutionStatus> lLessStarted = new List<LiveExecutionStatus>();
 
                     // Here we get the first task to start, and start it.
                     // NewTask could raise an exception if the task constructon fails
@@ -376,22 +374,52 @@ namespace YoctoScheduler.Core
                     using (SqlConnection conn = new SqlConnection(ConnectionString))
                     {
                         conn.Open();
-                        using (SqlTransaction trans = conn.BeginTransaction(System.Data.IsolationLevel.Serializable))
+
+                        // Start getting a peek on running tasks. We do not care of phantom reads so we 
+                        // just settle for ReadCommitted isolation level.
+                        using (SqlTransaction trans = conn.BeginTransaction(System.Data.IsolationLevel.ReadCommitted))
                         {
-                            eqi = ExecutionQueueItem.GetAndLockFirst(conn, trans);
-                            if (eqi != null)
+                            List<LiveExecutionStatus> lLess = LiveExecutionStatus.GetAll<LiveExecutionStatus>(conn, trans, LockType.Default);
+
+                            // now we lock the ExecutionQueueItem exclusively.
+                            List<ExecutionQueueItem> lEqis = ExecutionQueueItem.GetAll<ExecutionQueueItem>(conn, trans, LockType.TableLockX);
+
+                            // now for each task in the queue find if it can be started and the start it.
+                            foreach(var eqi in lEqis)
                             {
-                                // add to live table
-                                les = new LiveExecutionStatus(eqi.TaskID, this.ID, eqi.ScheduleID);
-                                LiveExecutionStatus.Insert(conn, trans, les);
+                                var task = Database.Task.GetByID<Task>(conn, trans, eqi.TaskID);
 
-                                // get the task for the configuration payload
-                                task = Database.Task.GetByID<Task>(conn, trans, eqi.TaskID);
+                                var lGlobalExecutions = lLess.FindAll(x => x.TaskID == eqi.TaskID);
+                                var lLocalExecutions = lGlobalExecutions.FindAll(x => x.ServerID == this.ID);
 
-                                // remove from pending execution queue
-                                ExecutionQueueItem.Delete(conn, trans, eqi);
+                                // we need to count the executions we have started in this transaction as they will not
+                                // show in the previous count.
+                                var lJustStartedExecutions = lLessStarted.FindAll(x => x.TaskID == eqi.TaskID);
+
+                                int iGlobalExecutionsCount = lGlobalExecutions.Count;
+                                int iLocalExecutionsCount = lLocalExecutions.Count;
+                                var iJustStartedExecutions = lJustStartedExecutions.Count;
+
+                                if (
+                                    (task.ConcurrencyLimitGlobal == 0 || task.ConcurrencyLimitGlobal > iGlobalExecutionsCount) &&
+                                    (task.ConcurrencyLimitSameInstance == 0 || task.ConcurrencyLimitSameInstance > (iLocalExecutionsCount + iJustStartedExecutions)) // do not forget just started entries!
+                                )
+                                {
+                                    log.InfoFormat("Preparing to start task {0:S}", task.ToString());
+                                    // add to live table
+                                    var les = new LiveExecutionStatus(eqi.TaskID, this.ID, eqi.ScheduleID);
+                                    LiveExecutionStatus.Insert(conn, trans, les);
+
+                                    // remove from pending execution queue
+                                    ExecutionQueueItem.Delete(conn, trans, eqi);
+
+                                    lLessStarted.Add(les);
+                                }
+                                else
+                                {
+                                    log.DebugFormat("Task not started: current situation ({0:N0} / {1:N0}), task {2:S}", iGlobalExecutionsCount, iLocalExecutionsCount, task.ToString());
+                                }
                             }
-
                             trans.Commit();
                         }
                     }
@@ -399,11 +427,19 @@ namespace YoctoScheduler.Core
                     // start the execution. As this call might fail we handle the failue in place.
                     // If failed the task is considered deququed succesfully. It's up to the
                     // workflow manager to handle this kind of failures.
-                    try
+                    foreach (var les in lLessStarted)
                     {
-                        if (eqi != null)
+                        Task task;
+                        try
                         {
-                            log.DebugFormat("Starting enqueued task {0:S}", eqi.ToString());
+                            using (SqlConnection conn = new SqlConnection(ConnectionString))
+                            {
+                                conn.Open();
+                                task = Database.Task.GetByID<Task>(conn, null, les.TaskID);
+                            }
+
+                            // get the task for the configuration payload
+                            log.DebugFormat("Starting enqueued task {0:S} for LES {1:S}", task.ToString(), les.ToString());
 
                             string detemplatedPayload = DetemplatePayload(task.Payload);
 
@@ -411,28 +447,28 @@ namespace YoctoScheduler.Core
                             wd.Start();
                             log.InfoFormat("Started task {0:S} as live execution status {1:S}", task.ToString(), les.ToString());
                         }
-                    }
-                    catch (Exception exce)
-                    {
-                        log.WarnFormat("Task {0:S} failed at startup: {0:S}", eqi.ToString(), exce.ToString());
-
-                        #region Set as failed during startup
-                        using (SqlConnection conn = new SqlConnection(this.ConnectionString))
+                        catch (Exception exce)
                         {
-                            conn.Open();
-                            using (var trans = conn.BeginTransaction())
-                            {
-                                DeadExecutionStatus des = new DeadExecutionStatus(les, TaskStatus.ExceptionAtStartup, exce.ToString());
-                                DeadExecutionStatus.Insert(conn, trans, des);
-                                LiveExecutionStatus.Delete(conn, trans, les);
+                            log.WarnFormat("LES {0:S} failed at startup: {0:S}", les.ToString(), exce.ToString());
 
-                                trans.Commit();
+                            #region Set as failed during startup
+                            using (SqlConnection conn = new SqlConnection(this.ConnectionString))
+                            {
+                                conn.Open();
+                                using (var trans = conn.BeginTransaction())
+                                {
+                                    DeadExecutionStatus des = new DeadExecutionStatus(les, TaskStatus.ExceptionAtStartup, exce.ToString());
+                                    DeadExecutionStatus.Insert(conn, trans, des);
+                                    LiveExecutionStatus.Delete(conn, trans, les);
+
+                                    trans.Commit();
+                                }
                             }
+                            #endregion
                         }
-                        #endregion
                     }
                 }
-                catch (Exception exce) // we must catch unhandled exceptions to keep the thread alive
+                catch (Exception exce) // we must catch unhandled exceptions to keep this thread alive
                 {
                     log.ErrorFormat("Unhandled exception during DequeueTasksThread: {0:S}", exce.ToString());
                 }
@@ -460,7 +496,7 @@ namespace YoctoScheduler.Core
 
             while (true)
             {
-                log.DebugFormat("{0:S} - Check for tasks to start - Starting", this.ToString());
+                //log.DebugFormat("{0:S} - Check for tasks to start - Starting", this.ToString());
 
                 using (SqlConnection conn = new SqlConnection(ConnectionString))
                 {
@@ -509,7 +545,7 @@ namespace YoctoScheduler.Core
         {
             while (true)
             {
-                log.DebugFormat("{0:S} - Check for server commands", this.ToString());
+                //log.DebugFormat("{0:S} - Check for server commands", this.ToString());
 
                 List<GenericCommand> commands = null;
 
