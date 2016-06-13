@@ -72,6 +72,8 @@
     <Compile Include="ExecutionTasks\ITask.cs" />
     <Compile Include="ExecutionTasks\JsonBasedTask.cs" />
     <Compile Include="ExecutionTasks\Passthrough\PassthroughTask.cs" />
+    <Compile Include="ExecutionTasks\SSIS\Configuration.cs" />
+    <Compile Include="ExecutionTasks\SSIS\SSISTask.cs" />
     <Compile Include="ExecutionTasks\StringBasedTask.cs" />
     <Compile Include="ExecutionTasks\TSQL\Configuration.cs" />
     <Compile Include="ExecutionTasks\TSQL\TSQLTask.cs" />
