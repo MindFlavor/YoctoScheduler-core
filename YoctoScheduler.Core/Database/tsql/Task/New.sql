@@ -4,6 +4,8 @@
 	,[Description]
 	,[Type]
 	,[Payload]
+	,[ConcurrencyLimitGlobal]
+	,[ConcurrencyLimitSameInstance]
 	)
 OUTPUT [INSERTED].[TaskID]
 VALUES(
@@ -11,5 +13,7 @@ VALUES(
 		@Name,
 		@Description,
 		@Type,
-		@Payload
+		@Payload,
+		@ConcurrencyLimitGlobal,
+		@ConcurrencyLimitSameInstance
     )

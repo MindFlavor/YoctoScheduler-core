@@ -33,12 +33,14 @@ CREATE TABLE [live].[Servers](
 GO
 
 CREATE TABLE [live].[Tasks](
-	[TaskID]			INT IDENTITY(1,1) NOT NULL,
-	[Name]				NVARCHAR(255),
-	[Description]		NVARCHAR(MAX),
-	[ReenqueueOnDead]	BIT NOT NULL,
-	[Type]				NVARCHAR(255),
-	[Payload]			NVARCHAR(MAX)
+	[TaskID]						INT IDENTITY(1,1) NOT NULL,
+	[Name]							NVARCHAR(255),
+	[ConcurrencyLimitGlobal]		INT NOT NULL,
+	[ConcurrencyLimitSameInstance]	INT NOT NULL,
+	[Description]					NVARCHAR(MAX),
+	[ReenqueueOnDead]				BIT NOT NULL,
+	[Type]							NVARCHAR(255),
+	[Payload]						NVARCHAR(MAX)
  CONSTRAINT [PK_Tasks] PRIMARY KEY CLUSTERED 
 (
 	[TaskID] ASC
@@ -100,9 +102,6 @@ REFERENCES [live].[Schedules] ([ScheduleID])
 GO
 
 ALTER TABLE [live].[ExecutionStatus] CHECK CONSTRAINT [FK_ExecutionStatus_Schedule_ScheduleID]
-GO
-
-CREATE UNIQUE INDEX IX_SingleScheduleExecution ON [live].[ExecutionStatus]([TaskID], [ScheduleID]) INCLUDE([ServerID], [LastUpdate]);
 GO
 
 CREATE INDEX IX_LastUpdate ON [live].[ExecutionStatus]([LastUpdate]);
@@ -227,7 +226,7 @@ INSERT INTO [configuration].[General]([Item], [Value]) VALUES('SERVER_POLL_TASK_
 INSERT INTO [configuration].[General]([Item], [Value]) VALUES('SERVER_POLL_COMMANDS_SLEEP_MS',				1 * 03 * 1000); -- 3 seconds
 
 INSERT INTO [configuration].[General]([Item], [Value]) VALUES('TASK_MAXIMUM_UPDATE_LAG_MS',					1 * 10 * 1000); -- ten seconds
-INSERT INTO [configuration].[General]([Item], [Value]) VALUES('SERVER_MAXIMUM_UPDATE_LAG_MS',				5 * 60 * 1000); -- 5 minutes
+INSERT INTO [configuration].[General]([Item], [Value]) VALUES('SERVER_MAXIMUM_UPDATE_LAG_MS',				2 * 60 * 1000); -- 2 minutes
 
 INSERT INTO [configuration].[General]([Item], [Value]) VALUES('WATCHDOG_SLEEP_MS',								2 * 1000);  -- 2 seconds
 

@@ -29,6 +29,7 @@ namespace YoctoScheduler.WebAPI
                     {
                         var r = DatabaseItem<K>.GetAll<T>(conn, trans);
                         trans.Commit();
+                        log.DebugFormat("{0:S} Get returning {1:N0} items.", typeof(T).FullName, r.Count);
                         return Ok(r);
                     }
                 }

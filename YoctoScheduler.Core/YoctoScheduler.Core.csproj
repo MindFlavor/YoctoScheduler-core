@@ -67,6 +67,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Database\DatabaseField.cs" />
+    <Compile Include="Database\LockType.cs" />
     <Compile Include="Exceptions\CertificateNotFoundException.cs" />
     <Compile Include="ExecutionTasks\ITask.cs" />
     <Compile Include="ExecutionTasks\JsonBasedTask.cs" />
@@ -192,6 +193,8 @@
     <EmbeddedResource Include="Database\tsql\LiveExecutionStatus\Update.sql" />
     <EmbeddedResource Include="Database\tsql\ExecutionQueueItem\GetAll.sql" />
     <EmbeddedResource Include="Database\tsql\DeadExecutionStatus\GetAll.sql" />
+    <EmbeddedResource Include="Database\tsql\LiveExecutionStatus\GetAllNoLock.sql" />
+    <EmbeddedResource Include="Database\tsql\ExecutionQueueItem\GetAllTableLockX.sql" />
     <Content Include="sched.ico" />
   </ItemGroup>
   <ItemGroup />
