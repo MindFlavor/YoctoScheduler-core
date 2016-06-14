@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Win32;
+using System.Threading;
 
 namespace YoctoScheduler.Core.ExecutionTasks.SSIS
 {
@@ -52,6 +53,8 @@ namespace YoctoScheduler.Core.ExecutionTasks.SSIS
                 throw new Exception("Failed to retrieve DTExec path.", ex);
             }
 
+            Process dtExec = null;
+
             // DTExec execution
             try
             {
@@ -59,7 +62,7 @@ namespace YoctoScheduler.Core.ExecutionTasks.SSIS
                 psi.FileName = DTExecPath;
                 psi.Arguments = Configuration.Arguments;
 
-                Process dtExec = Process.Start(psi);
+                dtExec = Process.Start(psi);
 
                 dtExec.WaitForExit();
 
@@ -69,6 +72,14 @@ namespace YoctoScheduler.Core.ExecutionTasks.SSIS
                 }
 
                 return "DTExec execution succeeded";
+            }
+            catch (ThreadAbortException)
+            {
+                if (dtExec != null)
+                {
+                    dtExec.Kill();
+                }
+                return "Process killed.";
             }
             catch (Exception ex)
             {
