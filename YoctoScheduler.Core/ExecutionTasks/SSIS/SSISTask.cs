@@ -62,7 +62,10 @@ namespace YoctoScheduler.Core.ExecutionTasks.SSIS
                 psi.FileName = DTExecPath;
                 psi.Arguments = Configuration.Arguments;
 
+                Job job = new Job();
+
                 dtExec = Process.Start(psi);
+                job.AssignProcess(dtExec);
 
                 dtExec.WaitForExit();
 

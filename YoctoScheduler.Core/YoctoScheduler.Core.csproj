@@ -81,6 +81,7 @@
     <Compile Include="ExecutionTasks\Passthrough\PassthroughTask.cs" />
     <Compile Include="ExecutionTasks\PowerShell\Configuration.cs" />
     <Compile Include="ExecutionTasks\PowerShell\PowerShellTask.cs" />
+    <Compile Include="ExecutionTasks\SSIS\Job.cs" />
     <Compile Include="ExecutionTasks\SSIS\SSISTask.cs" />
     <Compile Include="ExecutionTasks\SSIS\Configuration.cs" />
     <Compile Include="ExecutionTasks\StringBasedTask.cs" />
