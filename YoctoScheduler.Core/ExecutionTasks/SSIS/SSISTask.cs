@@ -12,6 +12,8 @@ namespace YoctoScheduler.Core.ExecutionTasks.SSIS
 {
     class SSISTask : JsonBasedTask<Configuration>
     {
+        private readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(SSISTask));
+
         public override string Do()
         {
             string DTExecPath;
@@ -61,10 +63,18 @@ namespace YoctoScheduler.Core.ExecutionTasks.SSIS
                 ProcessStartInfo psi = new ProcessStartInfo();
                 psi.FileName = DTExecPath;
                 psi.Arguments = Configuration.Arguments;
+                psi.RedirectStandardError = true;
+                psi.RedirectStandardOutput = true;
 
                 Job job = new Job();
 
-                dtExec = Process.Start(psi);
+                dtExec = new Process();
+                dtExec.StartInfo = psi;
+                dtExec.EnableRaisingEvents = true;
+                dtExec.ErrorDataReceived += new DataReceivedEventHandler(DataReceived);
+                dtExec.OutputDataReceived += new DataReceivedEventHandler(DataReceived);
+
+                dtExec.Start();
                 job.AssignProcess(dtExec);
 
                 if (Configuration.Timeout <= 0)
@@ -99,6 +109,11 @@ namespace YoctoScheduler.Core.ExecutionTasks.SSIS
             {
                 throw new Exception("Failed to execute DTExec.", ex);
             }
+        }
+
+        private void DataReceived(object sender, DataReceivedEventArgs e)
+        {
+            log.Info(e.Data);
         }
     }
 }
