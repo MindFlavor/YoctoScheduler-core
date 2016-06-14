@@ -83,7 +83,7 @@ namespace YoctoScheduler.Core.ExecutionTasks.SSIS
             }
             catch (Exception ex)
             {
-                return String.Format("Failed to execute DTExec with error {0}.", ex.Message);
+                throw new Exception("Failed to execute DTExec.", ex);
             }
         }
     }
