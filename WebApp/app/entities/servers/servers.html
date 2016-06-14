@@ -5,7 +5,7 @@
         <th>Description</th>
         <th>Last KA</th>
     </tr>
-    <tr ng-repeat="server in servers | orderBy:'-Status'">
+    <tr ng-repeat="server in servers | orderBy:'-LastPing'">
         <td>{{server.ID}}</td>
         <td>
             <span ng-class="(server.Status === 300) ? 'label label-success' : 'label label-default'"   >

@@ -4,6 +4,7 @@ using System.Data.SqlClient;
 using System.Threading;
 using System.Xml;
 using YoctoScheduler.Core.Database;
+using YoctoScheduler.Logging.Extensions;
 
 namespace YoctoScheduler.Core
 {
@@ -263,14 +264,14 @@ namespace YoctoScheduler.Core
             {
                 try
                 {
-                    LastPing = DateTime.Now;
-                    log.DebugFormat("{0:S} - Ping", this.ToString());
+                    log.TraceFormat("{0:S} - Update server LKA", this.ToString());
+
                     using (SqlConnection conn = new SqlConnection(ConnectionString))
                     {
                         conn.Open();
                         using (SqlTransaction trans = conn.BeginTransaction())
                         {
-                            Server.Update(conn, trans, this);
+                            this.UpdateKeepAlive(conn, trans);
                             trans.Commit();
                         }
                     }
@@ -289,8 +290,10 @@ namespace YoctoScheduler.Core
             {
                 try
                 {
+                    log.TraceFormat("{0:S} - Check for dead servers", this.ToString());
+
                     // a server is dead if there is no update in the last xxx msseconds
-                    DateTime dtDead = DateTime.Now.Subtract(TimeSpan.FromMilliseconds(int.Parse(Configuration["SERVER_MAXIMUM_UPDATE_LAG_MS"])));
+                    int iTimeoutMilliseconds = int.Parse(Configuration["SERVER_MAXIMUM_UPDATE_LAG_MS"]);
 
                     using (var conn = new SqlConnection(ConnectionString))
                     {
@@ -301,8 +304,8 @@ namespace YoctoScheduler.Core
                         param.Value = TaskStatus.Dead;
                         cmd.Parameters.Add(param);
 
-                        param = new SqlParameter("@dt", System.Data.SqlDbType.DateTime);
-                        param.Value = dtDead;
+                        param = new SqlParameter("@timeoutMilliSeconds", System.Data.SqlDbType.BigInt);
+                        param.Value = iTimeoutMilliseconds;
                         cmd.Parameters.Add(param);
 
                         param = new SqlParameter("@minStatus", System.Data.SqlDbType.Int);
@@ -328,17 +331,17 @@ namespace YoctoScheduler.Core
             {
                 try
                 {
-                    //log.DebugFormat("{0:S} - Check for dead tasks", this.ToString());
+                    log.TraceFormat("{0:S} - Check for dead tasks", this.ToString());
 
                     // a task is dead if there is no update in the xxx milliseconds (1 minute default)
-                    DateTime dtExpired = DateTime.Now.Subtract(TimeSpan.FromMilliseconds(int.Parse(Configuration["TASK_MAXIMUM_UPDATE_LAG_MS"])));
+                    int iTimeoutMilliseconds = int.Parse(Configuration["TASK_MAXIMUM_UPDATE_LAG_MS"]);
 
                     using (SqlConnection conn = new SqlConnection(ConnectionString))
                     {
                         conn.Open();
                         using (SqlTransaction trans = conn.BeginTransaction(System.Data.IsolationLevel.ReadCommitted))
                         {
-                            var lExpired = LiveExecutionStatus.GetAndLockAll(conn, trans, dtExpired);
+                            var lExpired = LiveExecutionStatus.GetAndLockExpired(conn, trans, iTimeoutMilliseconds);
 
                             foreach (var les in lExpired)
                             {
@@ -387,6 +390,8 @@ namespace YoctoScheduler.Core
             {
                 try
                 {
+                    log.TraceFormat("{0:S} - Check for tasks to start", this.ToString());
+
                     List<LiveExecutionStatus> lLessStarted = new List<LiveExecutionStatus>();
 
                     // Here we get the first task to start, and start it.
@@ -397,7 +402,7 @@ namespace YoctoScheduler.Core
                     {
                         conn.Open();
 
-                        // Start getting a peek on running tasks. We do not care of phantom reads so we 
+                        // Start getting a peek on running tasks. We do not care of phantom reads so we
                         // just settle for ReadCommitted isolation level.
                         using (SqlTransaction trans = conn.BeginTransaction(System.Data.IsolationLevel.ReadCommitted))
                         {
@@ -505,24 +510,10 @@ namespace YoctoScheduler.Core
 
         protected void TasksScheduledThread()
         {
-            // modificare il processo perchè includa la coda di esecuzione ( [live].[Schedules]).
-            // la query da utilizzare e'
-            /*
-             * SELECT * FROM [live].[Schedules] S WITH(XLOCK)
-                LEFT OUTER JOIN [live].[ExecutionQueue]  Q ON S.[ScheduleID] = Q.[ScheduleID]
-                LEFT OUTER JOIN [live].[ExecutionStatus] E ON S.[ScheduleID] = E.[ScheduleID]
-                WHERE
-		                Q.[ScheduleID] IS NULL
-	                AND
-		                E.[ScheduleID] IS NULL
-             *
-             * questa query locka la schedules e serializza il suo accesso. mostra solo le
-             * schedulazioni che non sono ne' in coda ne' in esecuzione
-             */
-
             while (true)
             {
-                //log.DebugFormat("{0:S} - Check for tasks to start - Starting", this.ToString());
+                log.TraceFormat("{0:S} - Check for tasks to schedule", this.ToString());
+
                 try
                 {
                     using (SqlConnection conn = new SqlConnection(ConnectionString))
@@ -580,7 +571,7 @@ namespace YoctoScheduler.Core
             {
                 try
                 {
-                    //log.DebugFormat("{0:S} - Check for server commands", this.ToString());
+                    log.TraceFormat("{0:S} - Check for server commands", this.ToString());
 
                     List<GenericCommand> commands = null;
 
@@ -660,6 +651,16 @@ namespace YoctoScheduler.Core
             LastPing = r.GetDateTime(3);
             HostName = r.GetString(4);
             IPs = lIPs;
+        }
+
+        public void UpdateKeepAlive(SqlConnection conn, SqlTransaction trans)
+        {
+            using (SqlCommand cmd = new SqlCommand(Database.tsql.Extractor.Get("Server.UpdateKeepAlive"), conn, trans))
+            {
+                PopolateParameters(cmd);
+                cmd.Prepare();
+                this.LastPing = (DateTime)cmd.ExecuteScalar();
+            }
         }
         #endregion
     }

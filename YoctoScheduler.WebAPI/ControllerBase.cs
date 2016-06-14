@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using System.Web.Http;
 using System.Web.Http.Cors;
 using YoctoScheduler.Core.Database;
+using YoctoScheduler.Logging.Extensions;
 
 namespace YoctoScheduler.WebAPI
 {
@@ -18,7 +19,7 @@ namespace YoctoScheduler.WebAPI
 
         public virtual IHttpActionResult Get()
         {
-            log.DebugFormat("Get::{0:S} requested", typeof(T).Name);
+            log.TraceFormat("Get::{0:S} requested", typeof(T).Name);
 
             try
             {
@@ -29,7 +30,7 @@ namespace YoctoScheduler.WebAPI
                     {
                         var r = DatabaseItem<K>.GetAll<T>(conn, trans);
                         trans.Commit();
-                        log.DebugFormat("{0:S} Get returning {1:N0} items.", typeof(T).FullName, r.Count);
+                        log.TraceFormat("{0:S} Get returning {1:N0} items.", typeof(T).FullName, r.Count);
                         return Ok(r);
                     }
                 }
@@ -42,6 +43,8 @@ namespace YoctoScheduler.WebAPI
 
         public virtual IHttpActionResult Get(K id)
         {
+            log.TraceFormat("Get::{0:S}({1:S}) requested", typeof(T).Name, id.ToString());
+
             try
             {
                 T t = null;

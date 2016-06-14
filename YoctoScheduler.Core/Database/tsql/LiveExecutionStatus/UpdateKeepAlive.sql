@@ -1,5 +1,6 @@
 ﻿UPDATE [live].[ExecutionStatus]
-   SET 
-	[LastUpdate] = @LastUpdate
- WHERE
+  SET 
+	[LastUpdate] = GETDATE()
+	OUTPUT [INSERTED].[LastUpdate]
+  WHERE
 	[GUID] = @GUID;

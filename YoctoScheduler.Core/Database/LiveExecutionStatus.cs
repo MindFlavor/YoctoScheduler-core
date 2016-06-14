@@ -72,6 +72,32 @@ namespace YoctoScheduler.Core.Database
             Inserted = r.GetDateTime(4);
         }
 
+        public static List<LiveExecutionStatus> GetAndLockExpired(SqlConnection conn, SqlTransaction trans, int iTimeoutMilliSeconds)
+        {
+            List<LiveExecutionStatus> lItems = new List<LiveExecutionStatus>();
+
+            using (SqlCommand cmd = new SqlCommand(tsql.Extractor.Get("LiveExecutionStatus.GetAndLockExpired"), conn, trans))
+            {
+                var param = new SqlParameter("@timeoutMilliSeconds", System.Data.SqlDbType.BigInt);
+                param.Value = iTimeoutMilliSeconds;
+                cmd.Parameters.Add(param);
+
+                cmd.Prepare();
+
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        LiveExecutionStatus les = new LiveExecutionStatus();
+                        les.ParseFromDataReader(reader);
+                        lItems.Add(les);
+                    }
+                }
+            }
+
+            return lItems;
+        }
+
         public static List<LiveExecutionStatus> GetAndLockAll(SqlConnection conn, SqlTransaction trans, DateTime minLastUpdate)
         {
             List<LiveExecutionStatus> lItems = new List<LiveExecutionStatus>();
@@ -100,8 +126,12 @@ namespace YoctoScheduler.Core.Database
        
         public void UpdateKeepAlive(SqlConnection conn, SqlTransaction trans)
         {
-            this.LastUpdate = DateTime.Now;
-            LiveExecutionStatus.Update(conn, trans, this);
+            using (SqlCommand cmd = new SqlCommand(tsql.Extractor.Get("LiveExecutionStatus.UpdateKeepAlive"), conn, trans))
+            {
+                PopolateParameters(cmd);
+                cmd.Prepare();
+                this.LastUpdate = (DateTime)cmd.ExecuteScalar();
+            }
         }
     }
 }
