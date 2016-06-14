@@ -8,6 +8,7 @@ using System.Threading;
 using CommandLine;
 using YoctoScheduler.Core;
 using YoctoScheduler.Core.Database;
+using System.Security;
 
 namespace YoctoScheduler.ServiceHost
 {
@@ -21,11 +22,19 @@ namespace YoctoScheduler.ServiceHost
             ApplicationLog = new EventLog();
             ApplicationLog.Source = "YoctoScheduler.ServiceHost";
 
-            ApplicationLog.WriteEntry(String.Format(
-                "Pid {0} Invoked with arguments {1}.",
-                Process.GetCurrentProcess().Id,
-                String.Join(" ", args))
-                );
+            try
+            {
+                ApplicationLog.WriteEntry(String.Format(
+                    "Pid {0} Invoked with arguments {1}.",
+                    Process.GetCurrentProcess().Id,
+                    String.Join(" ", args))
+                    );
+            }
+            catch (SecurityException)
+            {
+                Console.WriteLine("First execution must be performed by a user with administrative privileges.");
+                return (int)ExitCodes.APPLICATION_LOG_SECURITY_ERROR;
+            }
 
             CommandLineOptions opts = new CommandLineOptions();
             if (!Parser.Default.ParseArguments(args, opts))
@@ -191,7 +200,8 @@ namespace YoctoScheduler.ServiceHost
         {
             SUCCESS = 0,
             ARGUMENT_ERROR = 1,
-            CONFIGURATION_ERROR = 2
+            CONFIGURATION_ERROR = 2,
+            APPLICATION_LOG_SECURITY_ERROR = 3
         }
 
     }

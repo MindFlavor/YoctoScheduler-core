@@ -55,4 +55,7 @@ Log "Binary path is $binaryPath"
 
 New-Service -Name $config.ServiceName -BinaryPathName $binaryPath
 
+Log "Registering YoctoScheduler.ServiceHost Application log source"
+New-EventLog -LogName "Application" -Source "YoctoScheduler.ServiceHost"
+
 Log "Installation completed"
