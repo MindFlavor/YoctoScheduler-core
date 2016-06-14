@@ -8,6 +8,7 @@ namespace YoctoScheduler.Core.ExecutionTasks.SSIS
         {
             Use32Bit = false;
             SQLVersion = 120;
+            Timeout = 0;
         }
 
         public bool Use32Bit { get; set; }
@@ -32,5 +33,7 @@ namespace YoctoScheduler.Core.ExecutionTasks.SSIS
         }
 
         public string Arguments { get; set; }
+
+        public int Timeout { get; set; }
     }
 }

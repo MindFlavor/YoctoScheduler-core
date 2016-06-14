@@ -67,7 +67,18 @@ namespace YoctoScheduler.Core.ExecutionTasks.SSIS
                 dtExec = Process.Start(psi);
                 job.AssignProcess(dtExec);
 
-                dtExec.WaitForExit();
+                if (Configuration.Timeout <= 0)
+                {
+                    dtExec.WaitForExit();
+                }
+                else
+                {
+                    if (!dtExec.WaitForExit(Configuration.Timeout))
+                    {
+                        dtExec.Kill();
+                        throw new Exception("Timeout expired.");
+                    }
+                }
 
                 if (dtExec.ExitCode != 0)
                 {
