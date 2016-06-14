@@ -109,6 +109,10 @@
       <Project>{e289d503-5962-461a-be49-27d7394045e9}</Project>
       <Name>YoctoScheduler.Core</Name>
     </ProjectReference>
+    <ProjectReference Include="..\YoctoScheduler.Logging.Extensions\YoctoScheduler.Logging.Extensions.csproj">
+      <Project>{6ab13f1d-d207-4664-b2d5-62a096a3720f}</Project>
+      <Name>YoctoScheduler.Logging.Extensions</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />

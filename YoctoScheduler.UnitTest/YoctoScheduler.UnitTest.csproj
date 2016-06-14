@@ -36,6 +36,10 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="log4net, Version=1.2.15.0, Culture=neutral, PublicKeyToken=669e0ddf0bb1aa2a, processorArchitecture=MSIL">
+      <HintPath>..\packages\log4net.2.0.5\lib\net45-full\log4net.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
   </ItemGroup>
@@ -62,12 +66,20 @@
     <Compile Include="Daatabase\DeadExecutionStatus_Test.cs" />
     <Compile Include="Daatabase\Task_Test.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="LoggingExtensions.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\YoctoScheduler.Core\YoctoScheduler.Core.csproj">
       <Project>{e289d503-5962-461a-be49-27d7394045e9}</Project>
       <Name>YoctoScheduler.Core</Name>
     </ProjectReference>
+    <ProjectReference Include="..\YoctoScheduler.Logging.Extensions\YoctoScheduler.Logging.Extensions.csproj">
+      <Project>{6ab13f1d-d207-4664-b2d5-62a096a3720f}</Project>
+      <Name>YoctoScheduler.Logging.Extensions</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">

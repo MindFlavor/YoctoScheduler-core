@@ -209,7 +209,12 @@
     <EmbeddedResource Include="Database\tsql\GenericCommand\GetAll.sql" />
     <Content Include="sched.ico" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <ProjectReference Include="..\YoctoScheduler.Logging.Extensions\YoctoScheduler.Logging.Extensions.csproj">
+      <Project>{6ab13f1d-d207-4664-b2d5-62a096a3720f}</Project>
+      <Name>YoctoScheduler.Logging.Extensions</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it.
        Other similar extension points exist, see Microsoft.Common.targets.
