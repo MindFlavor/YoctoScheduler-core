@@ -7,7 +7,12 @@ using YoctoScheduler.Core.Database;
 
 namespace YoctoScheduler.WebAPI.Controllers
 {
-    public class SchedulesController : ControllerBasePost<Schedule,int>
+    [Attributes.GetAllSupported]
+    [Attributes.GetByIDSupported]
+    [Attributes.PostSupported]
+    [Attributes.PutSupported]
+    [Attributes.DeleteSupported]
+    public class SchedulesController : ControllerBase<Schedule,int>
     {
         private static readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(SchedulesController));
     }

@@ -11,7 +11,7 @@ namespace YoctoScheduler.WebAPI
         // This code configures Web API. The Startup class is specified as a type
         // parameter in the WebApp.Start method.
         public void Configuration(IAppBuilder appBuilder)
-        {            
+        {
             // Configure Web API for self-host. 
             HttpConfiguration config = new HttpConfiguration();
 
@@ -20,11 +20,14 @@ namespace YoctoScheduler.WebAPI
             config.Routes.MapHttpRoute(
                 name: "DefaultApi",
                 routeTemplate: "{controller}/{id}",
-                defaults: new { id = RouteParameter.Optional }
-            );
-
+                defaults: new { id = RouteParameter.Optional });
+           
             var appXmlType = config.Formatters.XmlFormatter.SupportedMediaTypes.FirstOrDefault(t => t.MediaType == "application/xml");
             config.Formatters.XmlFormatter.SupportedMediaTypes.Remove(appXmlType);
+
+            // this will screw curl but PowerShell will still work. JavaScript is to be tested.
+            //var listener = (System.Net.HttpListener)appBuilder.Properties["System.Net.HttpListener"];
+            //listener.AuthenticationSchemes = System.Net.AuthenticationSchemes.IntegratedWindowsAuthentication;
 
             appBuilder.UseWebApi(config);
         }

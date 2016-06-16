@@ -76,6 +76,8 @@
     <Compile Include="Database\DatabaseField.cs" />
     <Compile Include="Database\LockType.cs" />
     <Compile Include="Exceptions\CertificateNotFoundException.cs" />
+    <Compile Include="Exceptions\DatabaseConcurrencyException.cs" />
+    <Compile Include="Exceptions\ServerInitializationException.cs" />
     <Compile Include="ExecutionTasks\ITask.cs" />
     <Compile Include="ExecutionTasks\JsonBasedTask.cs" />
     <Compile Include="ExecutionTasks\Passthrough\PassthroughTask.cs" />
@@ -210,6 +212,9 @@
     <EmbeddedResource Include="Database\tsql\GenericCommand\GetAll.sql" />
     <EmbeddedResource Include="Database\tsql\LiveExecutionStatus\GetAndLockExpired.sql" />
     <EmbeddedResource Include="Database\tsql\Server\UpdateKeepAlive.sql" />
+    <EmbeddedResource Include="Database\tsql\Secret\Delete.sql" />
+    <EmbeddedResource Include="Database\tsql\Task\Update.sql" />
+    <EmbeddedResource Include="Database\tsql\Task\GetBySecondary.sql" />
     <Content Include="sched.ico" />
   </ItemGroup>
   <ItemGroup>

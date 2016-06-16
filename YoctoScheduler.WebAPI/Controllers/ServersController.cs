@@ -6,6 +6,9 @@ using System.Data.SqlClient;
 
 namespace YoctoScheduler.WebAPI.Controllers
 {
+    [Attributes.GetAllSupported]
+    [Attributes.GetByIDSupported]
+    [Attributes.DeleteSupported]
     public class ServersController : ControllerBase<Server, int>
     {
 

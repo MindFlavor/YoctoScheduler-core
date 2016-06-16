@@ -1,0 +1,90 @@
+<div class="container">
+    <div class="starter-template">
+
+        <div class="container">
+            <h1>
+                <span class="label label-info">New SSIS task</span>
+            </h1>
+            <h2>
+                <span class="label label-info">{{newTaskDetails.name}}</span>
+            </h2>
+
+            <div class="row">
+                <div class="col-md-2">
+                    <h3>
+                        <span class="label label-default">Achitecture </span>
+                    </h3>
+                </div>
+                <div class="col-md-1">
+                    <h3>
+                        <select ng-model="bitModel">
+                            <option value="32bit">32 bit</option>
+                            <option value="64bit">64 bit</option>
+                        </select>
+                    </h3>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-2">
+                    <h3>
+                        <span class="label label-default">SQL Server version </span>
+                    </h3>
+                </div>
+                <div class="col-md-1">
+                    <h3>
+                        <select ng-model="sqlVersion">
+                            <option value="100">100</option>
+                            <option value="110">110</option>
+                            <option value="120">120</option>
+                            <option value="130">130</option>
+                            <option value="140">140</option>
+                        </select>
+                    </h3>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-2">
+                    <h3>
+                        <span class="label label-default">Timeout</span>
+                    </h3>
+                </div>
+                <div class="col-md-5">
+                    <h3>
+                        <input type="number" min="0" ng-model="timeout" />
+                    </h3>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-4">
+                    <h3>
+                        <span class="label label-default">Arguments</span>
+                    </h3>
+                </div>
+            </div>
+
+
+            <div class="row">
+                <div class="col-md-6">
+                    <em>Arguments support embedded secrets via %%[ secret ]%%</em>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <textarea ng-model="taskArguments" ng-required="true" style="min-width: 100%"></textarea>
+                </div>
+            </div>
+
+        </div>
+
+        <img src="imgs/spinning_20.gif" ng-hide="!createInProgess" />
+        <button type="button" ng-class="buttonClass"  ng-click="createTask()">Create</button>
+
+        <h1>
+            <span class="label label-danger">{{errorMessage}}</span>
+        </h1>
+    </div>
+</div>

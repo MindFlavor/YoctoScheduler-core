@@ -18,13 +18,13 @@ angular.module('myApp.secrets', ['ngRoute'])
 
   $scope.retrieveSecrets = function () {
     console.log('Retrieving secrets')
-    $http.get('api/secretitems').
+    $http.get('api/encryptedsecretitems').
     success(function (data) {
-      console.log('Data retrieved from site')
+      console.log('encryptedsecretitems Data retrieved from site')
       $scope.secrets = data
     }).
     error(function (data, status, headers, config) {
-      console.log('Data *not* retrieved')
+      console.log('encryptedsecretitems Data *not* retrieved')
       $scope.secrets = null
     });
   };

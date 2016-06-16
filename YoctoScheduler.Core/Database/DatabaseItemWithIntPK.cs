@@ -9,7 +9,7 @@ namespace YoctoScheduler.Core.Database
     [System.Runtime.Serialization.DataContract]
     public abstract class DatabaseItemWithIntPK : DatabaseItem<int>
     {
-        public const int INVALID_ID = -1;
+        public const int INVALID_ID = 0;
 
 
         public override bool HasValidID()

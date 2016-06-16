@@ -9,8 +9,9 @@ namespace YoctoScheduler.WebAPI.Controllers
 {
     [Attributes.GetAllSupported]
     [Attributes.GetByIDSupported]
-    public class DeadExecutionsController : ControllerBase<DeadExecutionStatus, Guid>
+    [Attributes.DeleteSupported]
+    public class EncryptedSecretItemsController : ControllerBase<Secret, string>
     {
-        private static readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(DeadExecutionsController));
+        private static readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(EncryptedSecretItemsController));
     }
 }

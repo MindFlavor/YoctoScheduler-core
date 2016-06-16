@@ -4,11 +4,11 @@
     ,[LastPing]
 	,[HostName]
 	,[IPs])
-OUTPUT [INSERTED].[ServerID]    
+OUTPUT [INSERTED].[ServerID], [INSERTED].[LastPing]  
 VALUES(
         @status,
 		@description,
-		@lastping,
+		GETDATE(),
 		@HostName,
 		@IPs
     )

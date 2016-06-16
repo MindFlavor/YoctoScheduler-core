@@ -138,7 +138,7 @@ namespace YoctoScheduler.Core.Database
         }
 
 
-        public static void Delete<T>(SqlConnection conn, SqlTransaction trans, T t)
+        public static bool Delete<T>(SqlConnection conn, SqlTransaction trans, T t)
             where T : DatabaseItem<K>
         {
             #region Database entry
@@ -146,12 +146,17 @@ namespace YoctoScheduler.Core.Database
             {
                 t.PopolateParameters(cmd);
                 if (cmd.ExecuteNonQuery() == 1)
+                {
                     log.DebugFormat("Deleted {0:S}: {1:S}", t.GetType().Name, t.ToString());
+                    return true;
+                }
                 else
-                    throw new Exceptions.ConcurrencyException(string.Format("Failed to delete {0:S} with ID={1:S}. The key was not present in the database", typeof(T).Name, t.ToString()));
+                {
+                    log.WarnFormat("Failed to delete {0:S} with ID={1:S}. The key was not present in the database", typeof(T).Name, t.ToString());
+                    return false;
+                }
             }
             #endregion
-            log.DebugFormat("Deleted {0:S} {1:S}", t.GetType().Name, t.ToString());
         }
 
         public static T GetByID<T>(SqlConnection conn, SqlTransaction trans, K id)
@@ -180,6 +185,34 @@ namespace YoctoScheduler.Core.Database
             }
         }
 
+        public static T GetBySecondary<T, SECONDARY>(SqlConnection conn, SqlTransaction trans, SECONDARY id, int size)
+            where T : DatabaseItem<K>
+        {
+            string stmt = tsql.Extractor.Get(typeof(T).Name + ".GetBySecondary");
+
+            T t = Activator.CreateInstance<T>();            
+
+            using (SqlCommand cmd = new SqlCommand(stmt, conn, trans))
+            {
+                SqlParameter param = new SqlParameter("@Secondary", SqlDbTypeFromType(typeof(SECONDARY)), size);
+                param.Value = id;
+                cmd.Parameters.Add(param);
+
+                cmd.Prepare();
+
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    if (!reader.Read())
+                        return null;
+                    else
+                    {
+                        t.ParseFromDataReader(reader);
+                        return t;
+                    }
+                }
+            }
+        }
+    
         protected static List<T> GetAll<T>(SqlConnection conn, SqlTransaction trans, string customScript)
             where T : DatabaseItem<K>
         {

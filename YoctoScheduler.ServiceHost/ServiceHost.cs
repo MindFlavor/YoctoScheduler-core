@@ -179,7 +179,7 @@ namespace YoctoScheduler.ServiceHost
 
         private void ConsoleThreadRoutine()
         {
-            Console.WriteLine("Program running, prss <enter> to terminate the program.");
+            Console.WriteLine("Program running, press <enter> to terminate the program.");
             Console.ReadLine();
 
             this.Terminated.Set();

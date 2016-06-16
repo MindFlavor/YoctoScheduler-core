@@ -1,0 +1,39 @@
+<div class="container">
+    <div class="starter-template">
+        <h1>
+            <span class="label label-info">New task</span>
+        </h1>
+        <h4>
+            <input ng-model="newTaskDetails.name" placeholder="Task name" required ng-change="validateInput()" />
+            <img src="imgs/spinning_20.gif" ng-hide="!checkInProgess" />
+        </h4>
+        <h4>
+            <textarea class="span1" rows="4" placeholder="Task description" required ng-model="newTaskDetails.description"></textarea>
+        </h4>
+
+        <h4>
+            <input type="checkbox" ng-model="newTaskDetails.cbRequeueOnDead" /> <span class="label label-default">Requeue on dead service</span>
+        </h4>
+        <h4>
+            <input type="checkbox" ng-model="cbGlobalLimit" /> <span class="label label-default">Global concurrency limit</span>
+            <input type="number" min="1" ng-model="newTaskDetails.globalLimit" ng-disabled="!cbGlobalLimit" />
+        </h4>
+
+        <h4>
+            <input type="checkbox" ng-model="cbLocalLimit"/> <span class="label label-default">Local concurrency limit</span>
+            <input type="number" min="1" ng-model="newTaskDetails.localLimit" ng-disabled="!cbLocalLimit" />
+        </h4>
+
+        <h4>
+            <span class="label label-default">Task type</span>
+            <select ng-model="newTaskDetails.selectedTask">
+                <option value="T-SQL">T-SQL</option>
+                <option value="SSIS">SSIS</option>
+                <option value="PowerShell">PowerShell</option>
+                <option value="Wait">Wait (debug)</option>
+            </select>
+        </h4>
+
+        <button type="button" ng-class="buttonClass"  ng-click="redirectToTask()" title="{{buttonTitle}}">Next >></button>
+    </div>
+</div>

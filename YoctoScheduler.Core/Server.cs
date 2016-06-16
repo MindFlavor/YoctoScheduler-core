@@ -101,7 +101,7 @@ namespace YoctoScheduler.Core
             var server = new Server(connectionString)
             {
                 Description = Description,
-                LastPing = DateTime.Parse("2000-01-01"),
+                LastPing = DateTime.Parse("2000-01-01"), // this is needed because TSQL DateTime doesn't accept DateTime.MinValue. The Server.New method will ignore it though.
                 Status = TaskStatus.Starting
             };
 
@@ -110,7 +110,17 @@ namespace YoctoScheduler.Core
                 server.PopolateParameters(cmd);
 
                 cmd.Prepare();
-                server.ID = (int)cmd.ExecuteScalar();
+
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    if (reader.Read())
+                    {
+                        server.ID = reader.GetInt32(0);
+                        server.LastPing = reader.GetDateTime(1);
+                    }
+                    else
+                        throw new Exceptions.ServerInitializationException("Failed to register this server instance in the database");
+                }
             }
             #endregion
 
@@ -313,7 +323,9 @@ namespace YoctoScheduler.Core
                         cmd.Parameters.Add(param);
 
                         cmd.Prepare();
-                        cmd.ExecuteNonQuery();
+                        int iRet = cmd.ExecuteNonQuery();
+                        if(iRet != 0)
+                            log.InfoFormat("Marked {0} server(s) as dead.", iRet);
                     }
 
                     Thread.Sleep(int.Parse(Configuration["SERVER_POLL_DISABLE_DEAD_SERVERS_SLEEP_MS"]));
@@ -352,7 +364,8 @@ namespace YoctoScheduler.Core
 
                                 log.WarnFormat("Setting LiveExecutionStatus {0:S} as dead", les.ToString());
                                 // remove from live table
-                                LiveExecutionStatus.Delete(conn, trans, les);
+                                if (!LiveExecutionStatus.Delete(conn, trans, les))
+                                    throw new Exceptions.DatabaseConcurrencyException<LiveExecutionStatus>("Delete", les);
 
                                 // if required, reenqueue
                                 var task = YoctoScheduler.Core.Database.Task.GetByID<Task>(conn, trans, les.TaskID);
@@ -406,10 +419,10 @@ namespace YoctoScheduler.Core
                         // just settle for ReadCommitted isolation level.
                         using (SqlTransaction trans = conn.BeginTransaction(System.Data.IsolationLevel.ReadCommitted))
                         {
-                            List<LiveExecutionStatus> lLess = LiveExecutionStatus.GetAll<LiveExecutionStatus>(conn, trans, LockType.Default);
-
                             // now we lock the ExecutionQueueItem exclusively.
                             List<ExecutionQueueItem> lEqis = ExecutionQueueItem.GetAll<ExecutionQueueItem>(conn, trans, LockType.TableLockX);
+
+                            List<LiveExecutionStatus> lLess = LiveExecutionStatus.GetAll<LiveExecutionStatus>(conn, trans, LockType.Default);
 
                             // now for each task in the queue find if it can be started and the start it.
                             foreach (var eqi in lEqis)
@@ -439,7 +452,8 @@ namespace YoctoScheduler.Core
                                     LiveExecutionStatus.Insert(conn, trans, les);
 
                                     // remove from pending execution queue
-                                    ExecutionQueueItem.Delete(conn, trans, eqi);
+                                    if (!ExecutionQueueItem.Delete(conn, trans, eqi))
+                                        throw new Exceptions.DatabaseConcurrencyException<ExecutionQueueItem>("Delete", eqi);
 
                                     lLessStarted.Add(les);
                                 }
@@ -490,7 +504,9 @@ namespace YoctoScheduler.Core
                                 {
                                     DeadExecutionStatus des = new DeadExecutionStatus(les, TaskStatus.ExceptionAtStartup, exce.ToString());
                                     DeadExecutionStatus.Insert(conn, trans, des);
-                                    LiveExecutionStatus.Delete(conn, trans, les);
+
+                                    if (!ExecutionQueueItem.Delete(conn, trans, les))
+                                        throw new Exceptions.DatabaseConcurrencyException<LiveExecutionStatus>("Delete", les);
 
                                     trans.Commit();
                                 }

@@ -21,6 +21,9 @@ namespace YoctoScheduler.WebAPI
         {
             log.TraceFormat("Get::{0:S} requested", typeof(T).Name);
 
+            if (Attribute.GetCustomAttributes(this.GetType(), typeof(Attributes.GetAllSupportedAttribute), false) == null)
+                return ResponseMessage(new System.Net.Http.HttpResponseMessage(System.Net.HttpStatusCode.NotImplemented));
+
             try
             {
                 using (SqlConnection conn = new SqlConnection(Startup.ConnectionString))
@@ -45,6 +48,9 @@ namespace YoctoScheduler.WebAPI
         {
             log.TraceFormat("Get::{0:S}({1:S}) requested", typeof(T).Name, id.ToString());
 
+            if (Attribute.GetCustomAttributes(this.GetType(), typeof(Attributes.GetByIDSupportedAttribute), false) == null)
+                return ResponseMessage(new System.Net.Http.HttpResponseMessage(System.Net.HttpStatusCode.NotImplemented));
+
             try
             {
                 T t = null;
@@ -67,6 +73,144 @@ namespace YoctoScheduler.WebAPI
             catch (Core.Exceptions.TSQLNotFoundException)
             {
                 return BadRequest(string.Format("GetByID not supported by {0:S}", typeof(T).FullName));
+            }
+        }
+
+        public virtual IHttpActionResult Put(T value)
+        {
+            if (Attribute.GetCustomAttributes(this.GetType(), typeof(Attributes.PutSupportedAttribute), false) == null)
+                return ResponseMessage(new System.Net.Http.HttpResponseMessage(System.Net.HttpStatusCode.NotImplemented));
+
+            return _PostInternal(value);
+        }
+
+        public virtual IHttpActionResult Post(T value)
+        {
+            if (Attribute.GetCustomAttributes(this.GetType(), typeof(Attributes.PostSupportedAttribute), false) == null)
+                return ResponseMessage(new System.Net.Http.HttpResponseMessage(System.Net.HttpStatusCode.NotImplemented));
+
+            return _PostInternal(value);
+        }
+
+        public virtual IHttpActionResult Delete(T value)
+        {
+            if (Attribute.GetCustomAttributes(this.GetType(), typeof(Attributes.DeleteSupportedAttribute), false) == null)
+                return ResponseMessage(new System.Net.Http.HttpResponseMessage(System.Net.HttpStatusCode.NotImplemented));
+
+            if (value == null)
+                return BadRequest();
+
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(Startup.ConnectionString))
+                {
+                    conn.Open();
+                    using (var trans = conn.BeginTransaction())
+                    {
+                        DatabaseItem<K>.Delete<T>(conn, trans, value);
+                        return ResponseMessage(new System.Net.Http.HttpResponseMessage(System.Net.HttpStatusCode.NoContent));
+                    }
+                }
+            }
+            catch (Core.Exceptions.TSQLNotFoundException)
+            {
+                return BadRequest(string.Format("DELETE not supported by {0:S}", typeof(T).FullName));
+            }
+            catch (Core.Exceptions.TaskNotFoundException tfe)
+            {
+                log.ErrorFormat("TaskNotFoundException processing {0:S} DELETE: {1:S}", typeof(T).Name, tfe.ToString());
+                return BadRequest();
+            }
+            catch (System.Exception exce)
+            {
+                log.ErrorFormat("Unhandled exception processing {0:S} DELETE: {1:S}", typeof(T).Name, exce.ToString());
+                return InternalServerError();
+            }
+        }
+
+        #region Internal methods
+        // TODO: Support object update
+        protected virtual IHttpActionResult _PostInternal(T value)
+        {
+            if (value == null)
+                return BadRequest();
+
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(Startup.ConnectionString))
+                {
+                    conn.Open();
+                    using (var trans = conn.BeginTransaction())
+                    {
+                        DatabaseItem<K> item = default(DatabaseItem<K>);
+
+                        if (value.HasValidID())
+                        {
+                            item = DatabaseItem<K>.GetByID<T>(conn, trans, value.ID);
+                        }
+
+                        if (item == null)
+                        {
+                            #region New item
+                            var ret = value.Clone<T>(conn, trans);
+                            trans.Commit();
+                            // TODO : return a valid URI
+                            return Created("", ret);
+                            #endregion
+                        }
+                        else
+                        {
+                            #region Update
+                            value.ID = item.ID;
+                            DatabaseItem<K>.Update<T>(conn, trans, value);
+                            trans.Commit();
+
+                            return Ok();
+                            #endregion
+                        }
+                    }
+                }
+            }
+            catch (Core.Exceptions.TaskNotFoundException tfe)
+            {
+                log.ErrorFormat("TaskNotFoundException processing {0:S} POST: {1:S}", typeof(T).Name, tfe.ToString());
+                return BadRequest();
+            }
+            catch (System.Exception exce)
+            {
+                log.ErrorFormat("Unhandled exception processing {0:S} POST: {1:S}", typeof(T).Name, exce.ToString());
+
+                return InternalServerError();
+            }
+        }
+        #endregion
+
+
+        public virtual IHttpActionResult GetSecondary<SECONDARY>(SECONDARY id, int size)
+        {
+            log.TraceFormat("GetSecondary<{0:S}::{1:S}({2:S}) requested", typeof(T).Name, typeof(SECONDARY).Name, id.ToString());
+
+            try
+            {
+                T t = default(T);
+                using (SqlConnection conn = new SqlConnection(Startup.ConnectionString))
+                {
+                    conn.Open();
+                    using (var trans = conn.BeginTransaction())
+                    {
+                        t = DatabaseItem<K>.GetBySecondary<T, SECONDARY>(conn, trans, id, size);
+                        trans.Commit();
+                    }
+                }
+
+                if (t != null)
+                    return Ok(t);
+                else
+                    return NotFound();
+            }
+            catch (Core.Exceptions.TSQLNotFoundException ex)
+            {
+                return BadRequest(string.Format("Get secondary not supported by {0:S} ({1:S})", this.GetType().FullName, ex.ToString()));
             }
         }
     }

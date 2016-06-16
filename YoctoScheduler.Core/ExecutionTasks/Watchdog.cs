@@ -112,7 +112,8 @@ namespace YoctoScheduler.Core.ExecutionTasks
 
                         DeadExecutionStatus des = new DeadExecutionStatus(LiveExecutionStatus, TaskStatus.Completed, retVal);
                         DeadExecutionStatus.Insert(conn, trans, des);
-                        LiveExecutionStatus.Delete(conn, trans, LiveExecutionStatus);
+                        if (!LiveExecutionStatus.Delete(conn, trans, LiveExecutionStatus))
+                            throw new Exceptions.DatabaseConcurrencyException<LiveExecutionStatus>("Delete", LiveExecutionStatus);
 
                         trans.Commit();
                     }
@@ -136,7 +137,8 @@ namespace YoctoScheduler.Core.ExecutionTasks
 
                         DeadExecutionStatus des = new DeadExecutionStatus(LiveExecutionStatus, TaskStatus.Aborted, null);
                         DeadExecutionStatus.Insert(conn, trans, des);
-                        LiveExecutionStatus.Delete(conn, trans, LiveExecutionStatus);
+                        if (!LiveExecutionStatus.Delete(conn, trans, LiveExecutionStatus))
+                            throw new Exceptions.DatabaseConcurrencyException<LiveExecutionStatus>("Delete", LiveExecutionStatus);
 
                         trans.Commit();
                     }
@@ -159,8 +161,8 @@ namespace YoctoScheduler.Core.ExecutionTasks
 
                         DeadExecutionStatus des = new DeadExecutionStatus(LiveExecutionStatus, TaskStatus.ExceptionDuringExecution, exce.ToString());
                         DeadExecutionStatus.Insert(conn, trans, des);
-                        LiveExecutionStatus.Delete(conn, trans, LiveExecutionStatus);
-
+                        if (!LiveExecutionStatus.Delete(conn, trans, LiveExecutionStatus))
+                            throw new Exceptions.DatabaseConcurrencyException<LiveExecutionStatus>("Delete", LiveExecutionStatus);
                         trans.Commit();
                     }
                 }

@@ -1,0 +1,20 @@
+<div class="container">
+    <div class="starter-template">
+        <h1>
+            <span class="label label-info">New wait task</span>
+        </h1>
+        <h2>
+            <span class="label label-info">{{newTaskDetails.name}}</span>
+        </h2>
+        <h4>
+            <span class="label label-default">Seconds to wait</span> <input type="number" min="1" ng-model="waitSeconds" />
+        </h4>
+
+        <img src="imgs/spinning_20.gif" ng-hide="!createInProgess" />
+        <button type="button" ng-class="buttonClass"  ng-click="createTask()">Create</button>
+
+        <h1>
+            <span class="label label-danger">{{errorMessage}}</span>
+        </h1>
+    </div>
+</div>

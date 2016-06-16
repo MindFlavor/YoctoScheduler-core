@@ -17,6 +17,9 @@ namespace YoctoScheduler.Web
 
         public void Configuration(IAppBuilder appBuilder)
         {
+            var listener = (System.Net.HttpListener)appBuilder.Properties["System.Net.HttpListener"];
+            listener.AuthenticationSchemes = System.Net.AuthenticationSchemes.IntegratedWindowsAuthentication;
+
             appBuilder.UseFileServer(new FileServerOptions()
             {
                 RequestPath = PathString.Empty,

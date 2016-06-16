@@ -11,14 +11,27 @@ angular.module('myApp', [
   'myApp.version',
   'myApp.executions',
   'myApp.task',
-  'myApp.secrets'  
+  'myApp.secrets',
+  'myApp.new_task',
+  'myApp.new_task_wait',
+  'myApp.new_task_ssis',
+  'myApp.new_task_tsql',
+  'myApp.new_task_powershell'
 ]).
 config(['$locationProvider', '$routeProvider', function($locationProvider, $routeProvider) {
   $locationProvider.hashPrefix('!');
 
   //$routeProvider.otherwise({redirectTo: '/servers'});
-}]).
-run(['$rootScope', '$http', function($rootScope, $http){
+}]).factory("newTaskDetails", [function(){
+  return {
+    name : "",
+    description : "",
+    cbRequeueOnDead : true,
+    selectedTask :"T-SQL",
+    globalLimit : 1,
+    localLimit : 1
+  };
+}]).run(['$rootScope', '$http', function($rootScope, $http){
   $rootScope.retrieveServers = function () {
     console.log('api/servers GET - Start');
     $http.get('api/servers').
@@ -72,12 +85,20 @@ run(['$rootScope', '$http', function($rootScope, $http){
   $rootScope.retrieveLiveExecutions();
   $rootScope.retrieveExecutionQueue();
 
-
   $rootScope.formatTaskConcurrency = function(concurrecy) {
     if(concurrecy == 0)
       return '∞';
     else
       return concurrecy;
+  };
+
+  $rootScope.initializeNewTaskDetails = function(newTaskDetails) {
+    newTaskDetails.name = "";
+    newTaskDetails.description = "";
+    newTaskDetails.cbRequeueOnDead = true;
+    newTaskDetails.selectedTask = "T-SQL";
+    newTaskDetails.globalLimit = 1;
+    newTaskDetails.localLimit = 1;
   };
 }]);
 

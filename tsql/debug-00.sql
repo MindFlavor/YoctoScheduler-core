@@ -4,7 +4,7 @@ GO
 --GO
 
 SELECT * FROM [YoctoScheduler].[configuration].[General];
-SELECT * FROM [YoctoScheduler].[live].[Servers] ORDER BY LastPing DESC;
+SELECT * FROM [YoctoScheduler].[live].[Servers] WITH(NOLOCK) ORDER BY LastPing DESC;
 
 SELECT * FROM [YoctoScheduler].[live].[Tasks];
 SELECT * FROM [YoctoScheduler].[lookup].[Secret];

@@ -4,9 +4,12 @@
     <h1>
         <img src="imgs/task.png" />
         <span class="label label-primary">Task #{{task.ID}}</span>
-        <img ng-show="task.ReenqueueOnDead" src="imgs/restart.png" alt="Task will be requeued if it fails to signal its keep alive state"/>
+        <img ng-show="task.ReenqueueOnDead" src="imgs/restart.png" title="Task will be requeued if it fails to signal its keep alive state"/>
         <img ng-show="!task.ReenqueueOnDead" src="imgs/restart_off.png"/>
     </h1>
+        <h2>
+            <span class="label label-primary">{{task.Name}}</span>
+        </h2>
         <h3>
             <span class="label label-info">{{task.Type}} [{{formatTaskConcurrency(task.ConcurrencyLimitGlobal)}} / {{formatTaskConcurrency(task.ConcurrencyLimitSameInstance)}}]</span>
         </h3>
