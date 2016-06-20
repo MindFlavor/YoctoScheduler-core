@@ -140,7 +140,7 @@
     <EmbeddedResource Include="Database\tsql\ExecutionQueueItem\GetAndLockFirst.sql" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Database\tsql\ExecutionQueueItem\Delete.sql" />
+    <EmbeddedResource Include="Database\tsql\ExecutionQueueItem\DeleteByID.sql" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Database\tsql\LiveExecutionStatus\New.sql" />
@@ -185,7 +185,7 @@
     <EmbeddedResource Include="Database\tsql\Configuration\GetAll.sql" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Database\tsql\LiveExecutionStatus\Delete.sql" />
+    <EmbeddedResource Include="Database\tsql\LiveExecutionStatus\DeleteByID.sql" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Database\tsql\LiveExecutionStatus\UpdateKeepAlive.sql" />
@@ -212,9 +212,10 @@
     <EmbeddedResource Include="Database\tsql\GenericCommand\GetAll.sql" />
     <EmbeddedResource Include="Database\tsql\LiveExecutionStatus\GetAndLockExpired.sql" />
     <EmbeddedResource Include="Database\tsql\Server\UpdateKeepAlive.sql" />
-    <EmbeddedResource Include="Database\tsql\Secret\Delete.sql" />
+    <EmbeddedResource Include="Database\tsql\Secret\DeleteByID.sql" />
     <EmbeddedResource Include="Database\tsql\Task\Update.sql" />
     <EmbeddedResource Include="Database\tsql\Task\GetBySecondary.sql" />
+    <EmbeddedResource Include="Database\tsql\Schedule\DeleteByID.sql" />
     <Content Include="sched.ico" />
   </ItemGroup>
   <ItemGroup>

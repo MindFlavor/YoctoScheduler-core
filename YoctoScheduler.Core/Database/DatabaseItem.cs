@@ -148,7 +148,7 @@ namespace YoctoScheduler.Core.Database
             where T : DatabaseItem<K>
         {
             #region Database entry
-            using (SqlCommand cmd = new SqlCommand(tsql.Extractor.Get(typeof(T).Name + ".Delete"), conn, trans))
+            using (SqlCommand cmd = new SqlCommand(tsql.Extractor.Get(typeof(T).Name + ".DeleteByID"), conn, trans))
             {
                 t.PopolateParameters(cmd);
                 if (cmd.ExecuteNonQuery() == 1)

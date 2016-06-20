@@ -1,19 +1,38 @@
-<table class="table">
-    <tr>
-        <th>ID</th>
-        <th>Cron</th>
-        <th>Task</th>
-        <th>Last Fired</th>
-    </tr>
-    <tr ng-repeat="sched in schedules">
-       <td style="text-align: center;"><img src="imgs/stopw_30.png"/> {{sched.ID}}</td>
+<table class="table table-hover">
+    <thead class="thead-inverse">
+        <tr>
+            <th>ID</th>
+            <th>Cron</th>
+            <th>Task</th>
+            <th>Last Fired</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr ng-repeat="sched in schedules">
+           <td>
+               <img src="imgs/stopw_30.png"/> {{sched.ID}}
+           </td>
 
-        <td>
-            <span ng-class="(sched.Enabled === 300) ? 'label label-success' : 'label label-default'">
-                {{sched.Cron}}
-            </span>
-        </td>
-        <td><a href="#!/task/?id={{sched.TaskID}}"><img src="imgs/task_30.png"/></a></td>
-        <td><span class="label label-default">{{sched.LastFired | date:'medium'}}</span></td>
-    </tr>
+            <td>
+                <span ng-class="(sched.Enabled === 300) ? 'label label-success' : 'label label-default'">
+                    {{sched.Cron}}
+                </span>
+            </td>
+
+            <td>
+                <a href="#!/task/?id={{sched.TaskID}}">
+                    <img src="imgs/task_30.png"/>{{sched.TaskID}}
+                </a>
+            </td>
+
+            <td>
+                <span class="label label-default">{{sched.LastFired | date:'medium'}}</span>
+            </td>
+
+            <td>
+                <input type="button" ng-class="getButtoncClass(sched.ID)" ng-disabled="isButtonDisabled(sched.ID)" value="Remove" ng-click="removeSchedule(sched.ID)">
+            </td>
+        </tr>
+    </tbody>
 </table>

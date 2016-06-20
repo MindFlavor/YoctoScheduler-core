@@ -92,12 +92,12 @@ namespace YoctoScheduler.WebAPI
             return _PostInternal(value);
         }
 
-        public virtual IHttpActionResult Delete(T value)
+        public virtual IHttpActionResult Delete(K id)
         {
             if (Attribute.GetCustomAttributes(this.GetType(), typeof(Attributes.DeleteSupportedAttribute), false) == null)
                 return ResponseMessage(new System.Net.Http.HttpResponseMessage(System.Net.HttpStatusCode.NotImplemented));
 
-            if (value == null)
+            if (id == null)
                 return BadRequest();
 
             try
@@ -107,7 +107,12 @@ namespace YoctoScheduler.WebAPI
                     conn.Open();
                     using (var trans = conn.BeginTransaction())
                     {
-                        DatabaseItem<K>.Delete<T>(conn, trans, value);
+                        var t = DatabaseItem<K>.GetByID<T>(conn, trans, id);
+                        if (t == default(DatabaseItem<K>))
+                            return NotFound();
+
+                        DatabaseItem<K>.Delete<T>(conn, trans, t);
+                        trans.Commit();
                         return ResponseMessage(new System.Net.Http.HttpResponseMessage(System.Net.HttpStatusCode.NoContent));
                     }
                 }
