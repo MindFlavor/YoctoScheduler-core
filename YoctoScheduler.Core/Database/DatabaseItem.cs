@@ -108,6 +108,12 @@ namespace YoctoScheduler.Core.Database
 
         public abstract bool HasValidID();
 
+        public virtual void Validate()
+        {
+            // nothing to do, classes should override this in order
+            // to intercect invalid configurations
+        }
+
         public static void Insert<T>(SqlConnection conn, SqlTransaction trans, T t)
             where T : DatabaseItem<K>
         {

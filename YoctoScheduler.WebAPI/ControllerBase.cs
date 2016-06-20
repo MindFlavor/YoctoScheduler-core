@@ -124,7 +124,7 @@ namespace YoctoScheduler.WebAPI
             catch (System.Exception exce)
             {
                 log.ErrorFormat("Unhandled exception processing {0:S} DELETE: {1:S}", typeof(T).Name, exce.ToString());
-                return InternalServerError();
+                return InternalServerError(exce);
             }
         }
 
@@ -153,6 +153,7 @@ namespace YoctoScheduler.WebAPI
                         {
                             #region New item
                             var ret = value.Clone<T>(conn, trans);
+                            ret.Validate();
                             trans.Commit();
                             // TODO : return a valid URI
                             return Created("", ret);
@@ -180,7 +181,7 @@ namespace YoctoScheduler.WebAPI
             {
                 log.ErrorFormat("Unhandled exception processing {0:S} POST: {1:S}", typeof(T).Name, exce.ToString());
 
-                return InternalServerError();
+                return InternalServerError(exce);
             }
         }
         #endregion

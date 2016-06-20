@@ -55,6 +55,13 @@ namespace YoctoScheduler.Core.Database
             TaskID = r.GetInt32(3);
         }
 
+        public override void Validate()
+        {
+            base.Validate();
+
+            NCrontab.CrontabSchedule.Parse(Cron);
+        }
+
         public static List<Schedule> GetAndLockEnabledNotRunning(SqlConnection conn, SqlTransaction trans)
         {
             List<Schedule> lItems = new List<Schedule>();
