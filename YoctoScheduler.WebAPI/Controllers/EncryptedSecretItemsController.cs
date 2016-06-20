@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using YoctoScheduler.Core.Database;
+using YoctoScheduler.Logging.Extensions;
 
 namespace YoctoScheduler.WebAPI.Controllers
 {

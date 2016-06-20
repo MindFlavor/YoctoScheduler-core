@@ -16,7 +16,8 @@ angular.module('myApp', [
   'myApp.new_task_wait',
   'myApp.new_task_ssis',
   'myApp.new_task_tsql',
-  'myApp.new_task_powershell'
+  'myApp.new_task_powershell',
+  'myApp.new_secret'
 ]).
 config(['$locationProvider', '$routeProvider', function($locationProvider, $routeProvider) {
   $locationProvider.hashPrefix('!');

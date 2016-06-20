@@ -26,8 +26,8 @@ namespace YoctoScheduler.WebAPI
             config.Formatters.XmlFormatter.SupportedMediaTypes.Remove(appXmlType);
 
             // this will screw curl but PowerShell will still work. JavaScript is to be tested.
-            //var listener = (System.Net.HttpListener)appBuilder.Properties["System.Net.HttpListener"];
-            //listener.AuthenticationSchemes = System.Net.AuthenticationSchemes.IntegratedWindowsAuthentication;
+            var listener = (System.Net.HttpListener)appBuilder.Properties["System.Net.HttpListener"];
+            listener.AuthenticationSchemes = System.Net.AuthenticationSchemes.IntegratedWindowsAuthentication;
 
             appBuilder.UseWebApi(config);
         }

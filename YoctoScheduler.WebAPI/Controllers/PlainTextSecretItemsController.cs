@@ -61,7 +61,7 @@ namespace YoctoScheduler.WebAPI.Controllers
             catch (System.Exception exce)
             {
                 log.ErrorFormat("Unhandled exception processing Secret POST: {0:S}", exce.ToString());
-                return InternalServerError();
+                return InternalServerError(exce);
             }
         }
     }
