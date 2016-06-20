@@ -2,10 +2,10 @@
     <thead class="thead-inverse">
         <tr>
             <th>ID</th>
+            <th></th>
             <th>Cron</th>
             <th>Task</th>
             <th>Last Fired</th>
-            <th></th>
         </tr>
     </thead>
     <tbody>
@@ -13,6 +13,10 @@
            <td>
                <img src="imgs/stopw_30.png"/> {{sched.ID}}
            </td>
+
+            <td>
+                <input type="button" ng-class="getButtoncClass(sched.ID)" ng-disabled="isButtonDisabled(sched.ID)" value="Remove" ng-click="removeSchedule(sched.ID)">
+            </td>
 
             <td>
                 <span ng-class="(sched.Enabled === 300) ? 'label label-success' : 'label label-default'">
@@ -28,10 +32,6 @@
 
             <td>
                 <span class="label label-default">{{sched.LastFired | date:'medium'}}</span>
-            </td>
-
-            <td>
-                <input type="button" ng-class="getButtoncClass(sched.ID)" ng-disabled="isButtonDisabled(sched.ID)" value="Remove" ng-click="removeSchedule(sched.ID)">
             </td>
         </tr>
     </tbody>

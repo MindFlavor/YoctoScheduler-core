@@ -8,6 +8,10 @@ namespace YoctoScheduler.Core
 {
     public enum Priority
     {
-        Lowest, Low, Normal, High, Highest
+        Lowest = -1000,
+        Low = -500,
+        Normal = 0,
+        High = 500,
+        Highest = 100
     }
 }
