@@ -96,6 +96,8 @@ namespace YoctoScheduler.Core.Database
                 return System.Data.SqlDbType.UniqueIdentifier;
             else if (t == typeof(Nullable<int>))
                 return System.Data.SqlDbType.Int;
+            else if (t == typeof(Nullable<Guid>))
+                return System.Data.SqlDbType.UniqueIdentifier;
             else if (t.IsEnum)
                 return System.Data.SqlDbType.Int;
 
@@ -151,7 +153,7 @@ namespace YoctoScheduler.Core.Database
             using (SqlCommand cmd = new SqlCommand(tsql.Extractor.Get(typeof(T).Name + ".DeleteByID"), conn, trans))
             {
                 t.PopolateParameters(cmd);
-                if (cmd.ExecuteNonQuery() == 1)
+                if (cmd.ExecuteNonQuery() > 0)
                 {
                     log.DebugFormat("Deleted {0:S}: {1:S}", t.GetType().Name, t.ToString());
                     return true;
@@ -196,7 +198,7 @@ namespace YoctoScheduler.Core.Database
         {
             string stmt = tsql.Extractor.Get(typeof(T).Name + ".GetBySecondary");
 
-            T t = Activator.CreateInstance<T>();            
+            T t = Activator.CreateInstance<T>();
 
             using (SqlCommand cmd = new SqlCommand(stmt, conn, trans))
             {
@@ -218,7 +220,7 @@ namespace YoctoScheduler.Core.Database
                 }
             }
         }
-    
+
         protected static List<T> GetAll<T>(SqlConnection conn, SqlTransaction trans, string customScript)
             where T : DatabaseItem<K>
         {

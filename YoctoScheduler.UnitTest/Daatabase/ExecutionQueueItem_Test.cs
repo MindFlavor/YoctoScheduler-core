@@ -15,7 +15,7 @@ namespace YoctoScheduler.UnitTest.Daatabase
             {
                 InsertDate = DateTime.Now,
                 Priority = Core.Priority.Lowest,
-                ScheduleID = 1,
+                ScheduleID = Guid.NewGuid(),
                 TaskID = 1
             };
 

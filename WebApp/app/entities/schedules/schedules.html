@@ -11,7 +11,9 @@
     <tbody>
         <tr ng-repeat="sched in schedules">
            <td>
-               <img src="imgs/stopw_30.png"/> {{sched.ID}}
+               <a href="#!/schedule/{{sched.ID}}">
+                   <img src="imgs/stopw_30.png"/>
+               </a>
            </td>
 
             <td>

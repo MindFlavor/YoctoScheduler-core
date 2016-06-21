@@ -23,7 +23,7 @@ namespace YoctoScheduler.Core.Database
 
         [DatabaseProperty(Size = 4)]
         [System.Runtime.Serialization.DataMember]
-        public int? ScheduleID { get; set; }
+        public Guid? ScheduleID { get; set; }
 
         [DatabaseProperty(Size = 8)]
         [System.Runtime.Serialization.DataMember]
@@ -88,7 +88,7 @@ namespace YoctoScheduler.Core.Database
             ID = r.GetGuid(0);
             InsertDate = r.GetDateTime(4);
             if (!r.IsDBNull(3))
-                ScheduleID = r.GetInt32(3);
+                ScheduleID = r.GetGuid(3);
             else
                 ScheduleID = null;
         }

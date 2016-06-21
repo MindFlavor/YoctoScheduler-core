@@ -9,7 +9,7 @@ namespace YoctoScheduler.Core.Database
 {
     [System.Runtime.Serialization.DataContract]
     [DatabaseKey(DatabaseName = "ScheduleID", Size = 4)]
-    public class Schedule : DatabaseItemWithIntPK
+    public class Schedule : DatabaseItemWithGUIDPK
     {
         private static readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(Schedule));
 
@@ -48,7 +48,7 @@ namespace YoctoScheduler.Core.Database
 
         public override void ParseFromDataReader(SqlDataReader r)
         {
-            ID = r.GetInt32(0);
+            ID = r.GetGuid(0);
             Cron = r.GetString(1);
             Enabled = r.GetBoolean(2);
             LastFired = r.GetDateTime(4);

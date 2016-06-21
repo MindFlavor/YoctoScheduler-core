@@ -1,0 +1,31 @@
+<div class="container">
+    <div class="starter-template">
+        <h1>
+            <img src="imgs/stopw.png" />
+            <span class="label label-primary">Schedule {{schedule.ID}}</span>
+        </h1>
+
+        <h3>
+            Enabled: <span ng-class="(schedule.Enabled) ? 'label label-success' : 'label label-danger'">{{schedule.Enabled}}</span>
+        </h3>
+
+        <h2>
+            Task
+
+                <a href="#!/task/?id={{schedule.TaskID}}">
+                    <img src="imgs/task_30.png"/> {{schedule.TaskID}}
+                </a>
+
+        </h2>
+
+        <h2>
+            Cron <span class="label label-default">{{schedule.Cron}}</span>
+        </h2>
+
+
+
+        <h3>
+            <span class="label label-default">{{task.Description}}</span>
+        </h3>
+    </div>
+</div>

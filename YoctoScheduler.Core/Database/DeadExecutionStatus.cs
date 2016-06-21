@@ -50,7 +50,7 @@ namespace YoctoScheduler.Core.Database
         {
             ScheduleID = null;
             if (!r.IsDBNull(1))
-                ScheduleID = r.GetInt32(1);
+                ScheduleID = r.GetGuid(1);
             ID = r.GetGuid(0);
             TaskID = r.GetInt32(2);
             Status = (TaskStatus)r.GetInt32(3);

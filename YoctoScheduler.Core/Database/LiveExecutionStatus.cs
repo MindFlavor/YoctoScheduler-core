@@ -26,7 +26,7 @@ namespace YoctoScheduler.Core.Database
 
         [System.Runtime.Serialization.DataMember]
         [DatabaseProperty(Size = 4)]
-        public int? ScheduleID { get; set; }
+        public Guid? ScheduleID { get; set; }
 
         [System.Runtime.Serialization.DataMember]
         [DatabaseProperty(Size = 8)]
@@ -39,7 +39,7 @@ namespace YoctoScheduler.Core.Database
         public LiveExecutionStatus() : base()
         { }
 
-        public LiveExecutionStatus(int TaskID, int ServerID, int? ScheduleID) : base()
+        public LiveExecutionStatus(int TaskID, int ServerID, Guid? ScheduleID) : base()
         {
             this.TaskID = TaskID;
             this.ServerID = ServerID;
@@ -64,7 +64,7 @@ namespace YoctoScheduler.Core.Database
         {
             ScheduleID = null;
             if (!r.IsDBNull(1))
-                ScheduleID = r.GetInt32(1);
+                ScheduleID = r.GetGuid(1);
             ID = r.GetGuid(0);
             TaskID = r.GetInt32(2);
             ServerID = r.GetInt32(3);

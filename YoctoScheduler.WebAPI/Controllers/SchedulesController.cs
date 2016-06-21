@@ -12,7 +12,7 @@ namespace YoctoScheduler.WebAPI.Controllers
     [Attributes.PostSupported]
     [Attributes.PutSupported]
     [Attributes.DeleteSupported]
-    public class SchedulesController : ControllerBase<Schedule,int>
+    public class SchedulesController : ControllerBase<Schedule,Guid>
     {
         private static readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(SchedulesController));
     }
