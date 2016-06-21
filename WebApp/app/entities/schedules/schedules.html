@@ -27,8 +27,21 @@
             </td>
 
             <td>
-                <a href="#!/task/?id={{sched.TaskID}}">
-                    <img src="imgs/task_30.png"/>{{sched.TaskID}}
+                <a href="#!/task/{{sched.TaskID}}">
+                    <div class="row">
+                        <div class="span4">
+                            <span class="label label-info">
+                                {{findTaskByID(sched.TaskID).Name}}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="span4">
+                            <span class="label label-info">
+                                {{findTaskByID(sched.TaskID).Type}} ({{findTaskByID(sched.TaskID).ID}})
+                            </span>
+                        </div>
+                    </div>
                 </a>
             </td>
 

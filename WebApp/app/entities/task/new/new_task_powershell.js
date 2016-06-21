@@ -37,7 +37,7 @@ angular.module('myApp.new_task_powershell', ['ngRoute'])
     $http.post("/api/tasks", task)
         .success(function(data, status) {
           $rootScope.initializeNewTaskDetails($scope.newTaskDetails);
-          $location.path("/task").search({id: data.ID});
+          $location.path("/task/" + data.ID);
         })
         .error(function (data, status, headers, config) {
           $scope.createInProgess = false;

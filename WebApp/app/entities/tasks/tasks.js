@@ -9,15 +9,8 @@ angular.module('myApp.tasks', ['ngRoute'])
   });
 }])
 
-.controller('TasksCtrl', ['$scope', '$http', function($scope, $http) {
-  $scope.tasks = null;
-
-  $scope.findTaskByID = function(taskID) {
-    for (var i = 0; i < $scope.tasks.length; i++) {
-      if ($scope.tasks[i].ID === taskID)
-        return $scope.tasks[i];
-    }
-  };
+.controller('TasksCtrl', ['$scope', '$http', '$rootScope', function($scope, $http, $rootScope) {
+  $rootScope.retrieveTasks();
 
   $scope.getButtonImage = function(taskID, priority) {
     if ($scope.isButtonDisabled(taskID))
@@ -43,11 +36,11 @@ angular.module('myApp.tasks', ['ngRoute'])
   };
   
   $scope.isButtonDisabled = function(taskID) {
-    return !$scope.findTaskByID(taskID).isEnabled;
+    return !$rootScope.findTaskByID(taskID).isEnabled;
   };
 
   $scope.enqueueTask = function(taskID, priority) {
-    var item = $scope.findTaskByID(taskID);
+    var item = $rootScope.findTaskByID(taskID);
     item.isEnabled = false;
 
     var priorityInt = 0;
@@ -67,24 +60,4 @@ angular.module('myApp.tasks', ['ngRoute'])
       item.isEnabled = true;
     });
   };
-  
-  $scope.retrieveTasks = function () {
-    console.log('Retrieving tasks')
-    $http.get('api/tasks').
-    success(function (data) {
-      console.log('Data retrieved from site')
-      angular.forEach(data, function(elem) {
-        elem.isEnabled = true;
-      });
-      $scope.tasks = data
-    }).
-    error(function (data, status, headers, config) {
-      console.log('Data *not* retrieved')
-      $scope.tasks = null
-    });
-  };
-
-  if ($scope.tasks === null) {
-    $scope.retrieveTasks();
-  }
 }]);

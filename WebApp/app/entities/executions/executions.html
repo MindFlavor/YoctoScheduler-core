@@ -28,8 +28,21 @@
         </td>
 
         <td>
-            <a href="#!/task/?id={{ex.TaskID}}">
-                <img src="imgs/task_30.png"/>
+            <a href="#!/task/{{ex.TaskID}}">
+                <div class="row">
+                    <div class="span4">
+                        <span class="label label-info">
+                            {{findTaskByID(ex.TaskID).Name}}
+                        </span>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="span4">
+                        <span class="label label-info">
+                            {{findTaskByID(ex.TaskID).Type}} ({{findTaskByID(ex.TaskID).ID}})
+                        </span>
+                    </div>
+                </div>
             </a>
         </td>
 
@@ -80,8 +93,21 @@
         </td>
 
         <td>
-            <a href="#!/task/?id={{ex.TaskID}}">
-                <img src="imgs/task_30.png"/>
+            <a href="#!/task/{{ex.TaskID}}">
+                <div class="row">
+                    <div class="span4">
+                        <span class="label label-info">
+                            {{findTaskByID(ex.TaskID).Name}}
+                        </span>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="span4">
+                        <span class="label label-info">
+                            {{findTaskByID(ex.TaskID).Type}} ({{findTaskByID(ex.TaskID).ID}})
+                        </span>
+                    </div>
+                </div>
             </a>
         </td>
 
@@ -104,8 +130,7 @@
 
         <td>
             <a href="#!/server/{{ex.ServerID}}">
-                <img src="imgs/sched_30.png" />
-                {{ex.ServerID}}
+                {{findServerByID(ex.ServerID).HostName}} ({{ex.ServerID}})
             </a>
         </td>
 
@@ -162,8 +187,21 @@
         </td>
 
         <td>
-            <a href="#!/task/?id={{ex.TaskID}}">
-                <img src="imgs/task_30.png"/>
+            <a href="#!/task/{{ex.TaskID}}">
+                <div class="row">
+                    <div class="span4">
+                        <span class="label label-info">
+                            {{findTaskByID(ex.TaskID).Name}}
+                        </span>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="span4">
+                        <span class="label label-info">
+                            {{findTaskByID(ex.TaskID).Type}} ({{findTaskByID(ex.TaskID).ID}})
+                        </span>
+                    </div>
+                </div>
             </a>
         </td>
 
@@ -180,8 +218,9 @@
 
         <td>
             <a href="#!/server/{{ex.ServerID}}">
-                <img src="imgs/sched_30.png" />
-                {{ex.ServerID}}
+                <span ng-class="(findServerByID(ex.ServerID).Status > 0) ? 'label label-success' : 'label label-default'">
+                    {{findServerByID(ex.ServerID).HostName}} ({{ex.ServerID}})
+                </span>
             </a>
         </td>
     </tr>
