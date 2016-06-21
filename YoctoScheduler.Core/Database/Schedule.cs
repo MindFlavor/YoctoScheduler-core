@@ -13,8 +13,6 @@ namespace YoctoScheduler.Core.Database
     {
         private static readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(Schedule));
 
-        private static DateTime DT_NEVER = DateTime.Parse("1900-01-01");
-
         [DatabaseProperty(Size = 255)]
         [System.Runtime.Serialization.DataMember]
         public string Cron { get; set; }

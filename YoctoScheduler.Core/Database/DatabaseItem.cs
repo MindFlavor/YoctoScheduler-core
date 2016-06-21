@@ -13,6 +13,8 @@ namespace YoctoScheduler.Core.Database
     {
         private static readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(DatabaseItem<K>));
 
+        protected internal static DateTime DT_NEVER = DateTime.Parse("1900-01-01");
+
         public const string LOG_TIME_FORMAT = "yyyyMMdd HH:mm:ss";
 
         [System.Runtime.Serialization.DataMember]

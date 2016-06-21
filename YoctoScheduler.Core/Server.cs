@@ -188,11 +188,11 @@ namespace YoctoScheduler.Core
             cmd.Parameters.Add(param);
 
             param = new SqlParameter("@description", System.Data.SqlDbType.NVarChar, -1);
-            param.Value = Description;
+            param.Value = string.IsNullOrEmpty(Description) ? (object)DBNull.Value : Description;
             cmd.Parameters.Add(param);
 
             param = new SqlParameter("@HostName", System.Data.SqlDbType.NVarChar, -1);
-            param.Value = HostName;
+            param.Value = string.IsNullOrEmpty(HostName) ? (object)DBNull.Value : HostName;
             cmd.Parameters.Add(param);
 
             param = new SqlParameter("@IPs", System.Data.SqlDbType.Xml, -1);
@@ -201,18 +201,21 @@ namespace YoctoScheduler.Core
             var nRoot = doc.CreateElement("IPs");
             doc.AppendChild(nRoot);
 
-            foreach (var ip in IPs)
+            if (IPs != null)
             {
-                var nElem = doc.CreateElement("IP");
-                nElem.InnerText = ip;
-                nRoot.AppendChild(nElem);
+                foreach (var ip in IPs)
+                {
+                    var nElem = doc.CreateElement("IP");
+                    nElem.InnerText = ip;
+                    nRoot.AppendChild(nElem);
+                }
             }
             #endregion
             param.Value = doc.InnerXml;
             cmd.Parameters.Add(param);
 
             param = new SqlParameter("@lastping", System.Data.SqlDbType.DateTime);
-            param.Value = LastPing;
+            param.Value = LastPing == DateTime.MinValue ? DT_NEVER : LastPing;
             cmd.Parameters.Add(param);
 
             if (HasValidID())

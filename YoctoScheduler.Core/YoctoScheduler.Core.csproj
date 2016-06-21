@@ -216,6 +216,7 @@
     <EmbeddedResource Include="Database\tsql\Task\Update.sql" />
     <EmbeddedResource Include="Database\tsql\Task\GetBySecondary.sql" />
     <EmbeddedResource Include="Database\tsql\Schedule\DeleteByID.sql" />
+    <EmbeddedResource Include="Database\tsql\Server\GetByID.sql" />
     <Content Include="sched.ico" />
   </ItemGroup>
   <ItemGroup>

@@ -7,6 +7,7 @@
         <th>Task</th>
         <th>Sch</th>
     </tr>
+
     <tr ng-repeat="ex in executionQueue | orderBy: '-LastUpdate'">
         <td>
             <span class="label label-info">
@@ -43,6 +44,7 @@
             </span>
         </td>
     </tr>
+
 </table>
 
 
@@ -55,7 +57,7 @@
         <th>Task</th>
         <th>Last update</th>
         <th>Sch</th>
-        <th>ServerID</th>
+        <th>Server</th>
         <th>Kill</th>
     </tr>
     <tr ng-repeat="ex in liveexecutions | orderBy: '-LastUpdate'">
@@ -101,7 +103,10 @@
         </td>
 
         <td>
-            {{ex.ServerID}}
+            <a href="#!/server/{{ex.ServerID}}">
+                <img src="imgs/sched_30.png" />
+                {{ex.ServerID}}
+            </a>
         </td>
 
         <td>
@@ -121,7 +126,7 @@
         <th>ReturnCode</th>
         <th>Task</th>
         <th>Sch</th>
-        <th>ServerID</th>
+        <th>Server</th>
     </tr>
     <tr ng-repeat="ex in deadexecutions | orderBy: '-LastUpdate'">
         <td>
@@ -174,7 +179,10 @@
         </td>
 
         <td>
-            {{ex.ServerID}}
+            <a href="#!/server/{{ex.ServerID}}">
+                <img src="imgs/sched_30.png" />
+                {{ex.ServerID}}
+            </a>
         </td>
     </tr>
 </table>
