@@ -10,19 +10,27 @@
         </h3>
 
         <h2>
-            Task
-
-                <a href="#!/task/?id={{schedule.TaskID}}">
-                    <img src="imgs/task_30.png"/> {{schedule.TaskID}}
-                </a>
-
+            <a href="#!/task/{{schedule.TaskID}}">
+                <div class="row">
+                    <div class="span4">
+                    <span class="label label-info">
+                        {{findTaskByID(schedule.TaskID).Name}}
+                    </span>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="span4">
+                    <span class="label label-info">
+                        {{findTaskByID(schedule.TaskID).Type}} ({{findTaskByID(schedule.TaskID).ID}})
+                    </span>
+                    </div>
+                </div>
+            </a>
         </h2>
 
         <h2>
             Cron <span class="label label-default">{{schedule.Cron}}</span>
         </h2>
-
-
 
         <h3>
             <span class="label label-default">{{task.Description}}</span>

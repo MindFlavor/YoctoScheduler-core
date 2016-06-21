@@ -8,7 +8,7 @@
         <th>Sch</th>
     </tr>
 
-    <tr ng-repeat="ex in executionQueue | orderBy: '-LastUpdate'">
+    <tr ng-repeat="ex in executionQueue | orderBy: '-InsertDate'">
         <td>
             <span class="label label-info">
                 {{ex.ID}}
@@ -73,7 +73,7 @@
         <th>Server</th>
         <th>Kill</th>
     </tr>
-    <tr ng-repeat="ex in liveexecutions | orderBy: '-LastUpdate'">
+    <tr ng-repeat="ex in liveexecutions | orderBy: '-ID'">
         <td>
             <span class="label label-info">
                 {{ex.ID}}
@@ -130,7 +130,9 @@
 
         <td>
             <a href="#!/server/{{ex.ServerID}}">
-                {{findServerByID(ex.ServerID).HostName}} ({{ex.ServerID}})
+                <span ng-class="(findServerByID(ex.ServerID).Status > 0) ? 'label label-success' : 'label label-default'">
+                    {{findServerByID(ex.ServerID).HostName}} ({{ex.ServerID}})
+                </span>
             </a>
         </td>
 
