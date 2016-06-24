@@ -21,7 +21,7 @@ namespace YoctoScheduler.Core.ExecutionTasks.SSIS
             }
             set
             {
-                if (value == 120)
+                if (value == 110 || value == 120 || value == 130)
                 {
                     sqlVersion = value;
                 }
