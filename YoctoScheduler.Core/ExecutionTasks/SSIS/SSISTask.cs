@@ -63,8 +63,11 @@ namespace YoctoScheduler.Core.ExecutionTasks.SSIS
                 ProcessStartInfo psi = new ProcessStartInfo();
                 psi.FileName = DTExecPath;
                 psi.Arguments = Configuration.Arguments;
+                psi.CreateNoWindow = true;
+                psi.UseShellExecute = false;
                 psi.RedirectStandardError = true;
                 psi.RedirectStandardOutput = true;
+                psi.RedirectStandardInput = true;
 
                 Job job = new Job();
 
@@ -75,6 +78,10 @@ namespace YoctoScheduler.Core.ExecutionTasks.SSIS
                 dtExec.OutputDataReceived += new DataReceivedEventHandler(DataReceived);
 
                 dtExec.Start();
+                dtExec.StandardInput.Close();
+                dtExec.BeginErrorReadLine();
+                dtExec.BeginOutputReadLine();
+
                 job.AssignProcess(dtExec);
 
                 if (Configuration.Timeout <= 0)
