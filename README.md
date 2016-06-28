@@ -89,7 +89,7 @@ The same information can be retrieved by the YoctoScheduler web interface:
 Notice how the value is stored in its encrypted format only.
 
 
-*Note:* There is a bug in PowerShell generated certificates. See the [```System.Security.Cryptography.CryptographicException: Invalid provider type specified```](docs/System.Security.Cryptography.CryptographicException.md) known issue about how to resolve this.
+*Note:* There is a bug in PowerShell generated certificates. See the [```System.Security.Cryptography.CryptographicException: Invalid provider type specified```](docs/known-issues/System.Security.Cryptography.CryptographicException.md) known issue about how to resolve this.
 
 ### Task
 You can add a new mock task calling the [Tasks REST API](docs/rest/tasks.md) interface.
