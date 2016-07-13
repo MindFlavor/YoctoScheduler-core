@@ -1,8 +1,8 @@
 ﻿{
     "InstanceName": "test01",
     "Log4NetConfigFile": "sample_log4net_config.xml",
-    "RestEndpoint": "http://*:9000/",
-    "HttpEndpoint": "http://*:8080/",
+    "RestEndpoint": "http://*:9000/api",
+    "HttpEndpoint": "http://*:9000/",
     "WwwRoot": "D:\\GIT\\www\\YoctoScheduler\\app",
     "ConnectionString": "data source=servername;initial catalog=YoctoScheduler;Trusted_Connection=True;MultipleActiveResultSets=False;App=YoctoServer"
 }
