@@ -12,6 +12,8 @@ namespace YoctoScheduler.Core.ExecutionTasks.SSIS
 {
     class SSISTask : JsonBasedTask<Configuration>
     {
+        protected const string BLOCKING_PARAMETER = "/Par \"$ServerOption::SYNCHRONIZED(Boolean)\";True";
+
         private readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(SSISTask));
 
         public override string Do()
@@ -56,6 +58,13 @@ namespace YoctoScheduler.Core.ExecutionTasks.SSIS
             }
 
             Process dtExec = null;
+
+            #region Blocking argument injection if absent
+            if (Configuration.Arguments.IndexOf(BLOCKING_PARAMETER, StringComparison.InvariantCultureIgnoreCase) == -1)
+            {
+                Configuration.Arguments += " " + BLOCKING_PARAMETER;
+            }
+            #endregion
 
             // DTExec execution
             try
