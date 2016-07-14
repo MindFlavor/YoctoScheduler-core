@@ -22,7 +22,14 @@ angular.module('myApp', [
   'myApp.schedule',
   'myApp.server'
 ]).
-config(['$locationProvider', '$routeProvider', function($locationProvider, $routeProvider) {
+config(['$locationProvider', '$routeProvider', '$httpProvider', function($locationProvider, $routeProvider, $httpProvider) {
+  $httpProvider.defaults.cache = false;
+  if (!$httpProvider.defaults.headers.get) {
+    $httpProvider.defaults.headers.get = {};
+  }
+  // disable IE ajax request caching
+  $httpProvider.defaults.headers.get['If-Modified-Since'] = '0';
+
   $locationProvider.hashPrefix('!');
 
   //$routeProvider.otherwise({redirectTo: '/servers'});
@@ -137,7 +144,7 @@ config(['$locationProvider', '$routeProvider', function($locationProvider, $rout
     console.log('Retrieving tasks')
     $http.get('api/tasks').
     then(function (data) {
-      console.log('Tasks retrieved from site')
+      console.log('Tasks retrieved from site ' + data.data);
       angular.forEach(data.data, function(elem) {
         elem.isEnabled = true;
       });
