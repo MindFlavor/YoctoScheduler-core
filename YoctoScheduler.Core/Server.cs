@@ -380,7 +380,7 @@ namespace YoctoScheduler.Core
                                         TaskID = task.ID,
                                         Priority = Priority.Normal,
                                         ScheduleID = les.ScheduleID,
-                                        InsertDate = DateTime.Now
+                                        Inserted = DateTime.Now
                                     };
                                     ExecutionQueueItem.Insert(conn, trans, eqi);
                                 }
@@ -561,7 +561,7 @@ namespace YoctoScheduler.Core
                                         TaskID = task.ID,
                                         Priority = Priority.Normal,
                                         ScheduleID = sched.ID,
-                                        InsertDate = DateTime.Now
+                                        Inserted = DateTime.Now
                                     };
                                     ExecutionQueueItem.Insert(conn, trans, eqi);
                                     log.InfoFormat("Execution enqueued {0:S}", eqi.ToString());

@@ -3,10 +3,10 @@
     [TaskID]
     ,[Priority]
     ,[ScheduleID]
-    ,[InsertDate])
+    ,[Inserted])
 OUTPUT INSERTED.[GUID]
 VALUES
     (@TaskID
     ,@Priority
     ,@ScheduleID
-    ,@InsertDate)
+    ,@Inserted)
