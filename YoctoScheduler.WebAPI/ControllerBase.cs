@@ -171,7 +171,7 @@ namespace YoctoScheduler.WebAPI
                             DatabaseItem<K>.Update<T>(conn, trans, value);
                             trans.Commit();
 
-                            return Ok();
+                            return Ok(value);
                             #endregion
                         }
                     }
