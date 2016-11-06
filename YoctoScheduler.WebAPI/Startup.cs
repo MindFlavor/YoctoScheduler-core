@@ -25,7 +25,7 @@ namespace YoctoScheduler.WebAPI
             var appXmlType = config.Formatters.XmlFormatter.SupportedMediaTypes.FirstOrDefault(t => t.MediaType == "application/xml");
             config.Formatters.XmlFormatter.SupportedMediaTypes.Remove(appXmlType);
 
-            // this will screw curl but PowerShell will still work. JavaScript is to be tested.
+            // this will screw up curl but PowerShell will still work. JavaScript is to be tested.
             //var listener = (System.Net.HttpListener)appBuilder.Properties["System.Net.HttpListener"];
             //listener.AuthenticationSchemes = System.Net.AuthenticationSchemes.IntegratedWindowsAuthentication;
 

@@ -74,6 +74,7 @@
     <Compile Include="Commands\KillExecution\Configuration.cs" />
     <Compile Include="Commands\RestartServer\Configuration.cs" />
     <Compile Include="Database\DatabaseField.cs" />
+    <Compile Include="Database\ExecutionItem.cs" />
     <Compile Include="Database\LockType.cs" />
     <Compile Include="Exceptions\CertificateNotFoundException.cs" />
     <Compile Include="Exceptions\DatabaseConcurrencyException.cs" />
@@ -217,6 +218,7 @@
     <EmbeddedResource Include="Database\tsql\Task\GetBySecondary.sql" />
     <EmbeddedResource Include="Database\tsql\Schedule\DeleteByID.sql" />
     <EmbeddedResource Include="Database\tsql\Server\GetByID.sql" />
+    <EmbeddedResource Include="Database\tsql\ExecutionItem\GetAll.sql" />
     <Content Include="sched.ico" />
   </ItemGroup>
   <ItemGroup>
