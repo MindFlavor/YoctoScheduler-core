@@ -1,5 +1,39 @@
 ## Intro
-YoctoScheduler is a muli-thread, multi-process scheduling system. Each server in  a cluster should be indpendent from the others while maintaining some architectural constraints.
+YoctoScheduler is a muli-thread, multi-process scheduling system. It is meant to be a SQL Server Agent replacement for Azure workloads.  
+Each server in  a cluster should be indpendent from the others while maintaining some architectural constraints.
+
+The configuration data is stored in an Azure SQL Database or SQL Server database. Each scheduler process will start, read the configuration from the shared database and start processing tasks. 
+The schedulers are *greedy*, meaning they compete for tasks to execute. You can control how many instances of a task can start concurrently (both on the same server and globally) via a specific configuration option. The schedules, however, are guaranteed to be executed only once (this is different from multi instance SQL Server Agent, ie. AlwaysOn in which you have to manually handle concurrency) so you don't need to concern yourself with it. 
+The tasks can be:
+  * T-SQL tasks (ie everything you can do from a SqlConnection).
+  * SSIS tasks (provided you have SSIS engine available).
+  * PowerShell tasks.
+
+As this version there is no workflow to specify. Each task is indipendent. Depending on the need of this we will implemement the feature in the future.
+
+### Resiliency
+
+The schedulers are build with the cloud in mind. That means they are resilient: you can have a scheduler pick up a task previously being run by another, failed, scheduler. This happens automatically and, of course, you can opt out if you want. 
+
+This is an example of what can happen. Suppose we have two instances of our scheduler (maybe in an availability group):
+
+![](docs/imgs/res_00.png)
+
+Suppose now Server_A picks up a task (called Job_01) and starts executing it:
+
+![](docs/imgs/res_01.png)
+
+Job_01 can be running as result of a schedule or maybe we just started it manually. It does not matter. What matter is we marked Job_01 as *restartable* in case of server failure.
+
+Now let's suppose Server_A fails.
+
+![](docs/imgs/res_02.png)
+
+Server_B, after declaring Server_A dead, will pick Job_01 and start executing again.
+
+![](docs/imgs/res_03.png)
+
+This does not require manual intervention. Please note that the scheduler does not make assumption on the atomicity of the task restarted. It's up to you to provide transactionality (if needed).
 
 ## Legend
 
