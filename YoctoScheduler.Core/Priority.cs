@@ -12,6 +12,6 @@ namespace YoctoScheduler.Core
         Low = -500,
         Normal = 0,
         High = 500,
-        Highest = 100
+        Highest = 1000
     }
 }

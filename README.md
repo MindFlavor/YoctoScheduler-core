@@ -26,13 +26,14 @@ Workflow | A collection of task to be orchestrated as a single entity.
 * Each task should read its configuration from the centralized server (to encourage task independence).
 * Required tasks:
   * T-SQL task
+  * PowerShell task
+  * SSIS task
+
 
 ### ToDo
 
 #### Mandatory
-* Required tasks:
-  * A command line task
-  * A PowerShell task
+* PowerShell cmdlets. They are fairly easy to implement as they can only wrap the REST API calls.
 
 #### Nice to have
 * Tasks can spawn another task(s) as result of their elaboration.
@@ -46,7 +47,7 @@ Workflow | A collection of task to be orchestrated as a single entity.
 
 * SQL Server 2012+ or SQL Azure database.
 * A database and a ```dbo_owner``` user with relative login.
-* C# 4.5.2. Visual Studio is suggested but not required.
+* C# 4.5.2. 
 
 ## Installation
 YoctoScheduler can run in two modes, as a command line program or as a Windows Service. The [configuration](docs/configuration.md) is the same, the only difference is in the command line switches that either start the command line execution or register the windows service.
@@ -56,7 +57,7 @@ YoctoScheduler can run in two modes, as a command line program or as a Windows S
 3. Compile the executable and relative libraries.
 4. [Configure](docs/configuration.md).
 5. Run (for testing purposes you may want to start with the command line program).
-6. *optional* Clone the web frontend (in a separate project right now).
+6. *optional* Clone the web frontend (it's in a separate project right now). Once cloned make sure to configure the server files accordingly.
 
 ## Configuration
 
@@ -82,12 +83,7 @@ You can call the same REST API in a browser to get the secret list:
 
 ![](docs/imgs/00.png)
 
-The same information can be retrieved by the YoctoScheduler web interface:
-
-![](docs/imgs/01.png)
-
 Notice how the value is stored in its encrypted format only.
-
 
 *Note:* There is a bug in PowerShell generated certificates. See the [```System.Security.Cryptography.CryptographicException: Invalid provider type specified```](docs/known-issues/System.Security.Cryptography.CryptographicException.md) known issue about how to resolve this.
 
@@ -106,6 +102,10 @@ For example this is how to create a ```WaitTask``` (useful ony for debugging pur
 ```
 curl -X POST -H "Content-Type: application/json" cantun.mindflavor.it:9000/api/tasks -d '{"Name":"MyWaitTask", "ConcurrencyLimitGlobal":0, "ConcurrencyLimitSameInstance":1, "Description":"This task will stall the thread for 35 seconds. This task will task will not be requeued in case the server owning it dies", "ReenqueueOnDead":false,"Type":"WaitTask","Payload":"{\"SleepSeconds\":35}"'
 ```
+
+You can create a ```WaitTask``` using the web app by clicking Add in the Task view: 
+
+![](docs/imgs/07.png)
 
 #### T-SQL task
 Here is how you create a ```TSQLTask```:
@@ -130,9 +130,11 @@ For reference, here is the above task's payload:
 
 Notice how you can embed the ```Secret``` surrounding it with ```[%%``` and ```%%]```. This syntax is supported by JSON based tasks.
 
-You can retrieve the task list calling the ```REST API``` or using the YoctoScheduler web app:
+You can create T-SQL tasks and display the existing ones using the ```REST API``` or using the YoctoScheduler web app:
 
-![](docs/imgs/02.png)
+![](docs/imgs/06.png). 
+
+Notice how the webapp makes sure your're passing the parameters correctly.
 
 #### PowerShell task
 
@@ -221,6 +223,8 @@ SELECT *
 
 ![](docs/imgs/05.png)
 
+You can use the webapp to create ```PowerShell``` tasks.
+
 ### Schedule
 
 To add a schedule just call the [```schedules``` REST API](docs/rest/schedule.md) interface. For example this command will schedule the task with ID 1 every minute:
@@ -231,9 +235,7 @@ curl -X POST -H "Content-Type: application/json" cantun.mindflavor.it:9000/api/s
 
 Schedules support the CRON syntax via [NCrontab](https://github.com/atifaziz/NCrontab). For details please refer here: [https://github.com/atifaziz/NCrontab](https://github.com/atifaziz/NCrontab).
 
-Schedules can be retrieved via REST interface or web application:
-
-![](docs/imgs/03.png)
+Schedules can be retrieved via REST interface. The web app does not yet support creating schedules but should be developed soon.
 
 ## Direct Execution
 
@@ -245,13 +247,19 @@ curl -X POST -H "Content-Type: application/json" cantun.mindflavor.it:9000/api/q
 
 Scheduled task will start as soon as the concurrency conditions are met. You can also query the execution queue using the same interface.
 
+You can enqueue a task to be executed using the web interface under the task section. Notice you can pick the priority:
+
+![](docs/imgs/08.png)
+
 > Right now you cannot choose which server will execute the task. Is this right or we should change it?
 
 ## Execution Lists
 
-There are two different ```REST API``` interfaces for execution inspection: [alive](docs/rest/LiveExecution.md) and [completed](docs/rest/DeadExecution.md) executions. These two interfaces are GET only, that is you cannot post to them. The web interface shows the in the same page:
+There are three different ```REST API``` interfaces for execution inspection: [alive](docs/rest/LiveExecution.md) and [completed](docs/rest/DeadExecution.md) executions.  You can also call the global [executions](docs/rest/executions.md) which will include both plus the queued tasks. These interfaces are GET only, that is you cannot post to them. The global will support delete in order to remove old entries. The ```Executions``` tab in the web interface shows the tasks, grouped by status:
 
-![](docs/imgs/04.png)
+![](docs/imgs/09.png)
+
+The Task web app page updates itself so you don't need to refresh it.
 
 ## Known issues
 
