@@ -1,15 +1,27 @@
+# YoctoScheduler
+
+[![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/hyperium/hyper/master/LICENSE)
+
 ## Intro
-YoctoScheduler is a muli-thread, multi-process scheduling system. It is meant to be a SQL Server Agent replacement for Azure workloads.  
+YoctoScheduler is a multi-thread, multi-process scheduling system. It is meant to be a SQL Server Agent alternative for Azure workloads.  
 Each server in  a cluster should be indpendent from the others while maintaining some architectural constraints.
 
 The configuration data is stored in an Azure SQL Database or SQL Server database. Each scheduler process will start, read the configuration from the shared database and start processing tasks. 
-The schedulers are *greedy*, meaning they compete for tasks to execute. You can control how many instances of a task can start concurrently (both on the same server and globally) via a specific configuration option. The schedules, however, are guaranteed to be executed only once (this is different from multi instance SQL Server Agent, ie. AlwaysOn in which you have to manually handle concurrency) so you don't need to concern yourself with it. 
+The schedulers are *greedy*, meaning they compete for tasks to execute. You can control how many instances of a task can start concurrently (both on the same server and globally) via a specific configuration option. The schedules, however, are guaranteed to be executed only once (this is different from multi instance SQL Server Agent, ie. in AlwaysOn AG in which you have to manually handle concurrency) so you don't need to concern yourself with it. 
 The tasks can be:
   * T-SQL tasks (ie everything you can do from a SqlConnection).
   * SSIS tasks (provided you have SSIS engine available).
   * PowerShell tasks.
 
-As this version there is no workflow to specify. Each task is indipendent. Depending on the need of this we will implemement the feature in the future.
+As this version there is no workflow manager. Each task is indipendent. Depending on the need of this we will implemement the feature in the future.
+
+### Some uses
+
+YoctoScheduler has been successfully employed to:
+* Perform scheduled maintenance on Azure SQL Database(s)
+* Generate reports on timely basis
+* ETL in the cloud (both hypbrid and pure)
+* Handle AlwaysOn Availabilty groups jobs.
 
 ### Resiliency
 
@@ -70,12 +82,13 @@ Workflow | A collection of task to be orchestrated as a single entity.
 * PowerShell cmdlets. They are fairly easy to implement as they can only wrap the REST API calls.
 
 #### Nice to have
-* Tasks can spawn another task(s) as result of their elaboration.
-* You can create workflows that chain task based on:
+* Linux support (via .net core).
+* Tasks that spawn another task(s) as result of their elaboration.
+* Workflows that chain task based on:
   * Status (successful, failed, in exception)
   * Constant match (ie ```if return number = 1 then ... else if ...```)
   * Resources available
-* The server can schedule concurrent tasks inspecting the available resources (to better scale in parallel).
+* Fair scheduler. Scheduler should pick up tasks inspecting the available resources (to better scale in parallel).
 
 ## Requisites
 
@@ -86,10 +99,10 @@ Workflow | A collection of task to be orchestrated as a single entity.
 ## Installation
 YoctoScheduler can run in two modes, as a command line program or as a Windows Service. The [configuration](docs/configuration.md) is the same, the only difference is in the command line switches that either start the command line execution or register the windows service.
 
-1. Execute the [oop-tsql/00-create.sql](oop-tsql/00-create.sql) script on your chosen database instance. This will create the required database.
+1. Execute the [oop-tsql/00-create.sql](tsql/00-create.sql) script on your chosen database instance. This will create the required database.
 2. Create a login in the database instance and give it ```db_owner``` on the previously created database.
 3. Compile the executable and relative libraries.
-4. [Configure](docs/configuration.md).
+4. [Configure](docs/configuration.md) the service file.
 5. Run (for testing purposes you may want to start with the command line program).
 6. *optional* Clone the web frontend (it's in a separate project right now). Once cloned make sure to configure the server files accordingly.
 
