@@ -10,6 +10,7 @@ namespace YoctoScheduler.WebAPI.Controllers
 {
     [Attributes.PostSupported]
     [Attributes.PutSupported]
+    [System.Web.Http.Cors.EnableCors(origins: "*", headers: "*", methods: "*")]
     public class PlainTextSecretItemsController : System.Web.Http.ApiController
     {
         private static readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(PlainTextSecretItemsController));
@@ -56,7 +57,7 @@ namespace YoctoScheduler.WebAPI.Controllers
                 if (secretExisting == null)
                     return Created("", secNew);
                 else
-                    return Ok();
+                    return Ok(secNew);
             }
             catch (System.Exception exce)
             {
