@@ -33,7 +33,7 @@ namespace YoctoScheduler.WebAPI.Controllers
                     conn.Open();
                     using (var trans = conn.BeginTransaction())
                     {
-                        secretExisting = Secret.GetByID<Secret>(conn, trans, secret.Name);
+                        secretExisting = Secret.GetByID<Secret>(conn, trans, secret.ID);
                         if (secretExisting != null)
                         {
                             Secret.Delete<Secret>(conn, trans, secretExisting);
@@ -42,7 +42,7 @@ namespace YoctoScheduler.WebAPI.Controllers
                         #region New item
                         secNew = new Secret()
                         {
-                            ID = secret.Name,
+                            ID = secret.ID,
                             CertificateThumbprint = secret.CertificateThumbprint,
                             PlainTextValue = secret.PlainTextValue
                         };

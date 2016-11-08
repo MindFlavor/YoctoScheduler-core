@@ -54,9 +54,9 @@ namespace YoctoScheduler.Core.Database
         public Secret()
         { }
 
-        public Secret(string name, string CertificateThumbprint)
+        public Secret(string ID, string CertificateThumbprint)
         {
-            this.ID = name;
+            this.ID = ID;
             this.CertificateThumbprint = CertificateThumbprint;
         }
 
