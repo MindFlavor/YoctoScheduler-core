@@ -40,10 +40,10 @@
 <a id="intro" class="anchor" href="#intro" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Intro</h2>
 
 <p>YoctoScheduler is a multi-thread, multi-process scheduling system. It is meant to be a SQL Server Agent alternative for Azure workloads.<br>
-Each server in  a cluster should be indpendent from the others while maintaining some architectural constraints.</p>
+Each server in  a cluster should be independent from the others while maintaining some architectural constraints.</p>
 
-<p>The configuration data is stored in an Azure SQL Database or SQL Server database. Each scheduler process will start, read the configuration from the shared database and start processing tasks. 
-The schedulers are <em>greedy</em>, meaning they compete for tasks to execute. You can control how many instances of a task can start concurrently (both on the same server and globally) via a specific configuration option. The schedules, however, are guaranteed to be executed only once (this is different from multi instance SQL Server Agent, ie. in AlwaysOn AG in which you have to manually handle concurrency) so you don't need to concern yourself with it. 
+<p>The configuration data is stored in an Azure SQL Database or SQL Server database. Each scheduler process will start, read the configuration from the shared database and start processing tasks.
+The schedulers are <em>greedy</em>, meaning they compete for tasks to execute. You can control how many instances of a task can start concurrently (both on the same server and globally) via a specific configuration option. The schedules, however, are guaranteed to be executed only once (this is different from multi instance SQL Server Agent, i.e. in AlwaysOn AG in which you have to manually handle concurrency) so you don't need to concern yourself with it.
 The tasks can be:</p>
 
 <ul>
@@ -52,7 +52,7 @@ The tasks can be:</p>
 <li>PowerShell tasks.</li>
 </ul>
 
-<p>As this version there is no workflow manager. Each task is indipendent. Depending on the need of this we will implemement the feature in the future.</p>
+<p>As this version there is no workflow manager. Each task is independent. Depending on the need of this we will implement the feature in the future.</p>
 
 <h3>
 <a id="some-uses" class="anchor" href="#some-uses" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Some uses</h3>
@@ -62,14 +62,14 @@ The tasks can be:</p>
 <ul>
 <li>Perform scheduled maintenance on Azure SQL Database(s)</li>
 <li>Generate reports on timely basis</li>
-<li>ETL in the cloud (both hypbrid and pure)</li>
-<li>Handle AlwaysOn Availabilty groups jobs.</li>
+<li>ETL in the cloud (both hybrid and pure)</li>
+<li>Handle AlwaysOn Availability groups jobs.</li>
 </ul>
 
 <h3>
 <a id="resiliency" class="anchor" href="#resiliency" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Resiliency</h3>
 
-<p>The schedulers are build with the cloud in mind. That means they are resilient: you can have a scheduler pick up a task previously being run by another, failed, scheduler. This happens automatically and, of course, you can opt out if you want. </p>
+<p>The schedulers are build with the cloud in mind. That means they are resilient: you can have a scheduler pick up a task previously being run by another, failed, scheduler. This happens automatically and, of course, you can opt out if you want.</p>
 
 <p>This is an example of what can happen. Suppose we have two instances of our scheduler (maybe in an availability group):</p>
 
@@ -108,7 +108,7 @@ The tasks can be:</p>
 </tr>
 <tr>
 <td>Server</td>
-<td>Schedulator and executor process. A server manipulates the companion database.</td>
+<td>Scheduler and executor process. A server manipulates the companion database.</td>
 </tr>
 <tr>
 <td>Task status</td>
@@ -153,7 +153,7 @@ The tasks can be:</p>
 </ul>
 
 <h3>
-<a id="todo" class="anchor" href="#todo" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>ToDo</h3>
+<a id="to-do" class="anchor" href="#to-do" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>To-do</h3>
 
 <h4>
 <a id="mandatory" class="anchor" href="#mandatory" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Mandatory</h4>
@@ -172,7 +172,7 @@ The tasks can be:</p>
 
 <ul>
 <li>Status (successful, failed, in exception)</li>
-<li>Constant match (ie <code>if return number = 1 then ... else if ...</code>)</li>
+<li>Constant match (i.e. <code>if return number = 1 then ... else if ...</code>)</li>
 <li>Resources available</li>
 </ul>
 </li>
@@ -185,7 +185,7 @@ The tasks can be:</p>
 <ul>
 <li>SQL Server 2012+ or SQL Azure database.</li>
 <li>A database and a <code>dbo_owner</code> user with relative login.</li>
-<li>C# 4.5.2. </li>
+<li>C# 4.5.2.</li>
 </ul>
 
 <h2>
@@ -217,7 +217,7 @@ The tasks can be:</p>
 <h2>
 <a id="testing" class="anchor" href="#testing" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Testing</h2>
 
-<p>Here are some testing REST commands you can send to your YoctoScheduler instance. All the commands are server-agnostic so there is no difference based on which server instance you pick. Also note this samples use the linux curl command line tool. You can download a copy for Windows from <a href="http://www.mingw.org/">wingw.org</a> but some commands migth require some tweaking as windows and linux handle special characters differently.</p>
+<p>Here are some testing REST commands you can send to your YoctoScheduler instance. All the commands are server-agnostic so there is no difference based on which server instance you pick. Also note this samples use the Linux curl command line tool. You can download a copy for Windows from <a href="http://www.mingw.org/">wingw.org</a> but some commands might require some tweaking as windows and Linux handle special characters differently.</p>
 
 <h3>
 <a id="secret" class="anchor" href="#secret" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Secret</h3>
@@ -252,12 +252,12 @@ The tasks can be:</p>
 <h4>
 <a id="wait-task" class="anchor" href="#wait-task" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Wait task</h4>
 
-<p>For example this is how to create a <code>WaitTask</code> (useful ony for debugging purposes):</p>
+<p>For example this is how to create a <code>WaitTask</code> (useful only for debugging purposes):</p>
 
 <pre><code>curl -X POST -H "Content-Type: application/json" cantun.mindflavor.it:9000/api/tasks -d '{"Name":"MyWaitTask", "ConcurrencyLimitGlobal":0, "ConcurrencyLimitSameInstance":1, "Description":"This task will stall the thread for 35 seconds. This task will task will not be requeued in case the server owning it dies", "ReenqueueOnDead":false,"Type":"WaitTask","Payload":"{\"SleepSeconds\":35}"'
 </code></pre>
 
-<p>You can create a <code>WaitTask</code> using the web app by clicking Add in the Task view: </p>
+<p>You can create a <code>WaitTask</code> using the web app by clicking Add in the Task view:</p>
 
 <p><img src="docs/imgs/07.png" alt=""></p>
 
@@ -289,9 +289,9 @@ The tasks can be:</p>
 
 <p>You can create T-SQL tasks and display the existing ones using the <code>REST API</code> or using the YoctoScheduler web app:</p>
 
-<p><img src="docs/imgs/06.png" alt="">. </p>
+<p><img src="docs/imgs/06.png" alt="">.</p>
 
-<p>Notice how the webapp makes sure your're passing the parameters correctly.</p>
+<p>Notice how the WebApp makes sure you're passing the parameters correctly.</p>
 
 <h4>
 <a id="powershell-task" class="anchor" href="#powershell-task" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>PowerShell task</h4>
@@ -374,7 +374,7 @@ The tasks can be:</p>
 
 <p><img src="docs/imgs/05.png" alt=""></p>
 
-<p>You can use the webapp to create <code>PowerShell</code> tasks too.</p>
+<p>You can use the WebApp to create <code>PowerShell</code> tasks too.</p>
 
 <h3>
 <a id="schedule" class="anchor" href="#schedule" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Schedule</h3>
