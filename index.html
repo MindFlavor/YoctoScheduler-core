@@ -194,11 +194,11 @@ The tasks can be:</p>
 <p>YoctoScheduler can run in two modes, as a command line program or as a Windows Service. The <a href="docs/configuration.md">configuration</a> is the same, the only difference is in the command line switches that either start the command line execution or register the windows service.</p>
 
 <ol>
-<li>Execute the <a href="tsql/00-create.sql">oop-tsql/00-create.sql</a> script on your chosen database instance. This will create the required database.</li>
+<li>Execute the <a href="https://github.com/MindFlavor/YoctoScheduler-core/tree/master/tsql/00-create.sql">oop-tsql/00-create.sql</a> script on your chosen database instance. This will create the required database.</li>
 <li>Create a login in the database instance and give it <code>db_owner</code> on the previously created database.</li>
 <li>Compile the executable and relative libraries.</li>
 <li>
-<a href="docs/configuration.md">Configure</a> the service file.</li>
+<a href="https://github.com/MindFlavor/YoctoScheduler-core/tree/master/docs/configuration.md">Configure</a> the service file.</li>
 <li>Run (for testing purposes you may want to start with the command line program).</li>
 <li>
 <em>optional</em> Clone the web frontend (it's in a separate project right now). Once cloned make sure to configure the server files accordingly.</li>
@@ -207,12 +207,12 @@ The tasks can be:</p>
 <h2>
 <a id="configuration" class="anchor" href="#configuration" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Configuration</h2>
 
-<p>See the specific section: <a href="docs/configuration.md">configuration</a>.</p>
+<p>See the specific section: <a href="https://github.com/MindFlavor/YoctoScheduler-core/tree/master/docs/configuration.md">configuration</a>.</p>
 
 <h2>
 <a id="interaction" class="anchor" href="#interaction" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Interaction</h2>
 
-<p>Check out the <a href="docs/rest/rest.md">REST API reference</a>, the command line commands are deprecated and will be removed in the future.</p>
+<p>Check out the <a href="https://github.com/MindFlavor/YoctoScheduler-core/tree/master/docs/rest/rest.md">REST API reference</a>, the command line commands are deprecated and will be removed in the future.</p>
 
 <h2>
 <a id="testing" class="anchor" href="#testing" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Testing</h2>
@@ -222,7 +222,7 @@ The tasks can be:</p>
 <h3>
 <a id="secret" class="anchor" href="#secret" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Secret</h3>
 
-<p>You can create a secret using the <a href="docs/rest/secret-item.md"><code>SecretItems</code></a> REST API command. You have to specify the certificate thumbprint (as found in <code>My</code> certificate store) and the text to encrypt. The Secret name must be unique otherwise the call will fail.</p>
+<p>You can create a secret using the <a href="https://github.com/MindFlavor/YoctoScheduler-core/tree/master/docs/rest/secret-item.md"><code>SecretItems</code></a> REST API command. You have to specify the certificate thumbprint (as found in <code>My</code> certificate store) and the text to encrypt. The Secret name must be unique otherwise the call will fail.</p>
 
 <pre><code>curl -X POST -H "Content-Type: application/json" cantun.mindflavor.it:9000/api/secretitems -d '{"Name":"MyConnectionString", "CertificateThumbprint":"277103c882995da2d199050e58522d364513307e", "PlainTextValue":"data source=vSQL14A.mindflavor.it;initial catalog=YoctoScheduler;User Id=fagiolo;Password=cotto;MultipleActiveResultSets=False;App=YoctoTask"}"'
 </code></pre>
@@ -233,12 +233,12 @@ The tasks can be:</p>
 
 <p>Notice how the value is stored in its encrypted format only.</p>
 
-<p><em>Note:</em> There is a bug in PowerShell generated certificates. See the <a href="docs/known-issues/System.Security.Cryptography.CryptographicException.md"><code>System.Security.Cryptography.CryptographicException: Invalid provider type specified</code></a> known issue about how to resolve this.</p>
+<p><em>Note:</em> There is a bug in PowerShell generated certificates. See the <a href="https://github.com/MindFlavor/YoctoScheduler-core/tree/master/docs/known-issues/System.Security.Cryptography.CryptographicException.md"><code>System.Security.Cryptography.CryptographicException: Invalid provider type specified</code></a> known issue about how to resolve this.</p>
 
 <h3>
 <a id="task" class="anchor" href="#task" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Task</h3>
 
-<p>You can add a new mock task calling the <a href="docs/rest/tasks.md">Tasks REST API</a> interface.</p>
+<p>You can add a new mock task calling the <a href="https://github.com/MindFlavor/YoctoScheduler-core/tree/master/docs/rest/tasks.md">Tasks REST API</a> interface.</p>
 
 <p>In a nutshell the task is defined by:</p>
 
@@ -379,7 +379,7 @@ The tasks can be:</p>
 <h3>
 <a id="schedule" class="anchor" href="#schedule" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Schedule</h3>
 
-<p>To add a schedule just call the <a href="docs/rest/schedule.md"><code>schedules</code> REST API</a> interface. For example this command will schedule the task with ID 1 every minute:</p>
+<p>To add a schedule just call the <a href="https://github.com/MindFlavor/YoctoScheduler-core/tree/master/docs/rest/schedule.md"><code>schedules</code> REST API</a> interface. For example this command will schedule the task with ID 1 every minute:</p>
 
 <pre><code>curl -X POST -H "Content-Type: application/json" cantun.mindflavor.it:9000/api/schedules -d '{"Cron":"* * * * *","Enabled":true,"TaskID":1}'
 </code></pre>
@@ -391,7 +391,7 @@ The tasks can be:</p>
 <h2>
 <a id="direct-execution" class="anchor" href="#direct-execution" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Direct Execution</h2>
 
-<p>You can also enqueue a task for immediate execution instead of scheduling it. Just call the <a href="docs/rest/queueitem.md"><code>queueitems</code> REST API</a> interface specifying the TaskID and its priority:</p>
+<p>You can also enqueue a task for immediate execution instead of scheduling it. Just call the <a href="https://github.com/MindFlavor/YoctoScheduler-core/tree/master/docs/rest/queueitem.md"><code>queueitems</code> REST API</a> interface specifying the TaskID and its priority:</p>
 
 <pre><code>curl -X POST -H "Content-Type: application/json" cantun.mindflavor.it:9000/api/queueitems -d '{"TaskID":1,"Priority":1}'
 </code></pre>
@@ -409,7 +409,7 @@ The tasks can be:</p>
 <h2>
 <a id="execution-lists" class="anchor" href="#execution-lists" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Execution Lists</h2>
 
-<p>There are three different <code>REST API</code> interfaces for execution inspection: <a href="docs/rest/LiveExecution.md">alive</a> and <a href="docs/rest/DeadExecution.md">completed</a> executions.  You can also call the global <a href="docs/rest/executions.md">executions</a> which will include both plus the queued tasks. These interfaces are GET only, that is you cannot post to them. The global will support delete in order to remove old entries. The <code>Executions</code> tab in the web interface shows the tasks, grouped by status:</p>
+<p>There are three different <code>REST API</code> interfaces for execution inspection: <a href="https://github.com/MindFlavor/YoctoScheduler-core/tree/master/docs/rest/LiveExecution.md">alive</a> and <a href="https://github.com/MindFlavor/YoctoScheduler-core/tree/master/docs/rest/DeadExecution.md">completed</a> executions.  You can also call the global <a href="docs/rest/executions.md">executions</a> which will include both plus the queued tasks. These interfaces are GET only, that is you cannot post to them. The global will support delete in order to remove old entries. The <code>Executions</code> tab in the web interface shows the tasks, grouped by status:</p>
 
 <p><img src="docs/imgs/09.png" alt=""></p>
 
@@ -419,9 +419,9 @@ The tasks can be:</p>
 <a id="known-issues" class="anchor" href="#known-issues" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Known issues</h2>
 
 <ul>
-<li><p><a href="docs/known-issues/System.Security.Cryptography.CryptographicException.md"><code>System.Security.Cryptography.CryptographicException: Invalid provider type specified</code></a>.</p></li>
-<li><p><a href="docs/known-issues/owin-access-denied.md"><code>Access denied</code> during Owin initialization</a>.</p></li>
-<li><p><a href="docs/known-issues/bad-length-encryption.md"><code>Bad Length</code> during secret encryption</a>.</p></li>
+<li><p><a href="https://github.com/MindFlavor/YoctoScheduler-core/tree/master/docs/known-issues/System.Security.Cryptography.CryptographicException.md"><code>System.Security.Cryptography.CryptographicException: Invalid provider type specified</code></a>.</p></li>
+<li><p><a href="https://github.com/MindFlavor/YoctoScheduler-core/tree/master/docs/known-issues/owin-access-denied.md"><code>Access denied</code> during Owin initialization</a>.</p></li>
+<li><p><a href="https://github.com/MindFlavor/YoctoScheduler-core/tree/master/docs/known-issues/bad-length-encryption.md"><code>Bad Length</code> during secret encryption</a>.</p></li>
 </ul>
 
 <h2>
@@ -432,7 +432,7 @@ The tasks can be:</p>
 <h2>
 <a id="license" class="anchor" href="#license" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>License</h2>
 
-<p>Please see the <a href="LICENSE">LICENSE</a> file for details.</p>
+<p>Please see the <a href="https://github.com/MindFlavor/YoctoScheduler-core/tree/master/LICENSE">LICENSE</a> file for details.</p>
       </section>
     </div>
 
