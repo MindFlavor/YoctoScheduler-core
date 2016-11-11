@@ -1,5 +1,51 @@
+# YoctoScheduler
+
+[![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/hyperium/hyper/master/LICENSE)
+
 ## Intro
-YoctoScheduler is a muli-thread, multi-process scheduling system. Each server in  a cluster should be indpendent from the others while maintaining some architectural constraints.
+YoctoScheduler is a multi-thread, multi-process scheduling system. It is meant to be a SQL Server Agent alternative for Azure workloads.  
+Each server in  a cluster should be indpendent from the others while maintaining some architectural constraints.
+
+The configuration data is stored in an Azure SQL Database or SQL Server database. Each scheduler process will start, read the configuration from the shared database and start processing tasks. 
+The schedulers are *greedy*, meaning they compete for tasks to execute. You can control how many instances of a task can start concurrently (both on the same server and globally) via a specific configuration option. The schedules, however, are guaranteed to be executed only once (this is different from multi instance SQL Server Agent, ie. in AlwaysOn AG in which you have to manually handle concurrency) so you don't need to concern yourself with it. 
+The tasks can be:
+  * T-SQL tasks (ie everything you can do from a SqlConnection).
+  * SSIS tasks (provided you have SSIS engine available).
+  * PowerShell tasks.
+
+As this version there is no workflow manager. Each task is indipendent. Depending on the need of this we will implemement the feature in the future.
+
+### Some uses
+
+YoctoScheduler has been successfully employed to:
+* Perform scheduled maintenance on Azure SQL Database(s)
+* Generate reports on timely basis
+* ETL in the cloud (both hypbrid and pure)
+* Handle AlwaysOn Availabilty groups jobs.
+
+### Resiliency
+
+The schedulers are build with the cloud in mind. That means they are resilient: you can have a scheduler pick up a task previously being run by another, failed, scheduler. This happens automatically and, of course, you can opt out if you want. 
+
+This is an example of what can happen. Suppose we have two instances of our scheduler (maybe in an availability group):
+
+![](docs/imgs/res_00.png)
+
+Suppose now Server_A picks up a task (called Job_01) and starts executing it:
+
+![](docs/imgs/res_01.png)
+
+Job_01 can be running as result of a schedule or maybe we just started it manually. It does not matter. What matter is we marked Job_01 as *restartable* in case of server failure.
+
+Now let's suppose Server_A fails.
+
+![](docs/imgs/res_02.png)
+
+Server_B, after declaring Server_A dead, will pick Job_01 and start executing again.
+
+![](docs/imgs/res_03.png)
+
+This does not require manual intervention. Please note that the scheduler does not make assumption on the atomicity of the task restarted. It's up to you to provide transactionality (if needed).
 
 ## Legend
 
@@ -26,37 +72,39 @@ Workflow | A collection of task to be orchestrated as a single entity.
 * Each task should read its configuration from the centralized server (to encourage task independence).
 * Required tasks:
   * T-SQL task
+  * PowerShell task
+  * SSIS task
+
 
 ### ToDo
 
 #### Mandatory
-* Required tasks:
-  * A command line task
-  * A PowerShell task
+* PowerShell cmdlets. They are fairly easy to implement as they can only wrap the REST API calls.
 
 #### Nice to have
-* Tasks can spawn another task(s) as result of their elaboration.
-* You can create workflows that chain task based on:
+* Linux support (via .net core).
+* Tasks that spawn another task(s) as result of their elaboration.
+* Workflows that chain task based on:
   * Status (successful, failed, in exception)
   * Constant match (ie ```if return number = 1 then ... else if ...```)
   * Resources available
-* The server can schedule concurrent tasks inspecting the available resources (to better scale in parallel).
+* Fair scheduler. Scheduler should pick up tasks inspecting the available resources (to better scale in parallel).
 
 ## Requisites
 
 * SQL Server 2012+ or SQL Azure database.
 * A database and a ```dbo_owner``` user with relative login.
-* C# 4.5.2. Visual Studio is suggested but not required.
+* C# 4.5.2. 
 
 ## Installation
 YoctoScheduler can run in two modes, as a command line program or as a Windows Service. The [configuration](docs/configuration.md) is the same, the only difference is in the command line switches that either start the command line execution or register the windows service.
 
-1. Execute the [oop-tsql/00-create.sql](oop-tsql/00-create.sql) script on your chosen database instance. This will create the required database.
+1. Execute the [oop-tsql/00-create.sql](tsql/00-create.sql) script on your chosen database instance. This will create the required database.
 2. Create a login in the database instance and give it ```db_owner``` on the previously created database.
 3. Compile the executable and relative libraries.
-4. [Configure](docs/configuration.md).
+4. [Configure](docs/configuration.md) the service file.
 5. Run (for testing purposes you may want to start with the command line program).
-6. *optional* Clone the web frontend (in a separate project right now).
+6. *optional* Clone the web frontend (it's in a separate project right now). Once cloned make sure to configure the server files accordingly.
 
 ## Configuration
 
@@ -82,12 +130,7 @@ You can call the same REST API in a browser to get the secret list:
 
 ![](docs/imgs/00.png)
 
-The same information can be retrieved by the YoctoScheduler web interface:
-
-![](docs/imgs/01.png)
-
 Notice how the value is stored in its encrypted format only.
-
 
 *Note:* There is a bug in PowerShell generated certificates. See the [```System.Security.Cryptography.CryptographicException: Invalid provider type specified```](docs/known-issues/System.Security.Cryptography.CryptographicException.md) known issue about how to resolve this.
 
@@ -106,6 +149,12 @@ For example this is how to create a ```WaitTask``` (useful ony for debugging pur
 ```
 curl -X POST -H "Content-Type: application/json" cantun.mindflavor.it:9000/api/tasks -d '{"Name":"MyWaitTask", "ConcurrencyLimitGlobal":0, "ConcurrencyLimitSameInstance":1, "Description":"This task will stall the thread for 35 seconds. This task will task will not be requeued in case the server owning it dies", "ReenqueueOnDead":false,"Type":"WaitTask","Payload":"{\"SleepSeconds\":35}"'
 ```
+
+You can create a ```WaitTask``` using the web app by clicking Add in the Task view: 
+
+![](docs/imgs/07.png)
+
+> *Warning*: images might refer to an outdated WebApp version. The relevant pieces should be valid all the same.
 
 #### T-SQL task
 Here is how you create a ```TSQLTask```:
@@ -130,9 +179,11 @@ For reference, here is the above task's payload:
 
 Notice how you can embed the ```Secret``` surrounding it with ```[%%``` and ```%%]```. This syntax is supported by JSON based tasks.
 
-You can retrieve the task list calling the ```REST API``` or using the YoctoScheduler web app:
+You can create T-SQL tasks and display the existing ones using the ```REST API``` or using the YoctoScheduler web app:
 
-![](docs/imgs/02.png)
+![](docs/imgs/06.png). 
+
+Notice how the webapp makes sure your're passing the parameters correctly.
 
 #### PowerShell task
 
@@ -221,6 +272,8 @@ SELECT *
 
 ![](docs/imgs/05.png)
 
+You can use the webapp to create ```PowerShell``` tasks too.
+
 ### Schedule
 
 To add a schedule just call the [```schedules``` REST API](docs/rest/schedule.md) interface. For example this command will schedule the task with ID 1 every minute:
@@ -231,9 +284,7 @@ curl -X POST -H "Content-Type: application/json" cantun.mindflavor.it:9000/api/s
 
 Schedules support the CRON syntax via [NCrontab](https://github.com/atifaziz/NCrontab). For details please refer here: [https://github.com/atifaziz/NCrontab](https://github.com/atifaziz/NCrontab).
 
-Schedules can be retrieved via REST interface or web application:
-
-![](docs/imgs/03.png)
+Schedules can be retrieved via REST interface. The web app does not yet support creating schedules but should be developed soon.
 
 ## Direct Execution
 
@@ -245,13 +296,19 @@ curl -X POST -H "Content-Type: application/json" cantun.mindflavor.it:9000/api/q
 
 Scheduled task will start as soon as the concurrency conditions are met. You can also query the execution queue using the same interface.
 
+You can enqueue a task to be executed using the web interface under the task section. Notice you can pick the priority:
+
+![](docs/imgs/08.png)
+
 > Right now you cannot choose which server will execute the task. Is this right or we should change it?
 
 ## Execution Lists
 
-There are two different ```REST API``` interfaces for execution inspection: [alive](docs/rest/LiveExecution.md) and [completed](docs/rest/DeadExecution.md) executions. These two interfaces are GET only, that is you cannot post to them. The web interface shows the in the same page:
+There are three different ```REST API``` interfaces for execution inspection: [alive](docs/rest/LiveExecution.md) and [completed](docs/rest/DeadExecution.md) executions.  You can also call the global [executions](docs/rest/executions.md) which will include both plus the queued tasks. These interfaces are GET only, that is you cannot post to them. The global will support delete in order to remove old entries. The ```Executions``` tab in the web interface shows the tasks, grouped by status:
 
-![](docs/imgs/04.png)
+![](docs/imgs/09.png)
+
+The Task web app page updates itself so you don't need to refresh it.
 
 ## Known issues
 

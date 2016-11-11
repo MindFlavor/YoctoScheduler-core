@@ -10,7 +10,7 @@ namespace YoctoScheduler.WebAPI.Proxies
     public class Secret
     {
         [System.Runtime.Serialization.DataMember]
-        public string Name { get; set; }
+        public string ID { get; set; }
 
         [System.Runtime.Serialization.DataMember]
         public string CertificateThumbprint { get; set; }

@@ -2,8 +2,8 @@
       ,[TaskID]
       ,[Priority]
       ,[ScheduleID]
-      ,[InsertDate]
+      ,[Inserted]
   FROM [live].[ExecutionQueue] WITH(TABLOCKX)
   ORDER BY 
 	[Priority] DESC,
-	[InsertDate] DESC;
+	[Inserted] DESC;

@@ -94,6 +94,7 @@
     <Compile Include="Controllers\CommandsController.cs" />
     <Compile Include="Controllers\DeadExecutionsController.cs" />
     <Compile Include="Controllers\EncryptedSecretItemsController.cs" />
+    <Compile Include="Controllers\ExecutionsController.cs" />
     <Compile Include="Controllers\LiveExecutionsController.cs" />
     <Compile Include="Controllers\QueueItemsController.cs" />
     <Compile Include="Controllers\SchedulesController.cs" />

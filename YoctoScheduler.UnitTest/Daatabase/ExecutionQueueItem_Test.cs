@@ -13,7 +13,7 @@ namespace YoctoScheduler.UnitTest.Daatabase
         {
             ExecutionQueueItem eqi = new ExecutionQueueItem()
             {
-                InsertDate = DateTime.Now,
+                Inserted = DateTime.Now,
                 Priority = Core.Priority.Lowest,
                 ScheduleID = Guid.NewGuid(),
                 TaskID = 1
@@ -35,7 +35,7 @@ namespace YoctoScheduler.UnitTest.Daatabase
         {
             ExecutionQueueItem eqi = new ExecutionQueueItem()
             {
-                InsertDate = DateTime.Now,
+                Inserted = DateTime.Now,
                 Priority = Core.Priority.Lowest,
                 TaskID = 1
             };

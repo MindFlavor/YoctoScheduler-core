@@ -27,7 +27,7 @@ namespace YoctoScheduler.Core.Database
 
         [DatabaseProperty(Size = 8)]
         [System.Runtime.Serialization.DataMember]
-        public DateTime InsertDate { get; set; }
+        public DateTime Inserted { get; set; }
 
         public ExecutionQueueItem() : base()
         {
@@ -43,8 +43,8 @@ namespace YoctoScheduler.Core.Database
         {
             // this check will take care of the SQL DateTime limits
             // (DateTime.MinValue would throw a SQLException due being too far away in the past)
-            if (InsertDate == DateTime.MinValue)
-                InsertDate = DateTime.Now;
+            if (Inserted == DateTime.MinValue)
+                Inserted = DateTime.Now;
 
             return base.Clone<T>(conn, trans);
         }
@@ -58,7 +58,7 @@ namespace YoctoScheduler.Core.Database
                 TaskID.ToString(),
                 ScheduleID.HasValue ? ScheduleID.Value.ToString() : "<null>",
                 Priority.ToString(),
-                InsertDate.ToString(LOG_TIME_FORMAT));
+                Inserted.ToString(LOG_TIME_FORMAT));
         }
 
         public static ExecutionQueueItem GetAndLockFirst(SqlConnection conn, SqlTransaction trans)
@@ -86,7 +86,7 @@ namespace YoctoScheduler.Core.Database
             TaskID = r.GetInt32(1);
             Priority = (Priority)r.GetInt32(2);
             ID = r.GetGuid(0);
-            InsertDate = r.GetDateTime(4);
+            Inserted = r.GetDateTime(4);
             if (!r.IsDBNull(3))
                 ScheduleID = r.GetGuid(3);
             else

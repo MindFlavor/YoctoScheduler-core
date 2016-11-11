@@ -2,5 +2,5 @@
       ,[TaskID]
       ,[Priority]
       ,[ScheduleID]
-      ,[InsertDate]
+      ,[Inserted]
   FROM [live].[ExecutionQueue];

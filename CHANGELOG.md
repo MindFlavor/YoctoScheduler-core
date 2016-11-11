@@ -1,10 +1,11 @@
-## 20160531
+## 20161111
 
-## Commit TODO
+## First GitHub release
 
 * Added WebAPI project
 * Added Server REST Interface
 * Added Schedule REST Interface
+* Removed WebApp (moved to a separate projects)
 
 ### Commit [104b7d9d26097e56f1d038ada970ba642fbc208e](104b7d9d26097e56f1d038ada970ba642fbc208e)
 

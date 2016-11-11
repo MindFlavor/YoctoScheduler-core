@@ -137,8 +137,11 @@ namespace YoctoScheduler.WebAPI
         // TODO: Support object update
         protected virtual IHttpActionResult _PostInternal(T value)
         {
+
             if (value == null)
                 return BadRequest();
+
+            log.VerboseFormat("_PostInternal::{0:S}({1:S}) requested", typeof(T).Name, value.ToString());
 
             try
             {
@@ -171,7 +174,7 @@ namespace YoctoScheduler.WebAPI
                             DatabaseItem<K>.Update<T>(conn, trans, value);
                             trans.Commit();
 
-                            return Ok();
+                            return Ok(value);
                             #endregion
                         }
                     }

@@ -1,5 +1,7 @@
 ﻿using Owin;
 using System.Linq;
+using System.Net;
+using System.Net.Http;
 using System.Web.Http;
 
 namespace YoctoScheduler.WebAPI
@@ -15,7 +17,8 @@ namespace YoctoScheduler.WebAPI
             // Configure Web API for self-host. 
             HttpConfiguration config = new HttpConfiguration();
 
-            config.EnableCors();
+            var cors = new System.Web.Http.Cors.EnableCorsAttribute("*", "*", "*");
+            config.EnableCors(cors);
 
             config.Routes.MapHttpRoute(
                 name: "DefaultApi",
@@ -25,7 +28,7 @@ namespace YoctoScheduler.WebAPI
             var appXmlType = config.Formatters.XmlFormatter.SupportedMediaTypes.FirstOrDefault(t => t.MediaType == "application/xml");
             config.Formatters.XmlFormatter.SupportedMediaTypes.Remove(appXmlType);
 
-            // this will screw curl but PowerShell will still work. JavaScript is to be tested.
+            // this will screw up curl but PowerShell will still work. JavaScript is to be tested.
             //var listener = (System.Net.HttpListener)appBuilder.Properties["System.Net.HttpListener"];
             //listener.AuthenticationSchemes = System.Net.AuthenticationSchemes.IntegratedWindowsAuthentication;
 

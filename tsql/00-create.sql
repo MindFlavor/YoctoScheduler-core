@@ -150,7 +150,7 @@ CREATE TABLE [live].[ExecutionQueue] (
 	[TaskID] INT NOT NULL,
 	[Priority] INT NOT NULL,
 	[ScheduleID] UNIQUEIDENTIFIER NULL,
-	[InsertDate] DATETIME NOT NULL DEFAULT(GETDATE()),
+	[Inserted] DATETIME NOT NULL DEFAULT(GETDATE()),
  CONSTRAINT [PK_ExecutionQueue] PRIMARY KEY CLUSTERED 
 (
 	[GUID] ASC
@@ -171,7 +171,7 @@ GO
 ALTER TABLE [live].[ExecutionQueue] CHECK CONSTRAINT [FK_ExecutionQueue_ScheduleID]
 GO
 
-CREATE INDEX IDX_PriorityInsertDate ON [live].[ExecutionQueue]([Priority], [InsertDate])
+CREATE INDEX IDX_PriorityInserted ON [live].[ExecutionQueue]([Priority], [Inserted])
 GO
 
 --------------------------
