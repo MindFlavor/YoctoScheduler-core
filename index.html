@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="description" content="Yoctoscheduler-core : A cloud-aware (multi-process, self-healing) SQL Server Agent alternative">
+
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+
+    <title>Yoctoscheduler-core</title>
+  </head>
+
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/MindFlavor/YoctoScheduler-core">View on GitHub</a>
+
+          <h1 id="project_title">Yoctoscheduler-core</h1>
+          <h2 id="project_tagline">A cloud-aware (multi-process, self-healing) SQL Server Agent alternative</h2>
+
+            <section id="downloads">
+              <a class="zip_download_link" href="https://github.com/MindFlavor/YoctoScheduler-core/zipball/master">Download this project as a .zip file</a>
+              <a class="tar_download_link" href="https://github.com/MindFlavor/YoctoScheduler-core/tarball/master">Download this project as a tar.gz file</a>
+            </section>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+        <h1>
+<a id="yoctoscheduler" class="anchor" href="#yoctoscheduler" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>YoctoScheduler</h1>
+
+<p><a href="https://raw.githubusercontent.com/hyperium/hyper/master/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT licensed"></a></p>
+
+<h2>
+<a id="intro" class="anchor" href="#intro" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Intro</h2>
+
+<p>YoctoScheduler is a multi-thread, multi-process scheduling system. It is meant to be a SQL Server Agent alternative for Azure workloads.<br>
+Each server in  a cluster should be indpendent from the others while maintaining some architectural constraints.</p>
+
+<p>The configuration data is stored in an Azure SQL Database or SQL Server database. Each scheduler process will start, read the configuration from the shared database and start processing tasks. 
+The schedulers are <em>greedy</em>, meaning they compete for tasks to execute. You can control how many instances of a task can start concurrently (both on the same server and globally) via a specific configuration option. The schedules, however, are guaranteed to be executed only once (this is different from multi instance SQL Server Agent, ie. in AlwaysOn AG in which you have to manually handle concurrency) so you don't need to concern yourself with it. 
+The tasks can be:</p>
+
+<ul>
+<li>T-SQL tasks (ie everything you can do from a SqlConnection).</li>
+<li>SSIS tasks (provided you have SSIS engine available).</li>
+<li>PowerShell tasks.</li>
+</ul>
+
+<p>As this version there is no workflow manager. Each task is indipendent. Depending on the need of this we will implemement the feature in the future.</p>
+
+<h3>
+<a id="some-uses" class="anchor" href="#some-uses" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Some uses</h3>
+
+<p>YoctoScheduler has been successfully employed to:</p>
+
+<ul>
+<li>Perform scheduled maintenance on Azure SQL Database(s)</li>
+<li>Generate reports on timely basis</li>
+<li>ETL in the cloud (both hypbrid and pure)</li>
+<li>Handle AlwaysOn Availabilty groups jobs.</li>
+</ul>
+
+<h3>
+<a id="resiliency" class="anchor" href="#resiliency" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Resiliency</h3>
+
+<p>The schedulers are build with the cloud in mind. That means they are resilient: you can have a scheduler pick up a task previously being run by another, failed, scheduler. This happens automatically and, of course, you can opt out if you want. </p>
+
+<p>This is an example of what can happen. Suppose we have two instances of our scheduler (maybe in an availability group):</p>
+
+<p><img src="docs/imgs/res_00.png" alt=""></p>
+
+<p>Suppose now Server_A picks up a task (called Job_01) and starts executing it:</p>
+
+<p><img src="docs/imgs/res_01.png" alt=""></p>
+
+<p>Job_01 can be running as result of a schedule or maybe we just started it manually. It does not matter. What matter is we marked Job_01 as <em>restartable</em> in case of server failure.</p>
+
+<p>Now let's suppose Server_A fails.</p>
+
+<p><img src="docs/imgs/res_02.png" alt=""></p>
+
+<p>Server_B, after declaring Server_A dead, will pick Job_01 and start executing again.</p>
+
+<p><img src="docs/imgs/res_03.png" alt=""></p>
+
+<p>This does not require manual intervention. Please note that the scheduler does not make assumption on the atomicity of the task restarted. It's up to you to provide transactionality (if needed).</p>
+
+<h2>
+<a id="legend" class="anchor" href="#legend" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Legend</h2>
+
+<table>
+<thead>
+<tr>
+<th>Entity Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Task</td>
+<td>Atomic execution block. A task will never migrate between servers.</td>
+</tr>
+<tr>
+<td>Server</td>
+<td>Schedulator and executor process. A server manipulates the companion database.</td>
+</tr>
+<tr>
+<td>Task status</td>
+<td>A <code>task</code> can either be alive or dead. If not alive there is also a description of why is not running.</td>
+</tr>
+<tr>
+<td>Schedule</td>
+<td>A predefined fire time for a <code>Task</code>. It supports the <code>NCronTab</code> syntax to be flexible (up to the single minute).</td>
+</tr>
+<tr>
+<td>Workflow</td>
+<td>A collection of task to be orchestrated as a single entity.</td>
+</tr>
+</tbody>
+</table>
+
+<h2>
+<a id="requisites" class="anchor" href="#requisites" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Requisites</h2>
+
+<h3>
+<a id="done" class="anchor" href="#done" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Done</h3>
+
+<ul>
+<li>Each server must be independent and must rely on the companion database only.</li>
+<li>A schedule must fire at most <em>once</em>.</li>
+<li>If a schedule fires when there are no servers running the schedule is <em>lost</em>.</li>
+<li>Each task should be atomic and transactional. A task might fail at any moment and can be restarted on the same server (or another one).
+&gt; this constraint can be relaxed at first</li>
+<li>Each task must update its status at least each <strong><em>to_define_task_update_frequency</em></strong> seconds. An update will update the <code>LastUpdate</code> field in the <code>[live].[ExecutionStatus]</code> table.</li>
+<li>A task not updating its status for <strong><em>to_define_task_timeout</em></strong> seconds is considered dead. A dead task will be removed from the <code>[live].[ExecutionStatus]</code> table and placed in the <code>[dead].[ExecutionStatus]</code> table (along with a specific status).</li>
+<li>A dead task will be restarted if so specified (the <strong><em>restart logic is to be defined</em></strong>).</li>
+<li>Each task can specify concurrency limits, both globally and in the same server. For example, a task might run on an unlimited number of different servers but each server should only run one instance. The concurrency check must be performed by the server at runtime at it should be conservative: better to avoid starting a task is there's the possibility of exceeding the maximum configured parallelism even if it's not a certainty.</li>
+<li>Each task should read its configuration from the centralized server (to encourage task independence).</li>
+<li>Required tasks:
+
+<ul>
+<li>T-SQL task</li>
+<li>PowerShell task</li>
+<li>SSIS task</li>
+</ul>
+</li>
+</ul>
+
+<h3>
+<a id="todo" class="anchor" href="#todo" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>ToDo</h3>
+
+<h4>
+<a id="mandatory" class="anchor" href="#mandatory" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Mandatory</h4>
+
+<ul>
+<li>PowerShell cmdlets. They are fairly easy to implement as they can only wrap the REST API calls.</li>
+</ul>
+
+<h4>
+<a id="nice-to-have" class="anchor" href="#nice-to-have" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Nice to have</h4>
+
+<ul>
+<li>Linux support (via .net core).</li>
+<li>Tasks that spawn another task(s) as result of their elaboration.</li>
+<li>Workflows that chain task based on:
+
+<ul>
+<li>Status (successful, failed, in exception)</li>
+<li>Constant match (ie <code>if return number = 1 then ... else if ...</code>)</li>
+<li>Resources available</li>
+</ul>
+</li>
+<li>Fair scheduler. Scheduler should pick up tasks inspecting the available resources (to better scale in parallel).</li>
+</ul>
+
+<h2>
+<a id="requisites-1" class="anchor" href="#requisites-1" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Requisites</h2>
+
+<ul>
+<li>SQL Server 2012+ or SQL Azure database.</li>
+<li>A database and a <code>dbo_owner</code> user with relative login.</li>
+<li>C# 4.5.2. </li>
+</ul>
+
+<h2>
+<a id="installation" class="anchor" href="#installation" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Installation</h2>
+
+<p>YoctoScheduler can run in two modes, as a command line program or as a Windows Service. The <a href="docs/configuration.md">configuration</a> is the same, the only difference is in the command line switches that either start the command line execution or register the windows service.</p>
+
+<ol>
+<li>Execute the <a href="tsql/00-create.sql">oop-tsql/00-create.sql</a> script on your chosen database instance. This will create the required database.</li>
+<li>Create a login in the database instance and give it <code>db_owner</code> on the previously created database.</li>
+<li>Compile the executable and relative libraries.</li>
+<li>
+<a href="docs/configuration.md">Configure</a> the service file.</li>
+<li>Run (for testing purposes you may want to start with the command line program).</li>
+<li>
+<em>optional</em> Clone the web frontend (it's in a separate project right now). Once cloned make sure to configure the server files accordingly.</li>
+</ol>
+
+<h2>
+<a id="configuration" class="anchor" href="#configuration" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Configuration</h2>
+
+<p>See the specific section: <a href="docs/configuration.md">configuration</a>.</p>
+
+<h2>
+<a id="interaction" class="anchor" href="#interaction" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Interaction</h2>
+
+<p>Check out the <a href="docs/rest/rest.md">REST API reference</a>, the command line commands are deprecated and will be removed in the future.</p>
+
+<h2>
+<a id="testing" class="anchor" href="#testing" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Testing</h2>
+
+<p>Here are some testing REST commands you can send to your YoctoScheduler instance. All the commands are server-agnostic so there is no difference based on which server instance you pick. Also note this samples use the linux curl command line tool. You can download a copy for Windows from <a href="http://www.mingw.org/">wingw.org</a> but some commands migth require some tweaking as windows and linux handle special characters differently.</p>
+
+<h3>
+<a id="secret" class="anchor" href="#secret" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Secret</h3>
+
+<p>You can create a secret using the <a href="docs/rest/secret-item.md"><code>SecretItems</code></a> REST API command. You have to specify the certificate thumbprint (as found in <code>My</code> certificate store) and the text to encrypt. The Secret name must be unique otherwise the call will fail.</p>
+
+<pre><code>curl -X POST -H "Content-Type: application/json" cantun.mindflavor.it:9000/api/secretitems -d '{"Name":"MyConnectionString", "CertificateThumbprint":"277103c882995da2d199050e58522d364513307e", "PlainTextValue":"data source=vSQL14A.mindflavor.it;initial catalog=YoctoScheduler;User Id=fagiolo;Password=cotto;MultipleActiveResultSets=False;App=YoctoTask"}"'
+</code></pre>
+
+<p>You can call the same REST API in a browser to get the secret list:</p>
+
+<p><img src="docs/imgs/00.png" alt=""></p>
+
+<p>Notice how the value is stored in its encrypted format only.</p>
+
+<p><em>Note:</em> There is a bug in PowerShell generated certificates. See the <a href="docs/known-issues/System.Security.Cryptography.CryptographicException.md"><code>System.Security.Cryptography.CryptographicException: Invalid provider type specified</code></a> known issue about how to resolve this.</p>
+
+<h3>
+<a id="task" class="anchor" href="#task" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Task</h3>
+
+<p>You can add a new mock task calling the <a href="docs/rest/tasks.md">Tasks REST API</a> interface.</p>
+
+<p>In a nutshell the task is defined by:</p>
+
+<ul>
+<li>Name</li>
+<li>Type (TSQL task, PowerShell task, etc...)</li>
+<li>Server failure resiliency (whether it should be executed again if the hosting server dies before its completion)* Concurrency limits (both global and local, use 0 for unconstrained)</li>
+<li>Payload (task-dependent)</li>
+</ul>
+
+<h4>
+<a id="wait-task" class="anchor" href="#wait-task" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Wait task</h4>
+
+<p>For example this is how to create a <code>WaitTask</code> (useful ony for debugging purposes):</p>
+
+<pre><code>curl -X POST -H "Content-Type: application/json" cantun.mindflavor.it:9000/api/tasks -d '{"Name":"MyWaitTask", "ConcurrencyLimitGlobal":0, "ConcurrencyLimitSameInstance":1, "Description":"This task will stall the thread for 35 seconds. This task will task will not be requeued in case the server owning it dies", "ReenqueueOnDead":false,"Type":"WaitTask","Payload":"{\"SleepSeconds\":35}"'
+</code></pre>
+
+<p>You can create a <code>WaitTask</code> using the web app by clicking Add in the Task view: </p>
+
+<p><img src="docs/imgs/07.png" alt=""></p>
+
+<blockquote>
+<p><em>Warning</em>: images might refer to an outdated WebApp version. The relevant pieces should be valid all the same.</p>
+</blockquote>
+
+<h4>
+<a id="t-sql-task" class="anchor" href="#t-sql-task" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>T-SQL task</h4>
+
+<p>Here is how you create a <code>TSQLTask</code>:</p>
+
+<pre><code>curl -X POST -H "Content-Type: application/json" cantun.mindflavor.it:9000/api/tasks -d '{"Name":"MyDBTask_WithWait", "ConcurrencyLimitGlobal":2, "ConcurrencyLimitSameInstance":2,  "Description":"SELECT @@VERSION after WAITFOR DELAY of 30 seconds", "ReenqueueOnDead":true,"Type":"TSQLTask","Payload":"{\"ConnectionString\":\"%%[MyConnectionString]%%\", \"Statement\":\"WAITFOR DELAY \u002700:00:30\u0027; SELECT @@VERSION;\",\"CommandTimeout\":600}"'
+</code></pre>
+
+<p>For reference, here is the above task's payload:</p>
+
+<div class="highlight highlight-source-json"><pre>{
+  <span class="pl-s"><span class="pl-pds">"</span>Name<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>MyDBTask_WithWait<span class="pl-pds">"</span></span>,
+  <span class="pl-s"><span class="pl-pds">"</span>ConcurrencyLimitGlobal<span class="pl-pds">"</span></span>: <span class="pl-c1">2</span>,
+  <span class="pl-s"><span class="pl-pds">"</span>ConcurrencyLimitSameInstance<span class="pl-pds">"</span></span>: <span class="pl-c1">2</span>,
+  <span class="pl-s"><span class="pl-pds">"</span>Description<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>SELECT @@VERSION after WAITFOR DELAY of 30 seconds<span class="pl-pds">"</span></span>,
+  <span class="pl-s"><span class="pl-pds">"</span>ReenqueueOnDead<span class="pl-pds">"</span></span>: <span class="pl-c1">true</span>,
+  <span class="pl-s"><span class="pl-pds">"</span>Type<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>TSQLTask<span class="pl-pds">"</span></span>,
+  <span class="pl-s"><span class="pl-pds">"</span>Payload<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>{<span class="pl-cce">\"</span>ConnectionString<span class="pl-cce">\"</span>:<span class="pl-cce">\"</span>%%[MyConnectionString]%%<span class="pl-cce">\"</span>, <span class="pl-cce">\"</span>Statement<span class="pl-cce">\"</span>:<span class="pl-cce">\"</span>WAITFOR DELAY '00:00:30'; SELECT @@VERSION;<span class="pl-cce">\"</span>,<span class="pl-cce">\"</span>CommandTimeout<span class="pl-cce">\"</span>:600<span class="pl-pds">"</span></span>
+}</pre></div>
+
+<p>Notice how you can embed the <code>Secret</code> surrounding it with <code>[%%</code> and <code>%%]</code>. This syntax is supported by JSON based tasks.</p>
+
+<p>You can create T-SQL tasks and display the existing ones using the <code>REST API</code> or using the YoctoScheduler web app:</p>
+
+<p><img src="docs/imgs/06.png" alt="">. </p>
+
+<p>Notice how the webapp makes sure your're passing the parameters correctly.</p>
+
+<h4>
+<a id="powershell-task" class="anchor" href="#powershell-task" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>PowerShell task</h4>
+
+<p>PowerShell tasks accept only one parameter: Script. The output entries will be JSON serialized row by row (calling <code>ToString()</code> on them first). Here is an example that enumerates local drives along with used and free space:</p>
+
+<pre><code>curl -X POST -H "Content-Type: application/json" cantun.mindflavor.it:9000/api/tasks -d '{"Name":"My_PS_Drives", "ConcurrencyLimitGlobal":0, "ConcurrencyLimitSameInstance":1, "Description":"This task will enumerate local drives", "ReenqueueOnDead":true,"Type":"PowerShellTask","Payload":"{\"Script\":\"Get-PSDrive | foreach { $_.Name, $_.Root, $_.Used, $_.Free | Out-String }\"}"'
+</code></pre>
+
+<p>For reference, here is the configuration JSON:</p>
+
+<div class="highlight highlight-source-json"><pre>{
+  <span class="pl-s"><span class="pl-pds">"</span>Name<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>My_PS_Drives<span class="pl-pds">"</span></span>,
+  <span class="pl-s"><span class="pl-pds">"</span>ConcurrencyLimitGlobal<span class="pl-pds">"</span></span>: <span class="pl-c1">0</span>,
+  <span class="pl-s"><span class="pl-pds">"</span>ConcurrencyLimitSameInstance<span class="pl-pds">"</span></span>: <span class="pl-c1">1</span>,
+  <span class="pl-s"><span class="pl-pds">"</span>Description<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>This task will enumerate local drives<span class="pl-pds">"</span></span>,
+  <span class="pl-s"><span class="pl-pds">"</span>ReenqueueOnDead<span class="pl-pds">"</span></span>: <span class="pl-c1">true</span>,
+  <span class="pl-s"><span class="pl-pds">"</span>Type<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>PowerShellTask<span class="pl-pds">"</span></span>,
+  <span class="pl-s"><span class="pl-pds">"</span>Payload<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>{<span class="pl-cce">\"</span>Script<span class="pl-cce">\"</span>:<span class="pl-cce">\"</span>Get-PSDrive | foreach { $_.Name, $_.Root, $_.Used, $_.Free | Out-String }<span class="pl-cce">\"</span>}<span class="pl-pds">"</span></span>
+}</pre></div>
+
+<p>The output, as stated above, is serialized to a JSON. In my case this is the output:</p>
+
+<div class="highlight highlight-source-json"><pre>[
+  {
+    <span class="pl-s"><span class="pl-pds">"</span>Row<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>Alias<span class="pl-cce">\r\n\r\n</span><span class="pl-pds">"</span></span>
+  },
+  {
+    <span class="pl-s"><span class="pl-pds">"</span>Row<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>C<span class="pl-cce">\r\n</span>C:<span class="pl-cce">\\\r\n</span>590391623680<span class="pl-cce">\r\n</span>304360370176<span class="pl-cce">\r\n</span><span class="pl-pds">"</span></span>
+  },
+  {
+    <span class="pl-s"><span class="pl-pds">"</span>Row<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>Cert<span class="pl-cce">\r\n\\\r\n</span><span class="pl-pds">"</span></span>
+  },
+  {
+    <span class="pl-s"><span class="pl-pds">"</span>Row<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>E<span class="pl-cce">\r\n</span>E:<span class="pl-cce">\\\r\n</span>165277347840<span class="pl-cce">\r\n</span>334827339776<span class="pl-cce">\r\n</span><span class="pl-pds">"</span></span>
+  },
+  {
+    <span class="pl-s"><span class="pl-pds">"</span>Row<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>Env<span class="pl-cce">\r\n\r\n</span><span class="pl-pds">"</span></span>
+  },
+  {
+    <span class="pl-s"><span class="pl-pds">"</span>Row<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>F<span class="pl-cce">\r\n</span>F:<span class="pl-cce">\\\r\n</span>0<span class="pl-cce">\r\n</span><span class="pl-pds">"</span></span>
+  },
+  {
+    <span class="pl-s"><span class="pl-pds">"</span>Row<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>Function<span class="pl-cce">\r\n\r\n</span><span class="pl-pds">"</span></span>
+  },
+  {
+    <span class="pl-s"><span class="pl-pds">"</span>Row<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>G<span class="pl-cce">\r\n</span>G:<span class="pl-cce">\\\r\n</span>0<span class="pl-cce">\r\n</span><span class="pl-pds">"</span></span>
+  },
+  {
+    <span class="pl-s"><span class="pl-pds">"</span>Row<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>H<span class="pl-cce">\r\n</span>H:<span class="pl-cce">\\\r\n</span>164171661312<span class="pl-cce">\r\n</span>836029329408<span class="pl-cce">\r\n</span><span class="pl-pds">"</span></span>
+  },
+  {
+    <span class="pl-s"><span class="pl-pds">"</span>Row<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>HKCU<span class="pl-cce">\r\n</span>HKEY_CURRENT_USER<span class="pl-cce">\r\n</span><span class="pl-pds">"</span></span>
+  },
+  {
+    <span class="pl-s"><span class="pl-pds">"</span>Row<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>HKLM<span class="pl-cce">\r\n</span>HKEY_LOCAL_MACHINE<span class="pl-cce">\r\n</span><span class="pl-pds">"</span></span>
+  },
+  {
+    <span class="pl-s"><span class="pl-pds">"</span>Row<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>Variable<span class="pl-cce">\r\n\r\n</span><span class="pl-pds">"</span></span>
+  },
+  {
+    <span class="pl-s"><span class="pl-pds">"</span>Row<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>W<span class="pl-cce">\r\n</span>W:<span class="pl-cce">\\\r\n</span>97070129152<span class="pl-cce">\r\n</span>142726615040<span class="pl-cce">\r\n</span><span class="pl-pds">"</span></span>
+  },
+  {
+    <span class="pl-s"><span class="pl-pds">"</span>Row<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>WSMan<span class="pl-cce">\r\n\r\n</span><span class="pl-pds">"</span></span>
+  }
+]</pre></div>
+
+<p>You can pivot it in a table using SQL Server 2016 JSON features like this:</p>
+
+<div class="highlight highlight-source-sql"><pre>DECLARE @var NVARCHAR(MAX);
+<span class="pl-k">SELECT</span> @var <span class="pl-k">=</span> ReturnCode <span class="pl-k">FROM</span> [YoctoScheduler].[dead].[ExecutionStatus] S <span class="pl-k">INNER JOIN</span> [YoctoScheduler].[live].[Tasks] T <span class="pl-k">ON</span> <span class="pl-c1">S</span>.<span class="pl-c1">TaskID</span> <span class="pl-k">=</span> <span class="pl-c1">T</span>.<span class="pl-c1">TaskID</span>
+<span class="pl-k">WHERE</span> T.[Type] <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">'</span>PowerShellTask<span class="pl-pds">'</span></span> <span class="pl-k">AND</span> GUID <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">'</span>3B3B80D2-30A7-4D84-9486-16FB890603DC<span class="pl-pds">'</span></span>
+
+<span class="pl-k">SELECT</span> <span class="pl-k">*</span>
+ <span class="pl-k">FROM</span> OPENJSON (@var, <span class="pl-s"><span class="pl-pds">'</span>$<span class="pl-pds">'</span></span>)
+ WITH (
+        Row NVARCHAR(MAX)
+ ) <span class="pl-k">AS</span> OrdersArray</pre></div>
+
+<p><img src="docs/imgs/05.png" alt=""></p>
+
+<p>You can use the webapp to create <code>PowerShell</code> tasks too.</p>
+
+<h3>
+<a id="schedule" class="anchor" href="#schedule" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Schedule</h3>
+
+<p>To add a schedule just call the <a href="docs/rest/schedule.md"><code>schedules</code> REST API</a> interface. For example this command will schedule the task with ID 1 every minute:</p>
+
+<pre><code>curl -X POST -H "Content-Type: application/json" cantun.mindflavor.it:9000/api/schedules -d '{"Cron":"* * * * *","Enabled":true,"TaskID":1}'
+</code></pre>
+
+<p>Schedules support the CRON syntax via <a href="https://github.com/atifaziz/NCrontab">NCrontab</a>. For details please refer here: <a href="https://github.com/atifaziz/NCrontab">https://github.com/atifaziz/NCrontab</a>.</p>
+
+<p>Schedules can be retrieved via REST interface. The web app does not yet support creating schedules but should be developed soon.</p>
+
+<h2>
+<a id="direct-execution" class="anchor" href="#direct-execution" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Direct Execution</h2>
+
+<p>You can also enqueue a task for immediate execution instead of scheduling it. Just call the <a href="docs/rest/queueitem.md"><code>queueitems</code> REST API</a> interface specifying the TaskID and its priority:</p>
+
+<pre><code>curl -X POST -H "Content-Type: application/json" cantun.mindflavor.it:9000/api/queueitems -d '{"TaskID":1,"Priority":1}'
+</code></pre>
+
+<p>Scheduled task will start as soon as the concurrency conditions are met. You can also query the execution queue using the same interface.</p>
+
+<p>You can enqueue a task to be executed using the web interface under the task section. Notice you can pick the priority:</p>
+
+<p><img src="docs/imgs/08.png" alt=""></p>
+
+<blockquote>
+<p>Right now you cannot choose which server will execute the task. Is this right or we should change it?</p>
+</blockquote>
+
+<h2>
+<a id="execution-lists" class="anchor" href="#execution-lists" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Execution Lists</h2>
+
+<p>There are three different <code>REST API</code> interfaces for execution inspection: <a href="docs/rest/LiveExecution.md">alive</a> and <a href="docs/rest/DeadExecution.md">completed</a> executions.  You can also call the global <a href="docs/rest/executions.md">executions</a> which will include both plus the queued tasks. These interfaces are GET only, that is you cannot post to them. The global will support delete in order to remove old entries. The <code>Executions</code> tab in the web interface shows the tasks, grouped by status:</p>
+
+<p><img src="docs/imgs/09.png" alt=""></p>
+
+<p>The Task web app page updates itself so you don't need to refresh it.</p>
+
+<h2>
+<a id="known-issues" class="anchor" href="#known-issues" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Known issues</h2>
+
+<ul>
+<li><p><a href="docs/known-issues/System.Security.Cryptography.CryptographicException.md"><code>System.Security.Cryptography.CryptographicException: Invalid provider type specified</code></a>.</p></li>
+<li><p><a href="docs/known-issues/owin-access-denied.md"><code>Access denied</code> during Owin initialization</a>.</p></li>
+<li><p><a href="docs/known-issues/bad-length-encryption.md"><code>Bad Length</code> during secret encryption</a>.</p></li>
+</ul>
+
+<h2>
+<a id="debug" class="anchor" href="#debug" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Debug</h2>
+
+<p>TODO</p>
+
+<h2>
+<a id="license" class="anchor" href="#license" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>License</h2>
+
+<p>Please see the <a href="LICENSE">LICENSE</a> file for details.</p>
+      </section>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">Yoctoscheduler-core maintained by <a href="https://github.com/MindFlavor">MindFlavor</a></p>
+        <p>Published with <a href="https://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
+
+    
+
+  </body>
+</html>
