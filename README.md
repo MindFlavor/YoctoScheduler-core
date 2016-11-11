@@ -154,6 +154,8 @@ You can create a ```WaitTask``` using the web app by clicking Add in the Task vi
 
 ![](docs/imgs/07.png)
 
+> *Warning*: images might refer to an outdated WebApp version. The relevant pieces should be valid all the same.
+
 #### T-SQL task
 Here is how you create a ```TSQLTask```:
 
@@ -270,7 +272,7 @@ SELECT *
 
 ![](docs/imgs/05.png)
 
-You can use the webapp to create ```PowerShell``` tasks.
+You can use the webapp to create ```PowerShell``` tasks too.
 
 ### Schedule
 
