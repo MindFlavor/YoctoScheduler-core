@@ -4,28 +4,28 @@
 
 ## Intro
 YoctoScheduler is a multi-thread, multi-process scheduling system. It is meant to be a SQL Server Agent alternative for Azure workloads.  
-Each server in  a cluster should be indpendent from the others while maintaining some architectural constraints.
+Each server in  a cluster should be independent from the others while maintaining some architectural constraints.
 
-The configuration data is stored in an Azure SQL Database or SQL Server database. Each scheduler process will start, read the configuration from the shared database and start processing tasks. 
-The schedulers are *greedy*, meaning they compete for tasks to execute. You can control how many instances of a task can start concurrently (both on the same server and globally) via a specific configuration option. The schedules, however, are guaranteed to be executed only once (this is different from multi instance SQL Server Agent, ie. in AlwaysOn AG in which you have to manually handle concurrency) so you don't need to concern yourself with it. 
+The configuration data is stored in an Azure SQL Database or SQL Server database. Each scheduler process will start, read the configuration from the shared database and start processing tasks.
+The schedulers are *greedy*, meaning they compete for tasks to execute. You can control how many instances of a task can start concurrently (both on the same server and globally) via a specific configuration option. The schedules, however, are guaranteed to be executed only once (this is different from multi instance SQL Server Agent, i.e. in AlwaysOn AG in which you have to manually handle concurrency) so you don't need to concern yourself with it.
 The tasks can be:
   * T-SQL tasks (ie everything you can do from a SqlConnection).
   * SSIS tasks (provided you have SSIS engine available).
   * PowerShell tasks.
 
-As this version there is no workflow manager. Each task is indipendent. Depending on the need of this we will implemement the feature in the future.
+As this version there is no workflow manager. Each task is independent. Depending on the need of this we will implement the feature in the future.
 
 ### Some uses
 
 YoctoScheduler has been successfully employed to:
 * Perform scheduled maintenance on Azure SQL Database(s)
 * Generate reports on timely basis
-* ETL in the cloud (both hypbrid and pure)
-* Handle AlwaysOn Availabilty groups jobs.
+* ETL in the cloud (both hybrid and pure)
+* Handle AlwaysOn Availability groups jobs.
 
 ### Resiliency
 
-The schedulers are build with the cloud in mind. That means they are resilient: you can have a scheduler pick up a task previously being run by another, failed, scheduler. This happens automatically and, of course, you can opt out if you want. 
+The schedulers are build with the cloud in mind. That means they are resilient: you can have a scheduler pick up a task previously being run by another, failed, scheduler. This happens automatically and, of course, you can opt out if you want.
 
 This is an example of what can happen. Suppose we have two instances of our scheduler (maybe in an availability group):
 
@@ -52,7 +52,7 @@ This does not require manual intervention. Please note that the scheduler does n
 Entity Name | Description
 ------------|---------|
 Task | Atomic execution block. A task will never migrate between servers. |
-Server | Schedulator and executor process. A server manipulates the companion database.
+Server | Scheduler and executor process. A server manipulates the companion database.
 Task status | A ```task``` can either be alive or dead. If not alive there is also a description of why is not running.
 Schedule | A predefined fire time for a ```Task```. It supports the ```NCronTab``` syntax to be flexible (up to the single minute).
 Workflow | A collection of task to be orchestrated as a single entity.
@@ -76,7 +76,7 @@ Workflow | A collection of task to be orchestrated as a single entity.
   * SSIS task
 
 
-### ToDo
+### To-do
 
 #### Mandatory
 * PowerShell cmdlets. They are fairly easy to implement as they can only wrap the REST API calls.
@@ -86,7 +86,7 @@ Workflow | A collection of task to be orchestrated as a single entity.
 * Tasks that spawn another task(s) as result of their elaboration.
 * Workflows that chain task based on:
   * Status (successful, failed, in exception)
-  * Constant match (ie ```if return number = 1 then ... else if ...```)
+  * Constant match (i.e. ```if return number = 1 then ... else if ...```)
   * Resources available
 * Fair scheduler. Scheduler should pick up tasks inspecting the available resources (to better scale in parallel).
 
@@ -94,7 +94,7 @@ Workflow | A collection of task to be orchestrated as a single entity.
 
 * SQL Server 2012+ or SQL Azure database.
 * A database and a ```dbo_owner``` user with relative login.
-* C# 4.5.2. 
+* C# 4.5.2.
 
 ## Installation
 YoctoScheduler can run in two modes, as a command line program or as a Windows Service. The [configuration](docs/configuration.md) is the same, the only difference is in the command line switches that either start the command line execution or register the windows service.
@@ -116,7 +116,7 @@ Check out the [REST API reference](docs/rest/rest.md), the command line commands
 
 ## Testing
 
-Here are some testing REST commands you can send to your YoctoScheduler instance. All the commands are server-agnostic so there is no difference based on which server instance you pick. Also note this samples use the linux curl command line tool. You can download a copy for Windows from [wingw.org](http://www.mingw.org/) but some commands migth require some tweaking as windows and linux handle special characters differently.
+Here are some testing REST commands you can send to your YoctoScheduler instance. All the commands are server-agnostic so there is no difference based on which server instance you pick. Also note this samples use the Linux curl command line tool. You can download a copy for Windows from [wingw.org](http://www.mingw.org/) but some commands might require some tweaking as windows and Linux handle special characters differently.
 
 ### Secret
 
@@ -144,13 +144,13 @@ In a nutshell the task is defined by:
 * Payload (task-dependent)
 
 #### Wait task
-For example this is how to create a ```WaitTask``` (useful ony for debugging purposes):
+For example this is how to create a ```WaitTask``` (useful only for debugging purposes):
 
 ```
 curl -X POST -H "Content-Type: application/json" cantun.mindflavor.it:9000/api/tasks -d '{"Name":"MyWaitTask", "ConcurrencyLimitGlobal":0, "ConcurrencyLimitSameInstance":1, "Description":"This task will stall the thread for 35 seconds. This task will task will not be requeued in case the server owning it dies", "ReenqueueOnDead":false,"Type":"WaitTask","Payload":"{\"SleepSeconds\":35}"'
 ```
 
-You can create a ```WaitTask``` using the web app by clicking Add in the Task view: 
+You can create a ```WaitTask``` using the web app by clicking Add in the Task view:
 
 ![](docs/imgs/07.png)
 
@@ -181,9 +181,9 @@ Notice how you can embed the ```Secret``` surrounding it with ```[%%``` and ```%
 
 You can create T-SQL tasks and display the existing ones using the ```REST API``` or using the YoctoScheduler web app:
 
-![](docs/imgs/06.png). 
+![](docs/imgs/06.png).
 
-Notice how the webapp makes sure your're passing the parameters correctly.
+Notice how the WebApp makes sure you're passing the parameters correctly.
 
 #### PowerShell task
 
@@ -272,7 +272,7 @@ SELECT *
 
 ![](docs/imgs/05.png)
 
-You can use the webapp to create ```PowerShell``` tasks too.
+You can use the WebApp to create ```PowerShell``` tasks too.
 
 ### Schedule
 
